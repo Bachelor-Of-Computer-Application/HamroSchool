@@ -1,4 +1,4 @@
-package com.example.demo1;
+package hammroSchool;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
