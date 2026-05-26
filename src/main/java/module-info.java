@@ -1,7 +1,8 @@
-module hammroSchool {
+module com.hammroschool {
     requires javafx.controls;
     requires javafx.fxml;
 
-    opens hammroSchool to javafx.fxml;
-    exports hammroSchool;
+    opens com.hammroschool to javafx.fxml;
+    opens com.hammroschool.controller to javafx.fxml;
+    exports com.hammroschool;
 }
