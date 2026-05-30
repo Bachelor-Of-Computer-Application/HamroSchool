@@ -1,33 +1,32 @@
 package com.hammroschool.service.impl;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Properties;
 
+import com.hammroschool.config.AppConfig;
+import com.hammroschool.config.DatabaseSupport;
 import com.hammroschool.model.auth.UserAccount;
 import com.hammroschool.model.auth.UserRole;
 import com.hammroschool.service.AuthService;
 
 public final class InMemoryAuthService implements AuthService {
-    private static final InMemoryAuthService INSTANCE = new InMemoryAuthService();
-    private static final String STORAGE_FILE_NAME = "accounts.properties";
+    private static final InMemoryAuthService INSTANCE = new InMemoryAuthService(AppConfig.getInstance());
 
-    private final Map<String, UserAccount> accounts = new LinkedHashMap<>();
-    private final Path storageFile = Paths.get(System.getProperty("user.dir"), STORAGE_FILE_NAME);
+    private final DatabaseSupport databaseSupport;
 
-    private InMemoryAuthService() {
-        loadAccounts();
+    InMemoryAuthService(AppConfig appConfig) {
+        this(appConfig.getDatabaseUrl(), appConfig.getDatabaseUsername(), appConfig.getDatabasePassword(), appConfig.getDatabaseDriver());
+    }
+
+    InMemoryAuthService(String databaseUrl, String databaseUsername, String databasePassword, String databaseDriver) {
+        this.databaseSupport = new DatabaseSupport(databaseUrl, databaseUsername, databasePassword, databaseDriver);
+        databaseSupport.initializeSchemaIfNeeded();
         ensureDefaultAdmin();
-        saveAccounts();
     }
 
     public static InMemoryAuthService getInstance() {
@@ -40,16 +39,24 @@ public final class InMemoryAuthService implements AuthService {
             return Optional.empty();
         }
 
-        UserAccount account = accounts.get(key(username));
-        if (account == null) {
-            return Optional.empty();
-        }
+        String normalizedUsername = normalize(username);
+        String sql = "SELECT username, password, role FROM user_accounts WHERE username = ? AND password = ? AND role = ?";
+        try (Connection connection = databaseSupport.openConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, normalizedUsername);
+            statement.setString(2, password);
+            statement.setString(3, role.name());
 
-        if (!account.getPassword().equals(password) || account.getRole() != role) {
-            return Optional.empty();
-        }
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return Optional.of(mapAccount(resultSet));
+                }
+            }
 
-        return Optional.of(account);
+            return Optional.empty();
+        } catch (SQLException exception) {
+            throw new IllegalStateException("Unable to authenticate user " + normalizedUsername, exception);
+        }
     }
 
     @Override
@@ -58,73 +65,65 @@ public final class InMemoryAuthService implements AuthService {
             return false;
         }
 
-        String accountKey = key(username);
-        if (accounts.containsKey(accountKey)) {
-            return false;
-        }
+        String normalizedUsername = normalize(username);
+        String checkSql = "SELECT 1 FROM user_accounts WHERE username = ?";
+        String insertSql = "INSERT INTO user_accounts (username, password, role) VALUES (?, ?, ?)";
+        try (Connection connection = databaseSupport.openConnection();
+             PreparedStatement checkStatement = connection.prepareStatement(checkSql)) {
+            checkStatement.setString(1, normalizedUsername);
 
-        accounts.put(accountKey, new UserAccount(username, password, role));
-        saveAccounts();
-        return true;
+            try (ResultSet resultSet = checkStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    return false;
+                }
+            }
+
+            try (PreparedStatement insertStatement = connection.prepareStatement(insertSql)) {
+                insertStatement.setString(1, normalizedUsername);
+                insertStatement.setString(2, password);
+                insertStatement.setString(3, role.name());
+                insertStatement.executeUpdate();
+                return true;
+            }
+        } catch (SQLException exception) {
+            throw new IllegalStateException("Unable to create account " + normalizedUsername, exception);
+        }
     }
 
     @Override
     public synchronized List<UserAccount> getAccounts() {
-        return new ArrayList<>(accounts.values());
+        String sql = "SELECT username, password, role FROM user_accounts ORDER BY username";
+        List<UserAccount> accounts = new ArrayList<>();
+        try (Connection connection = databaseSupport.openConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+            while (resultSet.next()) {
+                accounts.add(mapAccount(resultSet));
+            }
+            return accounts;
+        } catch (SQLException exception) {
+            throw new IllegalStateException("Unable to load accounts", exception);
+        }
     }
 
-    private String key(String username) {
-        return username.trim().toLowerCase();
+    private UserAccount mapAccount(ResultSet resultSet) throws SQLException {
+        return new UserAccount(
+                resultSet.getString("username"),
+                resultSet.getString("password"),
+                UserRole.valueOf(resultSet.getString("role")));
     }
 
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
     }
 
-    private void loadAccounts() {
-        if (!Files.exists(storageFile)) {
-            return;
-        }
-
-        Properties properties = new Properties();
-        try (Reader reader = Files.newBufferedReader(storageFile)) {
-            properties.load(reader);
-        } catch (IOException exception) {
-            throw new IllegalStateException("Unable to load accounts from " + storageFile, exception);
-        }
-
-        for (String username : properties.stringPropertyNames()) {
-            String value = properties.getProperty(username);
-            if (value == null || !value.contains("|")) {
-                continue;
-            }
-
-            String[] parts = value.split("\\|", 2);
-            try {
-                UserRole role = UserRole.valueOf(parts[0]);
-                accounts.put(key(username), new UserAccount(username, parts[1], role));
-            } catch (IllegalArgumentException ignored) {
-                // Skip malformed records.
-            }
-        }
-    }
-
-    private void saveAccounts() {
-        Properties properties = new Properties();
-        for (UserAccount account : accounts.values()) {
-            properties.setProperty(account.getUsername(), account.getRole().name() + "|" + account.getPassword());
-        }
-
-        try (Writer writer = Files.newBufferedWriter(storageFile)) {
-            properties.store(writer, "Hammro School accounts");
-        } catch (IOException exception) {
-            throw new IllegalStateException("Unable to save accounts to " + storageFile, exception);
-        }
+    private String normalize(String username) {
+        return username.trim().toLowerCase();
     }
 
     private void ensureDefaultAdmin() {
-        if (!accounts.containsKey(key("admin"))) {
-            accounts.put(key("admin"), new UserAccount("admin", "admin123", UserRole.ADMIN));
+        if (!authenticate("admin", "admin123", UserRole.ADMIN).isPresent()) {
+            createAccount("admin", "admin123", UserRole.ADMIN);
         }
     }
 }
