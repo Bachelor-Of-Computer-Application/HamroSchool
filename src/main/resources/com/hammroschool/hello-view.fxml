@@ -1,51 +1,131 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ChoiceBox?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.PasswordField?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
 
-<HBox xmlns:fx="http://javafx.com/fxml" fx:controller="com.hammroschool.controller.AuthController"
-      spacing="0" prefWidth="980" prefHeight="640"
-      style="-fx-background-color: linear-gradient(to bottom right, #0f172a, #1e293b);">
+<StackPane prefHeight="560" prefWidth="860" style="-fx-background-color: #afb7b3; -fx-font-family: 'Segoe UI';" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.hammroschool.controller.AuthController">
+    <fx:define>
+        <ToggleGroup fx:id="roleToggleGroup" />
+    </fx:define>
+
     <children>
-        <VBox spacing="18" prefWidth="430" alignment="CENTER_LEFT"
-              style="-fx-background-color: rgba(255,255,255,0.07); -fx-padding: 36; -fx-border-color: rgba(255,255,255,0.12); -fx-border-width: 0 1 0 0;">
+        <HBox alignment="CENTER" prefHeight="522" prefWidth="820" style="-fx-background-color: white; -fx-background-radius: 20; -fx-border-radius: 20; -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.18), 30, 0.15, 0, 10);">
             <children>
-                <Label text="Hammro School" style="-fx-text-fill: white; -fx-font-size: 30px; -fx-font-weight: bold;"/>
-                <Label text="Login with your role to access the right dashboard. Admin can create teacher and student accounts."
-                       wrapText="true"
-                       style="-fx-text-fill: #cbd5e1; -fx-font-size: 15px;"/>
-                <VBox spacing="8" style="-fx-padding: 18 0 0 0;">
+                <VBox alignment="CENTER" prefHeight="560.0" prefWidth="451.0" spacing="22" style="-fx-background-color: #eef9f8; -fx-background-radius: 20 0 0 20; -fx-padding: 28 34 30 34;">
                     <children>
-                        <Label text="Default admin account" style="-fx-text-fill: #94a3b8; -fx-font-size: 13px;"/>
-                        <Label text="Username: admin" style="-fx-text-fill: white; -fx-font-size: 16px;"/>
-                        <Label text="Password: admin123" style="-fx-text-fill: white; -fx-font-size: 16px;"/>
+                        <Region VBox.vgrow="ALWAYS" />
+                        <ImageView fitHeight="265" fitWidth="265" preserveRatio="true">
+                            <image>
+                                <Image url="@images/hero-image.png" />
+                            </image>
+                        </ImageView>
+                        <VBox alignment="CENTER" spacing="8">
+                            <children>
+                                <Label style="-fx-font-size: 29px; -fx-font-weight: 800; -fx-text-fill: #0f172a;" text="Nameste!" />
+                                <Label alignment="CENTER" style="-fx-font-size: 18px; -fx-text-fill: #1f2937;" text="Welcome to Hammro School.&#10;Please log in to your account." textAlignment="CENTER" />
+                            </children>
+                        </VBox>
+                        <Region VBox.vgrow="ALWAYS" />
                     </children>
                 </VBox>
-            </children>
-        </VBox>
 
-        <VBox spacing="16" alignment="CENTER" prefWidth="550"
-              style="-fx-padding: 48;">
-            <children>
-                <VBox spacing="14" maxWidth="360" prefWidth="360"
-                      style="-fx-background-color: white; -fx-background-radius: 18; -fx-padding: 28; -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.35), 24, 0.2, 0, 10);">
+                <VBox prefHeight="514.0" prefWidth="515.0" spacing="14" style="-fx-background-color: white; -fx-background-radius: 0 20 20 0; -fx-padding: 26 26 22 26;">
                     <children>
-                        <Label text="Sign In" style="-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #0f172a;"/>
-                        <TextField fx:id="usernameField" promptText="Username" prefHeight="40"/>
-                        <PasswordField fx:id="passwordField" promptText="Password" prefHeight="40"/>
-                        <ChoiceBox fx:id="roleChoiceBox" prefHeight="40"/>
-                        <Button text="Login" onAction="#handleLogin" prefHeight="42"
-                                style="-fx-background-color: #0f172a; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 10;"/>
-                        <Label fx:id="statusLabel" wrapText="true"
-                               style="-fx-text-fill: #475569; -fx-font-size: 13px;"/>
+                        <HBox alignment="CENTER_LEFT" spacing="12">
+                            <children>
+                                <StackPane prefHeight="54" prefWidth="54">
+                                    <children>
+                                        <Circle fill="#e8f3fb" radius="26" />
+                                        <Rectangle arcHeight="4" arcWidth="4" fill="#0f6fa8" height="14" translateY="8" width="30" />
+                                        <Rectangle arcHeight="2" arcWidth="2" fill="#0f6fa8" height="14" rotate="45" translateY="-9" width="14" />
+                                        <Circle fill="#f4c26b" radius="7" translateY="-16" />
+                                    </children>
+                                </StackPane>
+                                <Label style="-fx-font-size: 28px; -fx-font-weight: 800; -fx-text-fill: #244a68;" text="Hammro&#10;School" />
+                            </children>
+                        </HBox>
+
+                        <Label style="-fx-font-size: 29px; -fx-font-weight: 700; -fx-text-fill: #101010; -fx-padding: 2 0 2 0;" text="Login to your Portal" />
+
+                        <HBox alignment="CENTER_LEFT" spacing="8">
+                            <children>
+                                <ToggleButton fx:id="studentRoleButton" alignment="CENTER" contentDisplay="TOP" onAction="#selectRole" prefHeight="76" prefWidth="104" selected="true" style="-fx-background-color: #bfdbfe; -fx-background-radius: 10; -fx-border-color: #bfdbfe; -fx-border-radius: 10; -fx-font-size: 16px; -fx-font-weight: 700; -fx-text-fill: #101010; -fx-padding: 8 10 8 10;" text="Student" userData="STUDENT">
+                                    <graphic>
+                                        <ImageView fitHeight="42" fitWidth="42" preserveRatio="true">
+                                            <image>
+                                                <Image url="@images/student-icon.png" />
+                                            </image>
+                                        </ImageView>
+                                    </graphic>
+                           <toggleGroup>
+                              <ToggleGroup fx:id="roleToggleGroup" />
+                           </toggleGroup>
+                                </ToggleButton>
+
+                                <ToggleButton fx:id="teacherRoleButton" alignment="CENTER" contentDisplay="TOP" onAction="#selectRole" prefHeight="76" prefWidth="104" style="-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #d1d5db; -fx-border-radius: 10; -fx-font-size: 16px; -fx-font-weight: 700; -fx-text-fill: #101010; -fx-padding: 8 10 8 10;" text="Teacher" toggleGroup="$roleToggleGroup" userData="TEACHER">
+                                    <graphic>
+                                        <ImageView fitHeight="42" fitWidth="42" preserveRatio="true">
+                                            <image>
+                                                <Image url="@images/teacher-icon.png" />
+                                            </image>
+                                        </ImageView>
+                                    </graphic>
+                                </ToggleButton>
+
+                                <ToggleButton fx:id="adminRoleButton" alignment="CENTER" contentDisplay="TOP" onAction="#selectRole" prefHeight="76" prefWidth="104" style="-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #d1d5db; -fx-border-radius: 10; -fx-font-size: 16px; -fx-font-weight: 700; -fx-text-fill: #101010; -fx-padding: 8 10 8 10;" text="Admin" toggleGroup="$roleToggleGroup" userData="ADMIN">
+                                    <graphic>
+                                        <ImageView fitHeight="42" fitWidth="42" preserveRatio="true">
+                                            <image>
+                                                <Image url="@images/admin-icon.png" />
+                                            </image>
+                                        </ImageView>
+                                    </graphic>
+                                </ToggleButton>
+                            </children>
+                        </HBox>
+
+                        <ChoiceBox fx:id="roleChoiceBox" managed="false" prefHeight="1" visible="false" />
+
+                        <VBox spacing="8" style="-fx-padding: 8 0 0 0;">
+                            <children>
+                                <Label style="-fx-font-size: 19px; -fx-text-fill: #1f1f1f; -fx-font-weight: 500;" text="Username" />
+                                <HBox alignment="CENTER_LEFT" spacing="12" style="-fx-background-color: #edf7f6; -fx-background-radius: 10; -fx-padding: 12 14 12 14;">
+                                    <children>
+                                        <ImageView fitHeight="19" fitWidth="19" preserveRatio="true">
+                                            <image>
+                                                <Image url="@images/username-icon.png" />
+                                            </image>
+                                        </ImageView>
+                                        <TextField fx:id="usernameField" prefHeight="24" promptText="username" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-focus-color: transparent; -fx-faint-focus-color: transparent; -fx-font-size: 16px; -fx-text-fill: #1f2937;" />
+                                    </children>
+                                </HBox>
+                            </children>
+                        </VBox>
+
+                        <VBox spacing="8">
+                            <children>
+                                <Label style="-fx-font-size: 19px; -fx-text-fill: #1f1f1f; -fx-font-weight: 500;" text="Password" />
+                                <HBox alignment="CENTER_LEFT" spacing="12" style="-fx-background-color: #edf7f6; -fx-background-radius: 10; -fx-padding: 12 14 12 14;">
+                                    <children>
+                                        <ImageView fitHeight="19" fitWidth="19" preserveRatio="true">
+                                            <image>
+                                                <Image url="@images/password-icon.png" />
+                                            </image>
+                                        </ImageView>
+                                        <PasswordField fx:id="passwordField" prefHeight="24" promptText="Enter your password" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-focus-color: transparent; -fx-faint-focus-color: transparent; -fx-font-size: 16px; -fx-text-fill: #1f2937;" />
+                                    </children>
+                                </HBox>
+                            </children>
+                        </VBox>
+
+                        <Button maxWidth="1.7976931348623157E308" onAction="#handleLogin" prefHeight="40" style="-fx-background-color: #f8ab0a; -fx-background-radius: 9; -fx-text-fill: #111827; -fx-font-size: 18px; -fx-font-weight: 800;" text="Login" />
+
+                        <Label fx:id="statusLabel" style="-fx-text-fill: #202020; -fx-font-size: 13px; -fx-padding: 2 0 0 0;" textAlignment="CENTER" wrapText="true" />
                     </children>
                 </VBox>
             </children>
-        </VBox>
+        </HBox>
     </children>
-</HBox>
+</StackPane>

@@ -1,5 +1,6 @@
 module com.hammroschool {
     requires javafx.controls;
+    requires transitive javafx.graphics;
     requires javafx.fxml;
     requires java.sql;
     requires com.h2database;
