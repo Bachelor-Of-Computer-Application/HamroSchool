@@ -1,24 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ChoiceBox?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ListView?>
-<?import javafx.scene.control.PasswordField?>
-<?import javafx.scene.control.Separator?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.hammroschool.controller.AdminController"
-            style="-fx-background-color: #f8fafc;">
+<BorderPane style="-fx-background-color: #f8fafc;" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/17.0.12" fx:controller="com.hammroschool.controller.AdminController">
     <top>
-        <HBox spacing="12" alignment="CENTER_LEFT"
-              style="-fx-background-color: #0f172a; -fx-padding: 18 28;">
+        <HBox alignment="CENTER_LEFT" spacing="12" style="-fx-background-color: #0f172a; -fx-padding: 18 28;">
             <children>
-                <Label text="Admin Dashboard" style="-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold;"/>
-                <Label fx:id="welcomeLabel" style="-fx-text-fill: #cbd5e1; -fx-font-size: 14px;"/>
+                <Label style="-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold;" text="Hammro School -Admin Dashboard" />
+                <Label fx:id="welcomeLabel" style="-fx-text-fill: #cbd5e1; -fx-font-size: 14px;" />
             </children>
         </HBox>
     </top>
@@ -26,25 +16,23 @@
     <center>
         <HBox spacing="24" style="-fx-padding: 28;">
             <children>
-                <VBox spacing="14" prefWidth="360" style="-fx-background-color: white; -fx-background-radius: 16; -fx-padding: 22; -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.12), 20, 0.2, 0, 8);">
+                <VBox prefWidth="360" spacing="14" style="-fx-background-color: white; -fx-background-radius: 16; -fx-padding: 22; -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.12), 20, 0.2, 0, 8);">
                     <children>
-                        <Label text="Create account" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #0f172a;"/>
-                        <TextField fx:id="usernameField" promptText="Username" prefHeight="40"/>
-                        <PasswordField fx:id="passwordField" promptText="Password" prefHeight="40"/>
-                        <ChoiceBox fx:id="roleChoiceBox" prefHeight="40"/>
-                        <Button text="Create Account" onAction="#handleCreateAccount" prefHeight="42"
-                                style="-fx-background-color: #2563eb; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 10;"/>
-                        <Label fx:id="statusLabel" wrapText="true" style="-fx-text-fill: #475569;"/>
-                        <Separator/>
-                        <Button text="Logout" onAction="#handleLogout" prefHeight="40"
-                                style="-fx-background-color: #e2e8f0; -fx-text-fill: #0f172a; -fx-font-weight: bold; -fx-background-radius: 10;"/>
+                        <Label style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #0f172a;" text="Create account" />
+                        <TextField fx:id="usernameField" prefHeight="40" promptText="Username" />
+                        <PasswordField fx:id="passwordField" prefHeight="40" promptText="Password" />
+                        <ChoiceBox fx:id="roleChoiceBox" prefHeight="40" />
+                        <Button onAction="#handleCreateAccount" prefHeight="42" style="-fx-background-color: #2563eb; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 10;" text="Create Account" />
+                        <Label fx:id="statusLabel" style="-fx-text-fill: #475569;" wrapText="true" />
+                        <Separator />
+                        <Button onAction="#handleLogout" prefHeight="40" style="-fx-background-color: #e2e8f0; -fx-text-fill: #0f172a; -fx-font-weight: bold; -fx-background-radius: 10;" text="Logout" />
                     </children>
                 </VBox>
 
-                <VBox spacing="14" VBox.vgrow="ALWAYS" style="-fx-background-color: white; -fx-background-radius: 16; -fx-padding: 22; -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.12), 20, 0.2, 0, 8);">
+                <VBox spacing="14" style="-fx-background-color: white; -fx-background-radius: 16; -fx-padding: 22; -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.12), 20, 0.2, 0, 8);" VBox.vgrow="ALWAYS">
                     <children>
-                        <Label text="Registered accounts" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #0f172a;"/>
-                        <ListView fx:id="accountListView" VBox.vgrow="ALWAYS"/>
+                        <Label style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #0f172a;" text="Registered accounts" />
+                        <ListView fx:id="accountListView" VBox.vgrow="ALWAYS" />
                     </children>
                 </VBox>
             </children>
