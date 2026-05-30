@@ -7,11 +7,14 @@ import com.hammroschool.service.impl.InMemoryAuthService;
 import com.hammroschool.util.SceneSwitcher;
 import com.hammroschool.util.SessionContext;
 
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToggleGroup;
 
 public class AuthController {
     private final AuthService authService = InMemoryAuthService.getInstance();
@@ -26,13 +29,34 @@ public class AuthController {
     private ChoiceBox<UserRole> roleChoiceBox;
 
     @FXML
+    private ToggleGroup roleToggleGroup;
+
+    @FXML
+    private ToggleButton studentRoleButton;
+
+    @FXML
+    private ToggleButton teacherRoleButton;
+
+    @FXML
+    private ToggleButton adminRoleButton;
+
+    @FXML
     private Label statusLabel;
 
     @FXML
     public void initialize() {
         roleChoiceBox.getItems().setAll(UserRole.values());
-        roleChoiceBox.getSelectionModel().select(UserRole.STUDENT);
+        roleChoiceBox.setValue(UserRole.STUDENT);
+        roleToggleGroup.selectToggle(studentRoleButton);
+        updateRoleButtonStyles();
         statusLabel.setText("Use admin / admin123 to sign in first.");
+    }
+
+    @FXML
+    private void selectRole(ActionEvent event) {
+        ToggleButton selectedButton = (ToggleButton) event.getSource();
+        roleChoiceBox.setValue(UserRole.valueOf(selectedButton.getUserData().toString()));
+        updateRoleButtonStyles();
     }
 
     @FXML
@@ -51,20 +75,39 @@ public class AuthController {
                         statusLabel.setText("Invalid username, password, or role."));
     }
 
+    private void updateRoleButtonStyles() {
+        styleRoleButton(studentRoleButton);
+        styleRoleButton(teacherRoleButton);
+        styleRoleButton(adminRoleButton);
+    }
+
+    private void styleRoleButton(ToggleButton button) {
+        boolean selected = button.isSelected();
+        if (selected) {
+            button.setStyle("-fx-background-color: #bfdbfe; -fx-background-radius: 10; -fx-border-color: #bfdbfe; -fx-border-radius: 10; -fx-font-size: 16px; -fx-font-weight: 700; -fx-text-fill: #101010; -fx-padding: 8 10 8 10; -fx-cursor: hand;");
+        } else {
+            button.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #d1d5db; -fx-border-radius: 10; -fx-font-size: 16px; -fx-font-weight: 700; -fx-text-fill: #101010; -fx-padding: 8 10 8 10; -fx-cursor: hand;");
+        }
+    }
+
     private void openDashboard(UserAccount account) {
         SessionContext.getInstance().setCurrentUser(account);
 
         String fxmlPath;
         String title;
-        if (account.getRole() == UserRole.ADMIN) {
-            fxmlPath = "/com/hammroschool/admin-view.fxml";
-            title = "Admin Dashboard";
-        } else if (account.getRole() == UserRole.TEACHER) {
-            fxmlPath = "/com/hammroschool/teacher-view.fxml";
-            title = "Teacher Dashboard";
-        } else {
-            fxmlPath = "/com/hammroschool/student-view.fxml";
-            title = "Student Dashboard";
+        switch (account.getRole()) {
+            case ADMIN -> {
+                fxmlPath = "/com/hammroschool/admin-view.fxml";
+                title = "Admin Dashboard";
+            }
+            case TEACHER -> {
+                fxmlPath = "/com/hammroschool/teacher-view.fxml";
+                title = "Teacher Dashboard";
+            }
+            default -> {
+                fxmlPath = "/com/hammroschool/student-view.fxml";
+                title = "Student Dashboard";
+            }
         }
 
         SceneSwitcher.showView(usernameField, fxmlPath, title, 980, 640);
