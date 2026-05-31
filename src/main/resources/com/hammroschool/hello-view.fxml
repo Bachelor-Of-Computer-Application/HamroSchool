@@ -3,7 +3,6 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.shape.*?>
 
 <StackPane prefHeight="560" prefWidth="860" style="-fx-background-color: #afb7b3; -fx-font-family: 'Segoe UI';" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.hammroschool.controller.AuthController">
     <fx:define>
@@ -35,14 +34,11 @@
                     <children>
                         <HBox alignment="CENTER_LEFT" spacing="12">
                             <children>
-                                <StackPane prefHeight="54" prefWidth="54">
-                                    <children>
-                                        <Circle fill="#e8f3fb" radius="26" />
-                                        <Rectangle arcHeight="4" arcWidth="4" fill="#0f6fa8" height="14" translateY="8" width="30" />
-                                        <Rectangle arcHeight="2" arcWidth="2" fill="#0f6fa8" height="14" rotate="45" translateY="-9" width="14" />
-                                        <Circle fill="#f4c26b" radius="7" translateY="-16" />
-                                    </children>
-                                </StackPane>
+                                <ImageView fitHeight="80" fitWidth="80" preserveRatio="true">
+                                    <image>
+                                        <Image url="@images/logo.png" />
+                                    </image>
+                                </ImageView>
                                 <Label style="-fx-font-size: 28px; -fx-font-weight: 800; -fx-text-fill: #244a68;" text="Hammro&#10;School" />
                             </children>
                         </HBox>
