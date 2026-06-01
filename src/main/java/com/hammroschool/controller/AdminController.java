@@ -6,7 +6,6 @@ import com.hammroschool.service.AuthService;
 import com.hammroschool.service.impl.InMemoryAuthService;
 import com.hammroschool.util.SceneSwitcher;
 import com.hammroschool.util.SessionContext;
-
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.ChoiceBox;
@@ -63,7 +62,7 @@ public class AdminController {
     @FXML
     private void handleLogout() {
         SessionContext.getInstance().clear();
-        SceneSwitcher.showView(welcomeLabel, "/com/hammroschool/hello-view.fxml", "Hammro School", 980, 640);
+        SceneSwitcher.showView(welcomeLabel, "/com/hammroschool/hello-view.fxml", "Hammro School", 920, 720);
     }
 
     private void refreshView() {

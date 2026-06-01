@@ -6,7 +6,6 @@ import com.hammroschool.service.AuthService;
 import com.hammroschool.service.impl.InMemoryAuthService;
 import com.hammroschool.util.SceneSwitcher;
 import com.hammroschool.util.SessionContext;
-
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ChoiceBox;
@@ -48,8 +47,8 @@ public class AuthController {
         roleChoiceBox.getItems().setAll(UserRole.values());
         roleChoiceBox.setValue(UserRole.STUDENT);
         roleToggleGroup.selectToggle(studentRoleButton);
+        statusLabel.setText("");
         updateRoleButtonStyles();
-        statusLabel.setText("Use admin / admin123 to sign in first.");
     }
 
     @FXML
@@ -82,11 +81,10 @@ public class AuthController {
     }
 
     private void styleRoleButton(ToggleButton button) {
-        boolean selected = button.isSelected();
-        if (selected) {
-            button.setStyle("-fx-background-color: #bfdbfe; -fx-background-radius: 10; -fx-border-color: #bfdbfe; -fx-border-radius: 10; -fx-font-size: 16px; -fx-font-weight: 700; -fx-text-fill: #101010; -fx-padding: 8 10 8 10; -fx-cursor: hand;");
+        if (button.isSelected()) {
+            button.setStyle("-fx-background-color: #191919; -fx-background-radius: 12; -fx-border-color: #191919; -fx-border-radius: 12; -fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: white; -fx-padding: 8 10 8 10; -fx-cursor: hand;");
         } else {
-            button.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #d1d5db; -fx-border-radius: 10; -fx-font-size: 16px; -fx-font-weight: 700; -fx-text-fill: #101010; -fx-padding: 8 10 8 10; -fx-cursor: hand;");
+            button.setStyle("-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e3e3e3; -fx-border-radius: 12; -fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: #202020; -fx-padding: 8 10 8 10; -fx-cursor: hand;");
         }
     }
 

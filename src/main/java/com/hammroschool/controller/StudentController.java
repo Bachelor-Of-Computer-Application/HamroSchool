@@ -2,7 +2,6 @@ package com.hammroschool.controller;
 
 import com.hammroschool.util.SceneSwitcher;
 import com.hammroschool.util.SessionContext;
-
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 
@@ -18,6 +17,6 @@ public class StudentController {
     @FXML
     private void handleLogout() {
         SessionContext.getInstance().clear();
-        SceneSwitcher.showView(welcomeLabel, "/com/hammroschool/hello-view.fxml", "Hammro School", 980, 640);
+        SceneSwitcher.showView(welcomeLabel, "/com/hammroschool/hello-view.fxml", "Hammro School", 920, 720);
     }
 }
