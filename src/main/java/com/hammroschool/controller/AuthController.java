@@ -107,10 +107,10 @@ public class AuthController {
             default -> studentRoleIcon;
         };
 
-        if (button.isSelected()) {
-            icon.setEffect(new ColorAdjust(0, 0, 1, 0));
+        if ("STUDENT".equals(button.getUserData().toString())) {
+            icon.setEffect(button.isSelected() ? null : new ColorAdjust(0, 0, -1, 0));
         } else {
-            icon.setEffect(null);
+            icon.setEffect(button.isSelected() ? new ColorAdjust(0, 0, 1, 0) : null);
         }
     }
 
