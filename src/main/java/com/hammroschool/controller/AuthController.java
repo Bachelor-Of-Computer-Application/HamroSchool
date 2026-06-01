@@ -14,6 +14,8 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.effect.ColorAdjust;
+import javafx.scene.image.ImageView;
 
 public class AuthController {
     private final AuthService authService = InMemoryAuthService.getInstance();
@@ -38,6 +40,15 @@ public class AuthController {
 
     @FXML
     private ToggleButton adminRoleButton;
+
+    @FXML
+    private ImageView studentRoleIcon;
+
+    @FXML
+    private ImageView teacherRoleIcon;
+
+    @FXML
+    private ImageView adminRoleIcon;
 
     @FXML
     private Label statusLabel;
@@ -85,6 +96,21 @@ public class AuthController {
             button.setStyle("-fx-background-color: #191919; -fx-background-radius: 12; -fx-border-color: #191919; -fx-border-radius: 12; -fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: white; -fx-padding: 8 10 8 10; -fx-cursor: hand;");
         } else {
             button.setStyle("-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e3e3e3; -fx-border-radius: 12; -fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: #202020; -fx-padding: 8 10 8 10; -fx-cursor: hand;");
+        }
+        updateRoleIcon(button);
+    }
+
+    private void updateRoleIcon(ToggleButton button) {
+        ImageView icon = switch (button.getUserData().toString()) {
+            case "TEACHER" -> teacherRoleIcon;
+            case "ADMIN" -> adminRoleIcon;
+            default -> studentRoleIcon;
+        };
+
+        if (button.isSelected()) {
+            icon.setEffect(new ColorAdjust(0, 0, 1, 0));
+        } else {
+            icon.setEffect(null);
         }
     }
 

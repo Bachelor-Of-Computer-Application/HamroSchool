@@ -38,7 +38,7 @@
                             <children>
                                 <ToggleButton fx:id="studentRoleButton" alignment="CENTER" contentDisplay="TOP" onAction="#selectRole" prefHeight="68" prefWidth="100" selected="true" text="Student" toggleGroup="$roleToggleGroup" userData="STUDENT">
                                     <graphic>
-                                        <ImageView fitHeight="22" fitWidth="22" preserveRatio="true">
+                                        <ImageView fx:id="studentRoleIcon" fitHeight="22" fitWidth="22" preserveRatio="true">
                                             <image>
                                                 <Image url="@images/login-page/person-icon.png" />
                                             </image>
@@ -48,7 +48,7 @@
 
                                 <ToggleButton fx:id="teacherRoleButton" alignment="CENTER" contentDisplay="TOP" onAction="#selectRole" prefHeight="68" prefWidth="100" text="Teacher" toggleGroup="$roleToggleGroup" userData="TEACHER">
                                     <graphic>
-                                        <ImageView fitHeight="22" fitWidth="22" preserveRatio="true">
+                                        <ImageView fx:id="teacherRoleIcon" fitHeight="22" fitWidth="22" preserveRatio="true">
                                             <image>
                                                 <Image url="@images/login-page/teacher-icon.png" />
                                             </image>
@@ -58,7 +58,7 @@
 
                                 <ToggleButton fx:id="adminRoleButton" alignment="CENTER" contentDisplay="TOP" onAction="#selectRole" prefHeight="68" prefWidth="100" text="Admin" toggleGroup="$roleToggleGroup" userData="ADMIN">
                                     <graphic>
-                                        <ImageView fitHeight="22" fitWidth="22" preserveRatio="true">
+                                        <ImageView fx:id="adminRoleIcon" fitHeight="22" fitWidth="22" preserveRatio="true">
                                             <image>
                                                 <Image url="@images/login-page/admin-icon.png" />
                                             </image>
