@@ -5,7 +5,7 @@
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane prefHeight="860.0" prefWidth="1280.0" style="-fx-background-color: #f8f8f7; -fx-font-family: 'Segoe UI';" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.hammroschool.controller.AdminController">
+<BorderPane prefHeight="860.0" prefWidth="1280.0" stylesheets="@styles.css" style="-fx-background-color: #f8f8f7; -fx-font-family: 'Segoe UI';" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.hammroschool.controller.AdminController">
     <left>
         <VBox prefWidth="216.0" spacing="18.0" style="-fx-background-color: #fbfbfa; -fx-border-color: #eceae6; -fx-border-width: 0 1 0 0;">
             <padding>
