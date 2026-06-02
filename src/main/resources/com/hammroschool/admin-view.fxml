@@ -16,7 +16,7 @@
                     <children>
                         <ImageView fitHeight="38.0" fitWidth="38.0" preserveRatio="true">
                             <image>
-                                <Image url="@images/admin-dashboard/hammro-school-logo.png" />
+                                <Image url="@images/logo.png" />
                             </image>
                         </ImageView>
                         <VBox spacing="2.0">

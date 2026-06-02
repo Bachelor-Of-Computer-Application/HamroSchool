@@ -19,7 +19,7 @@
                             <children>
                                 <ImageView fitHeight="28" fitWidth="28" preserveRatio="true">
                                     <image>
-                                        <Image url="@images/login-page/logo.png" />
+                                        <Image url="@images/logo.png" />
                                     </image>
                                 </ImageView>
                                 <Label style="-fx-font-size: 18px; -fx-font-weight: 800; -fx-text-fill: #1f1f1f;" text="Hammro School" />
