@@ -123,6 +123,8 @@ public class AuthController {
             case ADMIN -> {
                 fxmlPath = "/com/hammroschool/admin-view.fxml";
                 title = "Admin Dashboard";
+                SceneSwitcher.showView(usernameField, fxmlPath, title, 1280, 860);
+                return;
             }
             case TEACHER -> {
                 fxmlPath = "/com/hammroschool/teacher-view.fxml";
