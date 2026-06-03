@@ -1,4 +1,4 @@
-# Hammro School
+<center><h1>Hammro School</h1></center>
 
 ![Preview](OG.png)
 
