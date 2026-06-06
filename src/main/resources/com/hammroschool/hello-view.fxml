@@ -99,7 +99,6 @@
                                             </image>
                                         </ImageView>
                                         <PasswordField fx:id="passwordField" prefHeight="28" promptText="Enter your password" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-focus-color: transparent; -fx-faint-focus-color: transparent; -fx-font-size: 14px; -fx-text-fill: #202020; -fx-prompt-text-fill: #9a9a9a;" HBox.hgrow="ALWAYS" />
-                                        <Button focusTraversable="false" mnemonicParsing="false" prefHeight="20" prefWidth="22" style="-fx-background-color: transparent; -fx-text-fill: #8a8a8a; -fx-font-size: 13px; -fx-padding: 0;" text="👁" />
                                     </children>
                                 </HBox>
                             </children>
