@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build:
+    name: Build & Test (Java 21)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      # The pom.xml declares JavaFX with a 'win' classifier.
+      # On Linux CI runners we override it to 'linux' so the correct
+      # native binaries are resolved from Maven Central.
+      - name: Build & run tests
+        run: |
+          mvn --batch-mode --no-transfer-progress clean verify \
+            -Djavafx.platform=linux \
+            -Dclassifier=linux
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+          retention-days: 7
