@@ -19,7 +19,7 @@
                             <children>
                                 <ImageView fitHeight="28" fitWidth="28" preserveRatio="true">
                                     <image>
-                                        <Image url="@assets/logo.svg" />
+                                        <Image url="@assets/logo.png" />
                                     </image>
                                 </ImageView>
                                 <Label style="-fx-font-size: 18px; -fx-font-weight: 800; -fx-text-fill: #1f1f1f;" text="Hammro School" />
@@ -39,7 +39,7 @@
                                     <graphic>
                                         <ImageView fx:id="studentRoleIcon" fitHeight="22" fitWidth="22" preserveRatio="true">
                                             <image>
-                                                <Image url="@assets/login/student.svg" />
+                                                <Image url="@assets/login/student.png" />
                                             </image>
                                         </ImageView>
                                     </graphic>
@@ -52,7 +52,7 @@
                                     <graphic>
                                         <ImageView fx:id="teacherRoleIcon" fitHeight="22" fitWidth="22" preserveRatio="true">
                                             <image>
-                                                <Image url="@assets/login/teacher.svg" />
+                                                <Image url="@assets/login/teacher.png" />
                                             </image>
                                         </ImageView>
                                     </graphic>
@@ -62,7 +62,7 @@
                                     <graphic>
                                         <ImageView fx:id="adminRoleIcon" fitHeight="22" fitWidth="22" preserveRatio="true">
                                             <image>
-                                                <Image url="@assets/login/admin.svg" />
+                                                <Image url="@assets/login/admin.png" />
                                             </image>
                                         </ImageView>
                                     </graphic>
@@ -79,7 +79,7 @@
                                     <children>
                                         <ImageView fitHeight="18" fitWidth="18" preserveRatio="true">
                                             <image>
-                                                <Image url="@assets/login/username.svg" />
+                                                <Image url="@assets/login/username.png" />
                                             </image>
                                         </ImageView>
                                         <TextField fx:id="usernameField" prefHeight="28" promptText="Enter your username" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-focus-color: transparent; -fx-faint-focus-color: transparent; -fx-font-size: 14px; -fx-text-fill: #202020; -fx-prompt-text-fill: #9a9a9a;" HBox.hgrow="ALWAYS" />
@@ -95,7 +95,7 @@
                                     <children>
                                         <ImageView fitHeight="18" fitWidth="18" preserveRatio="true">
                                             <image>
-                                                <Image url="@assets/login/password.svg" />
+                                                <Image url="@assets/login/password.png" />
                                             </image>
                                         </ImageView>
                                         <PasswordField fx:id="passwordField" prefHeight="28" promptText="Enter your password" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-focus-color: transparent; -fx-faint-focus-color: transparent; -fx-font-size: 14px; -fx-text-fill: #202020; -fx-prompt-text-fill: #9a9a9a;" HBox.hgrow="ALWAYS" />
@@ -108,7 +108,7 @@
                             <graphic>
                                 <ImageView fitHeight="16" fitWidth="16" preserveRatio="true">
                                     <image>
-                                        <Image url="@assets/login/login.svg" />
+                                        <Image url="@assets/login/login.png" />
                                     </image>
                                 </ImageView>
                             </graphic>
@@ -127,7 +127,7 @@
                                 <DropShadow blurType="GAUSSIAN" color="#20304033" offsetY="8" radius="20" />
                             </effect>
                             <image>
-                                <Image url="@assets/hero-image.png" />
+                                <Image url="@assets/login/hero.png" />
                             </image>
                         </ImageView>
                     </children>
