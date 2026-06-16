@@ -1,25 +1,301 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.StackPane?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.hammroschool.controller.TeacherController"
-            style="-fx-background-color: linear-gradient(to bottom right, #fef3c7, #fde68a);">
+<BorderPane prefHeight="860.0" prefWidth="1280.0" stylesheets="@styles.css"
+            style="-fx-background-color: #f8f8f7; -fx-font-family: 'Segoe UI';"
+            xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.hammroschool.controller.TeacherController">
+
+    <!-- ═══════════════════════ SIDEBAR ═══════════════════════ -->
+    <left>
+        <VBox prefWidth="216.0" spacing="18.0"
+              style="-fx-background-color: #fbfbfa; -fx-border-color: #eceae6; -fx-border-width: 0 1 0 0;">
+            <padding>
+                <Insets bottom="24.0" left="20.0" right="16.0" top="18.0" />
+            </padding>
+            <children>
+
+                <!-- Logo + App Name -->
+                <HBox alignment="CENTER_LEFT" spacing="12.0">
+                    <children>
+                        <ImageView fitHeight="38.0" fitWidth="38.0" preserveRatio="true">
+                            <image><Image url="@assets/logo.png" /></image>
+                        </ImageView>
+                        <VBox spacing="2.0">
+                            <children>
+                                <Label style="-fx-text-fill: #161616; -fx-font-size: 16px; -fx-font-weight: 800;" text="Hammro School" />
+                                <Label style="-fx-text-fill: #8a8a8a; -fx-font-size: 12px;" text="Admin Portal" />
+                            </children>
+                        </VBox>
+                    </children>
+                </HBox>
+
+                <!-- Nav items -->
+                <VBox spacing="10.0">
+                    <children>
+                        <Button alignment="CENTER_LEFT" graphicTextGap="12.0" onAction="#handleNavDashboard"
+                                prefHeight="28.0"
+                                style="-fx-background-color: transparent; -fx-background-radius: 8; -fx-text-fill: #272727; -fx-font-size: 13px; -fx-font-weight: 600; -fx-padding: 10 14 10 14; -fx-cursor: hand;"
+                                text="Dashboard">
+                            <graphic>
+                                <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
+                                    <image><Image url="@assets/admin/aside/dashboard.png" /></image>
+                                </ImageView>
+                            </graphic>
+                        </Button>
+
+                        <Button alignment="CENTER_LEFT" graphicTextGap="12.0" onAction="#handleNavAccounts"
+                                prefHeight="28.0"
+                                style="-fx-background-color: transparent; -fx-background-radius: 8; -fx-text-fill: #272727; -fx-font-size: 13px; -fx-font-weight: 600; -fx-padding: 10 14 10 14; -fx-cursor: hand;"
+                                text="Accounts">
+                            <graphic>
+                                <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
+                                    <image><Image url="@assets/admin/aside/account.png" /></image>
+                                </ImageView>
+                            </graphic>
+                        </Button>
+
+                        <!-- Teachers — active state -->
+                        <Button alignment="CENTER_LEFT" graphicTextGap="12.0"
+                                prefHeight="28.0"
+                                style="-fx-background-color: #111111; -fx-background-radius: 8; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: 700; -fx-padding: 10 14 10 14; -fx-cursor: hand;"
+                                text="Teachers">
+                            <graphic>
+                                <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
+                                    <image><Image url="@assets/admin/aside/teacher.png" /></image>
+                                </ImageView>
+                            </graphic>
+                        </Button>
+
+                        <Button alignment="CENTER_LEFT" graphicTextGap="12.0"
+                                prefHeight="28.0"
+                                style="-fx-background-color: transparent; -fx-background-radius: 8; -fx-text-fill: #272727; -fx-font-size: 13px; -fx-font-weight: 600; -fx-padding: 10 14 10 14; -fx-cursor: hand;"
+                                text="Students">
+                            <graphic>
+                                <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
+                                    <image><Image url="@assets/admin/aside/student.png" /></image>
+                                </ImageView>
+                            </graphic>
+                        </Button>
+
+                        <Button alignment="CENTER_LEFT" graphicTextGap="12.0"
+                                prefHeight="28.0"
+                                style="-fx-background-color: transparent; -fx-background-radius: 8; -fx-text-fill: #272727; -fx-font-size: 13px; -fx-font-weight: 600; -fx-padding: 10 14 10 14; -fx-cursor: hand;"
+                                text="Settings">
+                            <graphic>
+                                <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
+                                    <image><Image url="@assets/admin/aside/setting.png" /></image>
+                                </ImageView>
+                            </graphic>
+                        </Button>
+                    </children>
+                </VBox>
+
+                <Region VBox.vgrow="ALWAYS" />
+
+                <Button fx:id="logoutButton" alignment="CENTER_LEFT" graphicTextGap="12.0"
+                        onAction="#handleLogout" prefHeight="40.0"
+                        style="-fx-background-color: transparent; -fx-text-fill: #272727; -fx-font-size: 13px; -fx-font-weight: 600; -fx-padding: 10 14 10 14; -fx-cursor: hand;"
+                        text="Logout">
+                    <graphic>
+                        <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
+                            <image><Image url="@assets/admin/aside/logout.png" /></image>
+                        </ImageView>
+                    </graphic>
+                </Button>
+
+            </children>
+        </VBox>
+    </left>
+
+    <!-- ═══════════════════════ MAIN CONTENT ═══════════════════════ -->
     <center>
-        <StackPane>
-            <children>
-                <Label fx:id="welcomeLabel" style="-fx-font-size: 30px; -fx-font-weight: bold; -fx-text-fill: #451a03;"/>
-            </children>
-        </StackPane>
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" pannable="true"
+                    style="-fx-background: transparent; -fx-background-color: transparent;">
+            <content>
+                <VBox spacing="22.0" style="-fx-padding: 24 28 28 28; -fx-background-color: transparent;">
+                    <children>
+
+                        <!-- ── Page header ── -->
+                        <HBox alignment="CENTER_LEFT" spacing="16.0">
+                            <children>
+                                <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                                    <children>
+                                        <Label style="-fx-font-size: 28px; -fx-font-weight: 800; -fx-text-fill: #171717;" text="Teachers" />
+                                        <Label style="-fx-font-size: 14px; -fx-text-fill: #8a8a8a;" text="All registered teachers in the system" />
+                                    </children>
+                                </VBox>
+
+                                <!-- User badge -->
+                                <HBox alignment="CENTER_LEFT" spacing="10.0"
+                                      style="-fx-background-color: white; -fx-background-radius: 999; -fx-border-color: #ebe9e4; -fx-border-radius: 999; -fx-padding: 8 14 8 10;">
+                                    <children>
+                                        <Label fx:id="userInitialsLabel"
+                                               style="-fx-background-color: #1d1d1d; -fx-background-radius: 999; -fx-text-fill: white; -fx-font-size: 11px; -fx-font-weight: 800; -fx-min-width: 28; -fx-min-height: 28; -fx-pref-width: 28; -fx-pref-height: 28; -fx-alignment: center;"
+                                               text="AD" />
+                                        <Label fx:id="userNameLabel"
+                                               style="-fx-text-fill: #1f1f1f; -fx-font-size: 13px; -fx-font-weight: 700;"
+                                               text="admin" />
+                                    </children>
+                                </HBox>
+                            </children>
+                        </HBox>
+
+                        <!-- ── Stat cards ── -->
+                        <HBox spacing="18.0">
+                            <children>
+
+                                <!-- Total Teachers -->
+                                <VBox prefWidth="220.0" spacing="10.0"
+                                      style="-fx-background-color: white; -fx-background-radius: 14; -fx-border-color: #e8e6e1; -fx-border-radius: 14; -fx-padding: 18; -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.07), 14, 0.12, 0, 3);">
+                                    <children>
+                                        <HBox alignment="CENTER_LEFT">
+                                            <children>
+                                                <VBox spacing="2.0" HBox.hgrow="ALWAYS">
+                                                    <children>
+                                                        <Label style="-fx-text-fill: #8a8a8a; -fx-font-size: 13px;" text="Total Teachers" />
+                                                        <Label fx:id="totalTeachersLabel"
+                                                               style="-fx-text-fill: #171717; -fx-font-size: 30px; -fx-font-weight: 800;"
+                                                               text="0" />
+                                                    </children>
+                                                </VBox>
+                                                <StackPane style="-fx-background-color: #f4f4f3; -fx-background-radius: 12; -fx-min-width: 38; -fx-min-height: 38; -fx-pref-width: 38; -fx-pref-height: 38;">
+                                                    <children>
+                                                        <ImageView fitHeight="18.0" fitWidth="18.0" preserveRatio="true">
+                                                            <image><Image url="@assets/admin/teacher/teacher.png" /></image>
+                                                        </ImageView>
+                                                    </children>
+                                                </StackPane>
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                </VBox>
+
+                                <!-- Active -->
+                                <VBox prefWidth="220.0" spacing="10.0"
+                                      style="-fx-background-color: white; -fx-background-radius: 14; -fx-border-color: #e8e6e1; -fx-border-radius: 14; -fx-padding: 18; -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.07), 14, 0.12, 0, 3);">
+                                    <children>
+                                        <HBox alignment="CENTER_LEFT">
+                                            <children>
+                                                <VBox spacing="2.0" HBox.hgrow="ALWAYS">
+                                                    <children>
+                                                        <Label style="-fx-text-fill: #8a8a8a; -fx-font-size: 13px;" text="Active" />
+                                                        <Label fx:id="activeTeachersLabel"
+                                                               style="-fx-text-fill: #171717; -fx-font-size: 30px; -fx-font-weight: 800;"
+                                                               text="0" />
+                                                    </children>
+                                                </VBox>
+                                                <StackPane style="-fx-background-color: #f0fdf4; -fx-background-radius: 12; -fx-min-width: 38; -fx-min-height: 38; -fx-pref-width: 38; -fx-pref-height: 38;">
+                                                    <children>
+                                                        <ImageView fitHeight="18.0" fitWidth="18.0" preserveRatio="true">
+                                                            <image><Image url="@assets/admin/teacher/active.png" /></image>
+                                                        </ImageView>
+                                                    </children>
+                                                </StackPane>
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                </VBox>
+
+                                <!-- New This Month -->
+                                <VBox prefWidth="220.0" spacing="10.0"
+                                      style="-fx-background-color: white; -fx-background-radius: 14; -fx-border-color: #e8e6e1; -fx-border-radius: 14; -fx-padding: 18; -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.07), 14, 0.12, 0, 3);">
+                                    <children>
+                                        <HBox alignment="CENTER_LEFT">
+                                            <children>
+                                                <VBox spacing="2.0" HBox.hgrow="ALWAYS">
+                                                    <children>
+                                                        <Label style="-fx-text-fill: #8a8a8a; -fx-font-size: 13px;" text="New This Month" />
+                                                        <Label fx:id="newThisMonthLabel"
+                                                               style="-fx-text-fill: #171717; -fx-font-size: 30px; -fx-font-weight: 800;"
+                                                               text="0" />
+                                                    </children>
+                                                </VBox>
+                                                <StackPane style="-fx-background-color: #f4f4f3; -fx-background-radius: 12; -fx-min-width: 38; -fx-min-height: 38; -fx-pref-width: 38; -fx-pref-height: 38;">
+                                                    <children>
+                                                        <ImageView fitHeight="18.0" fitWidth="18.0" preserveRatio="true">
+                                                            <image><Image url="@assets/admin/teacher/plus.png" /></image>
+                                                        </ImageView>
+                                                    </children>
+                                                </StackPane>
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                </VBox>
+
+                            </children>
+                        </HBox>
+
+                        <!-- ── Teacher List table card ── -->
+                        <VBox spacing="16.0"
+                              style="-fx-background-color: white; -fx-background-radius: 16; -fx-border-color: #e8e6e1; -fx-border-radius: 16; -fx-padding: 22; -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.08), 18, 0.14, 0, 4);"
+                              VBox.vgrow="ALWAYS">
+                            <children>
+
+                                <HBox alignment="CENTER_LEFT" spacing="14.0">
+                                    <children>
+                                        <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                                            <children>
+                                                <Label style="-fx-font-size: 20px; -fx-font-weight: 800; -fx-text-fill: #171717;" text="Teacher List" />
+                                                <Label style="-fx-font-size: 13px; -fx-text-fill: #8a8a8a;" text="Manage and view all teachers" />
+                                            </children>
+                                        </VBox>
+
+                                        <!-- Search -->
+                                        <HBox alignment="CENTER_LEFT" spacing="10.0"
+                                              style="-fx-background-color: #fbfbfa; -fx-background-radius: 10; -fx-border-color: #e6e4df; -fx-border-radius: 10; -fx-padding: 0 12 0 10;">
+                                            <children>
+                                                <ImageView fitHeight="14.0" fitWidth="14.0" preserveRatio="true">
+                                                    <image><Image url="@assets/admin/teacher/search.png" /></image>
+                                                </ImageView>
+                                                <TextField fx:id="searchField" prefHeight="36.0"
+                                                           promptText="Search"
+                                                           style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-focus-color: transparent; -fx-faint-focus-color: transparent; -fx-font-size: 13px; -fx-text-fill: #222222; -fx-prompt-text-fill: #a0a0a0;" />
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                </HBox>
+
+                                <TableView fx:id="teacherTable" VBox.vgrow="ALWAYS">
+                                    <columns>
+                                        <TableColumn fx:id="teacherColumn"  prefWidth="200.0" text="Teacher" />
+                                        <TableColumn fx:id="usernameColumn" prefWidth="150.0" text="Username" />
+                                        <TableColumn fx:id="subjectColumn"  prefWidth="180.0" text="Subject" />
+                                        <TableColumn fx:id="statusColumn"   prefWidth="120.0" text="Status" />
+                                        <TableColumn fx:id="actionsColumn"  prefWidth="80.0"  text="Actions" />
+                                    </columns>
+                                </TableView>
+
+                                <HBox alignment="CENTER_LEFT" spacing="14.0">
+                                    <children>
+                                        <Label fx:id="summaryLabel"
+                                               style="-fx-text-fill: #8a8a8a; -fx-font-size: 13px;"
+                                               text="Showing 0 of 0 teachers" />
+                                        <Region HBox.hgrow="ALWAYS" />
+                                        <HBox spacing="8.0">
+                                            <children>
+                                                <Button fx:id="prevButton" onAction="#handlePrevPage"
+                                                        style="-fx-background-color: #fbfbfa; -fx-border-color: #e6e4df; -fx-border-radius: 8; -fx-background-radius: 8; -fx-text-fill: #6b7280; -fx-font-size: 12px; -fx-font-weight: 600; -fx-padding: 8 12 8 12; -fx-cursor: hand;"
+                                                        text="Previous" />
+                                                <Button fx:id="nextButton" onAction="#handleNextPage"
+                                                        style="-fx-background-color: #fbfbfa; -fx-border-color: #e6e4df; -fx-border-radius: 8; -fx-background-radius: 8; -fx-text-fill: #6b7280; -fx-font-size: 12px; -fx-font-weight: 600; -fx-padding: 8 12 8 12; -fx-cursor: hand;"
+                                                        text="Next" />
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                </HBox>
+
+                            </children>
+                        </VBox>
+
+                    </children>
+                </VBox>
+            </content>
+        </ScrollPane>
     </center>
-    <bottom>
-        <StackPane style="-fx-padding: 0 0 32 0;">
-            <children>
-                <Button text="Logout" onAction="#handleLogout"
-                        style="-fx-background-color: #451a03; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 10 20;"/>
-            </children>
-        </StackPane>
-    </bottom>
+
 </BorderPane>
