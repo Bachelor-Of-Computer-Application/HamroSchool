@@ -76,6 +76,8 @@ public class TeacherDashboardController {
     @FXML private Label  attSubjectLabel;
     @FXML private Label  subjectTagLabel;
     @FXML private TextField attSearchField;
+    @FXML private Button attMarkAllPresentBtn;
+    @FXML private Button attSaveBtn;
     @FXML private TableView<String>            attTable;
     @FXML private TableColumn<String, String>  attColRoll;
     @FXML private TableColumn<String, String>  attColStudent;
@@ -98,6 +100,9 @@ public class TeacherDashboardController {
     @FXML private Label            msStatusLabel;
     @FXML private TextField        msSearchField;
     @FXML private Label            msSummaryLabel;
+    @FXML private Button           msAddMarkBtn;
+    @FXML private Button           msSaveMarkBtn;
+    @FXML private Button           msCancelFormBtn;
     @FXML private TableView<StudentMarkSummary>                 markSheetTable;
     @FXML private TableColumn<StudentMarkSummary, String>       msColRoll;
     @FXML private TableColumn<StudentMarkSummary, String>       msColStudent;
@@ -125,6 +130,7 @@ public class TeacherDashboardController {
 
     // ── Performance ───────────────────────────────────────────────────────────
     @FXML private ComboBox<String>          pfSubjectCombo;
+    @FXML private Button                    pfRefreshBtn;
     @FXML private Label                     pfAvgLabel;
     @FXML private Label                     pfHighLabel;
     @FXML private Label                     pfLowLabel;
@@ -162,6 +168,14 @@ public class TeacherDashboardController {
         if (!assignedSubject.isBlank()) msSubjectField.setText(assignedSubject);
 
         msSearchField.textProperty().addListener((obs, o, n) -> loadMarkSheetTable(n));
+
+        // Wire buttons from sub-FXML includes (no onAction in sub-files)
+        attMarkAllPresentBtn.setOnAction(e -> handleMarkAllPresent());
+        attSaveBtn.setOnAction(e -> handleSaveAttendance());
+        msAddMarkBtn.setOnAction(e -> handleOpenAddMark());
+        msSaveMarkBtn.setOnAction(e -> handleSaveMark());
+        msCancelFormBtn.setOnAction(e -> handleClearMarkForm());
+        pfRefreshBtn.setOnAction(e -> handleRefreshPerformance());
 
         showPane(attendancePane, navAttendanceBtn, "Attendance",
                 "Mark and manage attendance for your assigned subject only");
