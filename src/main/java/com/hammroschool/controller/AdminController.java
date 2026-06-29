@@ -6,7 +6,9 @@ import java.util.Objects;
 import com.hammroschool.model.auth.UserAccount;
 import com.hammroschool.model.auth.UserRole;
 import com.hammroschool.service.AuthService;
+import com.hammroschool.service.TeacherService;
 import com.hammroschool.service.impl.InMemoryAuthService;
+import com.hammroschool.service.impl.TeacherServiceImpl;
 import com.hammroschool.util.SceneSwitcher;
 import com.hammroschool.util.SessionContext;
 
@@ -28,63 +30,52 @@ import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 
 public class AdminController {
     private final AuthService authService = InMemoryAuthService.getInstance();
+    private final TeacherService teacherService = TeacherServiceImpl.getInstance();
     private final ObservableList<UserAccount> allAccounts = FXCollections.observableArrayList();
 
     private FilteredList<UserAccount> filteredAccounts;
+    @FXML private Label welcomeLabel;
 
-    @FXML
-    private Label welcomeLabel;
+    @FXML private Label totalAccountsLabel;
+    @FXML private Label teacherCountLabel;
+    @FXML private Label studentCountLabel;
 
-    @FXML
-    private Label totalAccountsLabel;
+    @FXML private TextField usernameField;
+    @FXML private PasswordField passwordField;
+    @FXML private ChoiceBox<UserRole> roleChoiceBox;
 
-    @FXML
-    private Label teacherCountLabel;
+    /** Container VBox for the subject row — shown only when TEACHER role is selected */
+    @FXML private VBox subjectRow;
+    @FXML private TextField subjectField;
 
-    @FXML
-    private Label studentCountLabel;
+    @FXML private Label statusLabel;
 
-    @FXML
-    private TextField usernameField;
+    @FXML private TextField searchField;
+    @FXML private Label summaryLabel;
 
-    @FXML
-    private PasswordField passwordField;
-
-    @FXML
-    private ChoiceBox<UserRole> roleChoiceBox;
-
-    @FXML
-    private Label statusLabel;
-
-    @FXML
-    private TextField searchField;
-
-    @FXML
-    private Label summaryLabel;
-
-    @FXML
-    private TableView<UserAccount> accountTable;
-
-    @FXML
-    private TableColumn<UserAccount, UserAccount> userColumn;
-
-    @FXML
-    private TableColumn<UserAccount, String> usernameColumn;
-
-    @FXML
-    private TableColumn<UserAccount, String> roleColumn;
-
-    @FXML
-    private TableColumn<UserAccount, UserAccount> actionsColumn;
+    @FXML private TableView<UserAccount> accountTable;
+    @FXML private TableColumn<UserAccount, UserAccount> userColumn;
+    @FXML private TableColumn<UserAccount, String> usernameColumn;
+    @FXML private TableColumn<UserAccount, String> roleColumn;
+    @FXML private TableColumn<UserAccount, UserAccount> actionsColumn;
 
     @FXML
     public void initialize() {
+        // Role choice box
         roleChoiceBox.setItems(FXCollections.observableArrayList(UserRole.values()));
         roleChoiceBox.getSelectionModel().select(UserRole.TEACHER);
 
+        // Subject field — shown only when TEACHER is selected
+        updateSubjectRowVisibility(roleChoiceBox.getValue());
+        roleChoiceBox.getSelectionModel().selectedItemProperty().addListener(
+            (obs, oldRole, newRole) -> updateSubjectRowVisibility(newRole)
+        );
+
+        // Table columns
         userColumn.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue()));
         usernameColumn.setCellValueFactory(cellData -> new ReadOnlyStringWrapper(cellData.getValue().getUsername()));
         roleColumn.setCellValueFactory(cellData -> new ReadOnlyStringWrapper(cellData.getValue().getRole().getDisplayName()));
@@ -94,10 +85,7 @@ public class AdminController {
             @Override
             protected void updateItem(UserAccount account, boolean empty) {
                 super.updateItem(account, empty);
-                if (empty || account == null) {
-                    setGraphic(null);
-                    return;
-                }
+                if (empty || account == null) { setGraphic(null); return; }
 
                 Label initials = new Label(getInitials(account.getUsername()));
                 initials.setStyle("-fx-background-color: #111111; -fx-text-fill: white; -fx-font-size: 11px; -fx-font-weight: 800; -fx-background-radius: 999; -fx-min-width: 28; -fx-min-height: 28; -fx-pref-width: 28; -fx-pref-height: 28; -fx-alignment: center;");
@@ -115,11 +103,7 @@ public class AdminController {
             @Override
             protected void updateItem(String role, boolean empty) {
                 super.updateItem(role, empty);
-                if (empty || role == null) {
-                    setGraphic(null);
-                    setText(null);
-                    return;
-                }
+                if (empty || role == null) { setGraphic(null); setText(null); return; }
 
                 Label badge = new Label(role);
                 badge.setStyle("-fx-background-color: #f4f4f5; -fx-text-fill: #111111; -fx-padding: 5 10 5 10; -fx-background-radius: 999; -fx-font-size: 11px; -fx-font-weight: 700;");
@@ -132,10 +116,7 @@ public class AdminController {
             @Override
             protected void updateItem(UserAccount account, boolean empty) {
                 super.updateItem(account, empty);
-                if (empty || account == null) {
-                    setGraphic(null);
-                    return;
-                }
+                if (empty || account == null) { setGraphic(null); return; }
 
                 ImageView icon = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/hammroschool/images/admin-dashboard/three-dot-icon.png"))));
                 icon.setFitHeight(14);
@@ -144,7 +125,6 @@ public class AdminController {
 
                 Button button = new Button();
                 button.setGraphic(icon);
-                button.setText(null);
                 button.setStyle("-fx-background-color: transparent; -fx-cursor: hand; -fx-padding: 6 8 6 8; -fx-background-radius: 999;");
                 setGraphic(button);
             }
@@ -163,6 +143,12 @@ public class AdminController {
         refreshView();
     }
 
+    private void updateSubjectRowVisibility(UserRole role) {
+        boolean isTeacher = role == UserRole.TEACHER;
+        subjectRow.setVisible(isTeacher);
+        subjectRow.setManaged(isTeacher);
+    }
+
     @FXML
     private void handleCreateAccount() {
         String username = usernameField.getText();
@@ -170,9 +156,21 @@ public class AdminController {
         UserRole role = roleChoiceBox.getValue();
 
         if (authService.createAccount(username, password, role)) {
-            statusLabel.setText("Account created for " + username + " as " + role.getDisplayName() + ".");
+            // If teacher, also save the typed subject
+            if (role == UserRole.TEACHER) {
+                String subject = subjectField.getText().trim();
+                if (!subject.isEmpty()) {
+                    teacherService.saveTeacherSubject(username, subject);
+                    statusLabel.setText("Teacher account created for " + username + " — Subject: " + subject + ".");
+                } else {
+                    statusLabel.setText("Teacher account created for " + username + " (no subject assigned).");
+                }
+            } else {
+                statusLabel.setText("Account created for " + username + " as " + role.getDisplayName() + ".");
+            }
             usernameField.clear();
             passwordField.clear();
+            subjectField.clear();
             roleChoiceBox.getSelectionModel().select(UserRole.TEACHER);
             refreshView();
         } else {
@@ -218,8 +216,8 @@ public class AdminController {
 
     private void updateSummary() {
         long totalAccounts = allAccounts.size();
-        long teacherAccounts = allAccounts.stream().filter(account -> account.getRole() == UserRole.TEACHER).count();
-        long studentAccounts = allAccounts.stream().filter(account -> account.getRole() == UserRole.STUDENT).count();
+        long teacherAccounts = allAccounts.stream().filter(a -> a.getRole() == UserRole.TEACHER).count();
+        long studentAccounts = allAccounts.stream().filter(a -> a.getRole() == UserRole.STUDENT).count();
 
         totalAccountsLabel.setText(Long.toString(totalAccounts));
         teacherCountLabel.setText(Long.toString(teacherAccounts));
@@ -230,35 +228,22 @@ public class AdminController {
     private void updateFilter(String query) {
         String normalizedQuery = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
         filteredAccounts.setPredicate(account -> {
-            if (normalizedQuery.isEmpty()) {
-                return true;
-            }
-
+            if (normalizedQuery.isEmpty()) return true;
             return account.getUsername().toLowerCase(Locale.ROOT).contains(normalizedQuery)
                     || account.getRole().getDisplayName().toLowerCase(Locale.ROOT).contains(normalizedQuery);
         });
-
         summaryLabel.setText("Showing " + filteredAccounts.size() + " of " + allAccounts.size() + " accounts");
     }
 
     private String getInitials(String username) {
-        if (username == null || username.isBlank()) {
-            return "?";
-        }
-
+        if (username == null || username.isBlank()) return "?";
         String[] parts = username.trim().split("\\s+");
-        if (parts.length == 1) {
-            return parts[0].substring(0, Math.min(2, parts[0].length())).toUpperCase(Locale.ROOT);
-        }
-
+        if (parts.length == 1) return parts[0].substring(0, Math.min(2, parts[0].length())).toUpperCase(Locale.ROOT);
         return (parts[0].substring(0, 1) + parts[1].substring(0, 1)).toUpperCase(Locale.ROOT);
     }
 
     private String formatDisplayName(String username) {
-        if (username == null || username.isBlank()) {
-            return "Unknown user";
-        }
-
+        if (username == null || username.isBlank()) return "Unknown user";
         String trimmed = username.trim();
         return Character.toUpperCase(trimmed.charAt(0)) + trimmed.substring(1);
     }

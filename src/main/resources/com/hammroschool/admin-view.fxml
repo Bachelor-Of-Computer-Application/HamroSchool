@@ -224,6 +224,13 @@
                                             </children>
                                         </VBox>
 
+                                        <VBox fx:id="subjectRow" spacing="8.0">
+                                            <children>
+                                                <Label style="-fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: #222222;" text="Subject" />
+                                                <TextField fx:id="subjectField" prefHeight="40.0" promptText="e.g. Mathematics" style="-fx-background-color: #fbfbfa; -fx-background-radius: 10; -fx-border-color: #e6e4df; -fx-border-radius: 10; -fx-padding: 0 12 0 12; -fx-font-size: 13px; -fx-text-fill: #222222; -fx-prompt-text-fill: #a0a0a0;" />
+                                            </children>
+                                        </VBox>
+
                                         <Button onAction="#handleCreateAccount" prefHeight="42.0" style="-fx-background-color: #171717; -fx-background-radius: 10; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: 700; -fx-padding: 0 16 0 16; -fx-cursor: hand;" text="Create Account">
                                             <graphic>
                                                 <ImageView fitHeight="14.0" fitWidth="14.0" preserveRatio="true">

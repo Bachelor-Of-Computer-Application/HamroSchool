@@ -58,12 +58,27 @@ public final class DatabaseSupport {
                 statement.executeUpdate(loadSqlFromResource("create_teachers.sql"));
                 statement.executeUpdate(loadSqlFromResource("create_class_rooms.sql"));
                 statement.executeUpdate(loadSqlFromResource("create_marks.sql"));
+                statement.executeUpdate(loadSqlFromResource("create_attendance.sql"));
+                runMigrations(connection);
             }
             initialized = true;
         } catch (ClassNotFoundException exception) {
             throw new IllegalStateException("Unable to load database driver", exception);
         } catch (SQLException exception) {
             throw new IllegalStateException("Unable to initialize database schema", exception);
+        }
+    }
+
+    private void runMigrations(Connection connection) throws SQLException {
+        // Add username and subject columns to teachers table if they don't exist yet
+        String[] migrations = {
+            "ALTER TABLE teachers ADD COLUMN IF NOT EXISTS username VARCHAR(100)",
+            "ALTER TABLE teachers ADD COLUMN IF NOT EXISTS subject VARCHAR(255)"
+        };
+        try (Statement stmt = connection.createStatement()) {
+            for (String sql : migrations) {
+                stmt.executeUpdate(sql);
+            }
         }
     }
 
