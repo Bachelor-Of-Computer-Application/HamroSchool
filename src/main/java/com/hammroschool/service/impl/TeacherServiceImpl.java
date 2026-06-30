@@ -1,80 +1,63 @@
 package com.hammroschool.service.impl;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import com.hammroschool.config.DatabaseSupport;
+import org.bson.Document;
+
+import com.hammroschool.config.MongoClientProvider;
 import com.hammroschool.model.auth.UserAccount;
 import com.hammroschool.model.auth.UserRole;
 import com.hammroschool.service.TeacherService;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Sorts;
+import com.mongodb.client.model.Updates;
 
 public class TeacherServiceImpl implements TeacherService {
 
     private static final TeacherServiceImpl INSTANCE = new TeacherServiceImpl();
-    private final InMemoryAuthService authService = InMemoryAuthService.getInstance();
-    private final DatabaseSupport databaseSupport = DatabaseSupport.getInstance();
 
-    private TeacherServiceImpl() {}
+    private final MongoCollection<Document> col;
 
-    public static TeacherServiceImpl getInstance() {
-        return INSTANCE;
+    private TeacherServiceImpl() {
+        MongoDatabase db = MongoClientProvider.getInstance().getDatabase();
+        col = db.getCollection("user_accounts");
     }
+
+    public static TeacherServiceImpl getInstance() { return INSTANCE; }
 
     @Override
     public List<UserAccount> getAllTeachers() {
-        return authService.getAccounts().stream()
-            .filter(account -> account.getRole() == UserRole.TEACHER)
-            .toList();
+        List<UserAccount> list = new ArrayList<>();
+        for (Document d : col.find(Filters.eq("role", UserRole.TEACHER.name()))
+                             .sort(Sorts.ascending("username"))) {
+            list.add(new UserAccount(
+                    d.getString("username"),
+                    d.getString("password"),
+                    UserRole.TEACHER));
+        }
+        return list;
     }
 
     @Override
-    public synchronized boolean saveTeacherSubject(String username, String subject) {
-        if (isBlank(username) || isBlank(subject)) {
-            return false;
-        }
-
-        String normalized = username.trim().toLowerCase();
-        // MERGE (upsert): insert if not exists, update if already present
-        String mergeSql =
-            "MERGE INTO teachers (username, subject) KEY (username) VALUES (?, ?)";
-        try (Connection conn = databaseSupport.openConnection();
-             PreparedStatement stmt = conn.prepareStatement(mergeSql)) {
-            stmt.setString(1, normalized);
-            stmt.setString(2, subject.trim());
-            stmt.executeUpdate();
-            return true;
-        } catch (SQLException e) {
-            throw new IllegalStateException("Unable to save teacher subject for " + normalized, e);
-        }
+    public boolean saveTeacherSubject(String username, String subject) {
+        if (username == null || username.isBlank()) return false;
+        long matched = col.updateOne(
+                Filters.eq("username", username.trim().toLowerCase()),
+                Updates.set("subject", subject == null ? "" : subject.trim()))
+                .getMatchedCount();
+        return matched > 0;
     }
 
     @Override
-    public synchronized Optional<String> getSubject(String username) {
-        if (isBlank(username)) {
-            return Optional.empty();
-        }
-
-        String normalized = username.trim().toLowerCase();
-        String sql = "SELECT subject FROM teachers WHERE username = ?";
-        try (Connection conn = databaseSupport.openConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, normalized);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return Optional.ofNullable(rs.getString("subject"));
-                }
-            }
-            return Optional.empty();
-        } catch (SQLException e) {
-            throw new IllegalStateException("Unable to fetch subject for " + normalized, e);
-        }
-    }
-
-    private boolean isBlank(String value) {
-        return value == null || value.trim().isEmpty();
+    public Optional<String> getSubject(String username) {
+        if (username == null || username.isBlank()) return Optional.empty();
+        Document d = col.find(Filters.eq("username", username.trim().toLowerCase())).first();
+        if (d == null) return Optional.empty();
+        String subject = d.getString("subject");
+        return (subject != null && !subject.isBlank()) ? Optional.of(subject) : Optional.empty();
     }
 }

@@ -7,7 +7,7 @@ import java.util.Objects;
 import com.hammroschool.model.auth.UserAccount;
 import com.hammroschool.model.auth.UserRole;
 import com.hammroschool.service.AuthService;
-import com.hammroschool.service.impl.InMemoryAuthService;
+import com.hammroschool.service.impl.MongoAuthService;
 import com.hammroschool.util.SceneSwitcher;
 import com.hammroschool.util.SessionContext;
 
@@ -30,7 +30,7 @@ public class StudentController {
 
     private static final int PAGE_SIZE = 7;
 
-    private final AuthService authService = InMemoryAuthService.getInstance();
+    private final AuthService authService = MongoAuthService.getInstance();
     private final ObservableList<UserAccount> allStudents = FXCollections.observableArrayList();
 
     private List<UserAccount> filteredStudents = List.of();

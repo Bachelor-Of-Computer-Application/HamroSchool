@@ -41,9 +41,9 @@ public class TeacherDashboardController {
     private final AttendanceService attendanceService = AttendanceServiceImpl.getInstance();
     private final TeacherService    teacherService    = TeacherServiceImpl.getInstance();
 
-    private String    teacherUsername;
-    private String    assignedSubject;
-    private LocalDate attendanceDate = LocalDate.now();
+    private String          teacherUsername;
+    private String          assignedSubject;
+    private final LocalDate attendanceDate = LocalDate.now();
 
     /** Live map: studentUsername → current status (PRESENT/ABSENT/LATE) for today's session. */
     private final Map<String, String> pendingStatus = new HashMap<>();
@@ -780,13 +780,6 @@ public class TeacherDashboardController {
             case "C"  -> "#d97706"; case "D"  -> "#ea580c";
             default   -> "#dc2626";
         };
-    }
-
-    private String gradeFromPct(double pct) {
-        if (pct >= 90) return "A+"; if (pct >= 80) return "A";
-        if (pct >= 70) return "B+"; if (pct >= 60) return "B";
-        if (pct >= 50) return "C";  if (pct >= 40) return "D";
-        return "F";
     }
 
     private String initials(String name) {

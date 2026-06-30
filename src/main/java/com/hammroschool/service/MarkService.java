@@ -48,4 +48,15 @@ public interface MarkService {
      * teacher+subject (students without marks get percentage 0 and rank last).
      */
     List<ReportCardEntry> getReportCard(String teacherUsername, String subjectName);
+
+    // ── Teacher subject assignments ───────────────────────────────────────────
+
+    /** Assign a subject to a teacher (admin panel). Silently ignores duplicates. */
+    void assignSubject(String teacherUsername, String subjectName);
+
+    /** Remove a subject assignment from a teacher. */
+    void removeSubject(String teacherUsername, String subjectName);
+
+    /** All subjects assigned to a teacher via the admin panel. */
+    List<String> getAssignedSubjects(String teacherUsername);
 }

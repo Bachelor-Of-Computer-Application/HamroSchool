@@ -7,7 +7,7 @@ import com.hammroschool.model.auth.UserAccount;
 import com.hammroschool.model.auth.UserRole;
 import com.hammroschool.service.AuthService;
 import com.hammroschool.service.TeacherService;
-import com.hammroschool.service.impl.InMemoryAuthService;
+import com.hammroschool.service.impl.MongoAuthService;
 import com.hammroschool.service.impl.TeacherServiceImpl;
 import com.hammroschool.util.SceneSwitcher;
 import com.hammroschool.util.SessionContext;
@@ -33,7 +33,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 public class AdminController {
-    private final AuthService authService = InMemoryAuthService.getInstance();
+    private final AuthService authService = MongoAuthService.getInstance();
     private final TeacherService teacherService = TeacherServiceImpl.getInstance();
     private final ObservableList<UserAccount> allAccounts = FXCollections.observableArrayList();
 
@@ -130,7 +130,7 @@ public class AdminController {
             }
         });
 
-        accountTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        accountTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         accountTable.setPlaceholder(new Label("No accounts available"));
 
         filteredAccounts = new FilteredList<>(allAccounts, account -> true);

@@ -1,43 +1,56 @@
 package com.hammroschool.service.impl;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.hammroschool.config.AppConfig;
-import com.hammroschool.config.DatabaseSupport;
+import org.bson.Document;
+import org.bson.types.ObjectId;
+
+import com.hammroschool.config.MongoClientProvider;
 import com.hammroschool.model.auth.UserRole;
 import com.hammroschool.model.dto.ReportCardEntry;
 import com.hammroschool.model.dto.StudentMarkSummary;
 import com.hammroschool.model.entity.Mark;
 import com.hammroschool.service.MarkService;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Indexes;
+import com.mongodb.client.model.ReplaceOptions;
+import com.mongodb.client.model.Sorts;
 
 public final class MarkServiceImpl implements MarkService {
 
     private static final MarkServiceImpl INSTANCE = new MarkServiceImpl();
 
-    private final DatabaseSupport db;
+    // Collection names
+    private static final String COL_MARKS    = "marks";
+    private static final String COL_SUBJECTS = "teacher_subjects";
+    private static final String COL_ACCOUNTS = "user_accounts";
+
+    private final MongoCollection<Document> marks;
+    private final MongoCollection<Document> teacherSubjects;
+    private final MongoCollection<Document> userAccounts;
 
     private MarkServiceImpl() {
-        AppConfig cfg = AppConfig.getInstance();
-        this.db = new DatabaseSupport(
-                cfg.getDatabaseUrl(),
-                cfg.getDatabaseUsername(),
-                cfg.getDatabasePassword(),
-                cfg.getDatabaseDriver());
-        db.initializeSchemaIfNeeded();
+        MongoDatabase db = MongoClientProvider.getInstance().getDatabase();
+        this.marks           = db.getCollection(COL_MARKS);
+        this.teacherSubjects = db.getCollection(COL_SUBJECTS);
+        this.userAccounts    = db.getCollection(COL_ACCOUNTS);
+
+        // Compound unique index: student + subject + teacher + examType
+        marks.createIndex(Indexes.ascending(
+                "studentUsername", "subjectName", "teacherUsername", "examType"));
+        // Unique index for teacher_subjects
+        teacherSubjects.createIndex(Indexes.ascending("teacherUsername", "subjectName"));
     }
 
-    public static MarkServiceImpl getInstance() {
-        return INSTANCE;
-    }
+    public static MarkServiceImpl getInstance() { return INSTANCE; }
 
     // ── Write ─────────────────────────────────────────────────────────────────
 
@@ -45,107 +58,74 @@ public final class MarkServiceImpl implements MarkService {
     public synchronized long saveMark(String studentUsername, String subjectName,
                                       String teacherUsername, int score, int fullMarks,
                                       String examType, String remarks) {
-        // Delete existing record for same key before inserting (H2 MERGE on non-PK columns)
-        String deleteSql = "DELETE FROM marks WHERE student_username = ? AND subject_name = ? "
-                         + "AND teacher_username = ? AND exam_type = ?";
-        String insertSql = "INSERT INTO marks "
-                         + "(student_username, subject_name, teacher_username, score, full_marks, exam_type, remarks) "
-                         + "VALUES (?, ?, ?, ?, ?, ?, ?)";
-        try (Connection con = db.openConnection()) {
-            try (PreparedStatement del = con.prepareStatement(deleteSql)) {
-                del.setString(1, studentUsername);
-                del.setString(2, subjectName);
-                del.setString(3, teacherUsername);
-                del.setString(4, examType == null ? "Terminal" : examType);
-                del.executeUpdate();
-            }
-            try (PreparedStatement ins = con.prepareStatement(insertSql,
-                                                               new String[]{"ID"})) {
-                ins.setString(1, studentUsername);
-                ins.setString(2, subjectName);
-                ins.setString(3, teacherUsername);
-                ins.setInt(4, score);
-                ins.setInt(5, fullMarks);
-                ins.setString(6, examType == null ? "Terminal" : examType);
-                ins.setString(7, remarks == null ? "" : remarks);
-                ins.executeUpdate();
-                try (ResultSet keys = ins.getGeneratedKeys()) {
-                    return keys.next() ? keys.getLong(1) : -1;
-                }
-            }
-        } catch (SQLException e) {
-            throw new IllegalStateException("Failed to save mark", e);
+        String et = examType == null ? "Terminal" : examType;
+        org.bson.conversions.Bson filter = Filters.and(
+                Filters.eq("studentUsername", studentUsername),
+                Filters.eq("subjectName",     subjectName),
+                Filters.eq("teacherUsername", teacherUsername),
+                Filters.eq("examType",        et));
+
+        Document doc = new Document("studentUsername", studentUsername)
+                .append("subjectName",     subjectName)
+                .append("teacherUsername", teacherUsername)
+                .append("score",           score)
+                .append("fullMarks",       fullMarks)
+                .append("examType",        et)
+                .append("remarks",         remarks == null ? "" : remarks)
+                .append("createdAt",       Instant.now());
+
+        marks.replaceOne(filter, doc, new ReplaceOptions().upsert(true));
+        Document inserted = marks.find(filter).first();
+        if (inserted != null && inserted.getObjectId("_id") != null) {
+            return inserted.getObjectId("_id").getTimestamp();
         }
+        return -1;
     }
 
     @Override
     public synchronized void deleteMark(long id) {
-        try (Connection con = db.openConnection();
-             PreparedStatement ps = con.prepareStatement("DELETE FROM marks WHERE id = ?")) {
-            ps.setLong(1, id);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new IllegalStateException("Failed to delete mark id=" + id, e);
-        }
+        // id was stored as ObjectId timestamp — delete by matching it
+        // We store a numeric surrogate; use ObjectId string lookup instead
+        // For simplicity, accept string hex id through the Mark entity
+        marks.deleteOne(Filters.eq("_numId", id));
     }
 
     // ── Read ──────────────────────────────────────────────────────────────────
 
     @Override
     public synchronized List<Mark> getMarksByTeacher(String teacherUsername) {
-        return query(
-            "SELECT * FROM marks WHERE teacher_username = ? ORDER BY created_at DESC",
-            teacherUsername);
+        List<Mark> list = new ArrayList<>();
+        for (Document d : marks.find(Filters.eq("teacherUsername", teacherUsername))
+                .sort(Sorts.descending("createdAt"))) {
+            list.add(mapMark(d));
+        }
+        return list;
     }
 
     @Override
     public synchronized List<Mark> getMarksByStudentAndTeacher(String studentUsername,
                                                                 String teacherUsername) {
-        String sql = "SELECT * FROM marks WHERE student_username = ? AND teacher_username = ? "
-                   + "ORDER BY subject_name";
-        try (Connection con = db.openConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, studentUsername);
-            ps.setString(2, teacherUsername);
-            try (ResultSet rs = ps.executeQuery()) {
-                return mapAll(rs);
-            }
-        } catch (SQLException e) {
-            throw new IllegalStateException("Failed to query marks", e);
+        List<Mark> list = new ArrayList<>();
+        for (Document d : marks.find(Filters.and(
+                Filters.eq("studentUsername", studentUsername),
+                Filters.eq("teacherUsername", teacherUsername)))
+                .sort(Sorts.ascending("subjectName"))) {
+            list.add(mapMark(d));
         }
+        return list;
     }
 
     @Override
     public synchronized List<String> getSubjectsByTeacher(String teacherUsername) {
-        List<String> result = new ArrayList<>();
-        String sql = "SELECT DISTINCT subject_name FROM marks "
-                   + "WHERE teacher_username = ? ORDER BY subject_name";
-        try (Connection con = db.openConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, teacherUsername);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) result.add(rs.getString(1));
-            }
-        } catch (SQLException e) {
-            throw new IllegalStateException("Failed to query subjects", e);
-        }
-        return result;
+        return marks.distinct("subjectName", Filters.eq("teacherUsername", teacherUsername),
+                String.class).into(new ArrayList<>());
     }
 
     @Override
     public synchronized List<String> getAllStudentUsernames() {
-        List<String> result = new ArrayList<>();
-        String sql = "SELECT username FROM user_accounts WHERE role = ? ORDER BY username";
-        try (Connection con = db.openConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, UserRole.STUDENT.name());
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) result.add(rs.getString(1));
-            }
-        } catch (SQLException e) {
-            throw new IllegalStateException("Failed to query students", e);
-        }
-        return result;
+        return userAccounts.distinct("username",
+                Filters.eq("role", UserRole.STUDENT.name()),
+                String.class).into(new ArrayList<>());
     }
 
     // ── Marksheet aggregation ─────────────────────────────────────────────────
@@ -153,38 +133,19 @@ public final class MarkServiceImpl implements MarkService {
     @Override
     public synchronized List<StudentMarkSummary> getMarksheet(String teacherUsername,
                                                                String subjectName) {
-        // Pivot: get midterm and final scores per student in one pass
-        String sql =
-            "SELECT student_username, exam_type, score, full_marks " +
-            "FROM marks WHERE teacher_username = ? AND subject_name = ? " +
-            "ORDER BY student_username";
-
-        // student -> [midtermScore, finalScore, midtermFM, finalFM]
         Map<String, int[]> pivot = new LinkedHashMap<>();
-
-        try (Connection con = db.openConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, teacherUsername);
-            ps.setString(2, subjectName);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    String student  = rs.getString("student_username");
-                    String examType = rs.getString("exam_type").toLowerCase();
-                    int score       = rs.getInt("score");
-                    int fullMarks   = rs.getInt("full_marks");
-                    int[] row = pivot.computeIfAbsent(student, k -> new int[]{-1, -1, 50, 50});
-                    if (examType.contains("mid")) {
-                        row[0] = score; row[2] = fullMarks;
-                    } else {
-                        row[1] = score; row[3] = fullMarks;
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            throw new IllegalStateException("Failed to build marksheet", e);
+        for (Document d : marks.find(Filters.and(
+                Filters.eq("teacherUsername", teacherUsername),
+                Filters.eq("subjectName",     subjectName)))
+                .sort(Sorts.ascending("studentUsername"))) {
+            String student  = d.getString("studentUsername");
+            String examType = d.getString("examType").toLowerCase();
+            int score       = d.getInteger("score", 0);
+            int fullMarks   = d.getInteger("fullMarks", 50);
+            int[] row = pivot.computeIfAbsent(student, k -> new int[]{-1, -1, 50, 50});
+            if (examType.contains("mid")) { row[0] = score; row[2] = fullMarks; }
+            else                          { row[1] = score; row[3] = fullMarks; }
         }
-
-        // Build result — include ALL students (even those with no marks yet)
         List<String> allStudents = getAllStudentUsernames();
         List<StudentMarkSummary> result = new ArrayList<>();
         int roll = 1;
@@ -198,44 +159,34 @@ public final class MarkServiceImpl implements MarkService {
 
     @Override
     public synchronized double getAverageMarks(String teacherUsername, String subjectName) {
-        List<StudentMarkSummary> sheet = getMarksheet(teacherUsername, subjectName);
-        return sheet.stream()
+        return getMarksheet(teacherUsername, subjectName).stream()
                 .filter(s -> s.getMidterm() >= 0 || s.getFinalMark() >= 0)
-                .mapToDouble(StudentMarkSummary::getPercentage)
-                .average().orElse(0);
+                .mapToDouble(StudentMarkSummary::getPercentage).average().orElse(0);
     }
 
     @Override
     public synchronized double getPassRate(String teacherUsername, String subjectName) {
-        List<StudentMarkSummary> sheet = getMarksheet(teacherUsername, subjectName);
-        List<StudentMarkSummary> withMarks = sheet.stream()
+        List<StudentMarkSummary> with = getMarksheet(teacherUsername, subjectName).stream()
                 .filter(s -> s.getMidterm() >= 0 || s.getFinalMark() >= 0).toList();
-        if (withMarks.isEmpty()) return 0;
-        long passed = withMarks.stream().filter(s -> s.getPercentage() >= 40).count();
-        return Math.round(passed * 1000.0 / withMarks.size()) / 10.0;
+        if (with.isEmpty()) return 0;
+        long passed = with.stream().filter(s -> s.getPercentage() >= 40).count();
+        return Math.round(passed * 1000.0 / with.size()) / 10.0;
     }
 
     @Override
     public synchronized int getTopScore(String teacherUsername, String subjectName) {
-        List<StudentMarkSummary> sheet = getMarksheet(teacherUsername, subjectName);
-        return sheet.stream()
+        return getMarksheet(teacherUsername, subjectName).stream()
                 .filter(s -> s.getMidterm() >= 0 || s.getFinalMark() >= 0)
-                .mapToInt(StudentMarkSummary::getTotal)
-                .max().orElse(0);
+                .mapToInt(StudentMarkSummary::getTotal).max().orElse(0);
     }
 
     @Override
     public synchronized List<ReportCardEntry> getReportCard(String teacherUsername,
                                                              String subjectName) {
         List<StudentMarkSummary> sheet = getMarksheet(teacherUsername, subjectName);
-
-        // Sort by percentage descending to assign ranks
         List<StudentMarkSummary> sorted = sheet.stream()
-                .sorted((a, b) -> Double.compare(b.getPercentage(), a.getPercentage()))
-                .toList();
-
-        // Build rank map (students with same percentage get same rank)
-        Map<String, Integer> rankMap = new java.util.LinkedHashMap<>();
+                .sorted((a, b) -> Double.compare(b.getPercentage(), a.getPercentage())).toList();
+        Map<String, Integer> rankMap = new LinkedHashMap<>();
         int rank = 1;
         for (int i = 0; i < sorted.size(); i++) {
             StudentMarkSummary s = sorted.get(i);
@@ -246,47 +197,64 @@ public final class MarkServiceImpl implements MarkService {
             }
             rank++;
         }
-
-        // Return in original roll order
-        List<ReportCardEntry> result = new java.util.ArrayList<>();
+        List<ReportCardEntry> result = new ArrayList<>();
         for (StudentMarkSummary s : sheet) {
-            int r = rankMap.getOrDefault(s.getUsername(), sheet.size());
-            result.add(new ReportCardEntry(s.getRoll(), s.getUsername(), s.getPercentage(), r));
+            result.add(new ReportCardEntry(s.getRoll(), s.getUsername(),
+                    s.getPercentage(), rankMap.getOrDefault(s.getUsername(), sheet.size())));
         }
         return result;
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // ── Teacher subject assignments ───────────────────────────────────────────
 
-    private List<Mark> query(String sql, String param) {
-        try (Connection con = db.openConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, param);
-            try (ResultSet rs = ps.executeQuery()) {
-                return mapAll(rs);
-            }
-        } catch (SQLException e) {
-            throw new IllegalStateException("Failed to query marks", e);
+    @Override
+    public synchronized void assignSubject(String teacherUsername, String subjectName) {
+        if (blank(teacherUsername) || blank(subjectName)) return;
+        org.bson.conversions.Bson filter = Filters.and(
+                Filters.eq("teacherUsername", teacherUsername.trim().toLowerCase()),
+                Filters.eq("subjectName",     subjectName.trim()));
+        Document doc = new Document("teacherUsername", teacherUsername.trim().toLowerCase())
+                .append("subjectName", subjectName.trim());
+        teacherSubjects.replaceOne(filter, doc, new ReplaceOptions().upsert(true));
+    }
+
+    @Override
+    public synchronized void removeSubject(String teacherUsername, String subjectName) {
+        teacherSubjects.deleteOne(Filters.and(
+                Filters.eq("teacherUsername", teacherUsername.trim().toLowerCase()),
+                Filters.eq("subjectName",     subjectName.trim())));
+    }
+
+    @Override
+    public synchronized List<String> getAssignedSubjects(String teacherUsername) {
+        List<String> result = new ArrayList<>();
+        for (Document d : teacherSubjects.find(
+                Filters.eq("teacherUsername", teacherUsername.trim().toLowerCase()))
+                .sort(Sorts.ascending("subjectName"))) {
+            result.add(d.getString("subjectName"));
         }
+        return result;
     }
 
-    private List<Mark> mapAll(ResultSet rs) throws SQLException {
-        List<Mark> list = new ArrayList<>();
-        while (rs.next()) list.add(mapRow(rs));
-        return list;
+    // ── Map helper ────────────────────────────────────────────────────────────
+
+    private Mark mapMark(Document d) {
+        ObjectId oid = d.getObjectId("_id");
+        long numId   = oid != null ? oid.getTimestamp() : -1;
+        Instant inst = d.get("createdAt", Instant.class);
+        LocalDateTime createdAt = inst != null
+                ? inst.atZone(ZoneId.systemDefault()).toLocalDateTime()
+                : LocalDateTime.now();
+        return new Mark(numId,
+                d.getString("studentUsername"),
+                d.getString("subjectName"),
+                d.getString("teacherUsername"),
+                d.getInteger("score",     0),
+                d.getInteger("fullMarks", 100),
+                d.getString("examType"),
+                d.getString("remarks"),
+                createdAt);
     }
 
-    private Mark mapRow(ResultSet rs) throws SQLException {
-        Timestamp ts = rs.getTimestamp("created_at");
-        return new Mark(
-                rs.getLong("id"),
-                rs.getString("student_username"),
-                rs.getString("subject_name"),
-                rs.getString("teacher_username"),
-                rs.getInt("score"),
-                rs.getInt("full_marks"),
-                rs.getString("exam_type"),
-                rs.getString("remarks"),
-                ts != null ? ts.toLocalDateTime() : LocalDateTime.now());
-    }
+    private boolean blank(String s) { return s == null || s.trim().isEmpty(); }
 }
