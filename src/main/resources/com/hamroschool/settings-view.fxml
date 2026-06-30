@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane prefHeight="860.0" prefWidth="1280.0" stylesheets="@styles.css"
+            style="-fx-background-color: #f8f8f7; -fx-font-family: 'Segoe UI';"
+            xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.hamroschool.controller.SettingsController">
+
+    <!-- ═══════════════════  SIDEBAR  ═══════════════════ -->
+    <left>
+        <VBox prefWidth="216.0" spacing="18.0"
+              style="-fx-background-color: #fbfbfa; -fx-border-color: #eceae6; -fx-border-width: 0 1 0 0;">
+            <padding>
+                <Insets bottom="24.0" left="20.0" right="16.0" top="18.0" />
+            </padding>
+            <children>
+
+                <!-- Logo + title -->
+                <HBox alignment="CENTER_LEFT" spacing="12.0">
+                    <children>
+                        <ImageView fitHeight="38.0" fitWidth="38.0" preserveRatio="true">
+                            <image><Image url="@assets/logo.png" /></image>
+                        </ImageView>
+                        <VBox spacing="2.0">
+                            <children>
+                                <Label style="-fx-text-fill: #161616; -fx-font-size: 16px; -fx-font-weight: 800;"
+                                       text="Hamro School" />
+                                <Label style="-fx-text-fill: #8a8a8a; -fx-font-size: 12px;"
+                                       text="Admin Portal" />
+                            </children>
+                        </VBox>
+                    </children>
+                </HBox>
+
+                <!-- Nav items -->
+                <VBox spacing="10.0">
+                    <children>
+                        <Button alignment="CENTER_LEFT" graphicTextGap="12.0" onAction="#handleNavDashboard"
+                                prefHeight="28.0"
+                                style="-fx-background-color: transparent; -fx-background-radius: 8; -fx-text-fill: #272727; -fx-font-size: 13px; -fx-font-weight: 600; -fx-padding: 10 14 10 14; -fx-cursor: hand;"
+                                text="Dashboard">
+                            <graphic>
+                                <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
+                                    <image><Image url="@assets/admin/aside/dashboard-dark.png" /></image>
+                                </ImageView>
+                            </graphic>
+                        </Button>
+
+                        <Button alignment="CENTER_LEFT" graphicTextGap="12.0" onAction="#handleNavAccounts"
+                                prefHeight="28.0"
+                                style="-fx-background-color: transparent; -fx-background-radius: 8; -fx-text-fill: #272727; -fx-font-size: 13px; -fx-font-weight: 600; -fx-padding: 10 14 10 14; -fx-cursor: hand;"
+                                text="Accounts">
+                            <graphic>
+                                <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
+                                    <image><Image url="@assets/admin/aside/account.png" /></image>
+                                </ImageView>
+                            </graphic>
+                        </Button>
+
+                        <Button alignment="CENTER_LEFT" graphicTextGap="12.0" onAction="#handleNavTeachers"
+                                prefHeight="28.0"
+                                style="-fx-background-color: transparent; -fx-background-radius: 8; -fx-text-fill: #272727; -fx-font-size: 13px; -fx-font-weight: 600; -fx-padding: 10 14 10 14; -fx-cursor: hand;"
+                                text="Teachers">
+                            <graphic>
+                                <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
+                                    <image><Image url="@assets/admin/aside/teacher.png" /></image>
+                                </ImageView>
+                            </graphic>
+                        </Button>
+
+                        <Button alignment="CENTER_LEFT" graphicTextGap="12.0" onAction="#handleNavStudents"
+                                prefHeight="28.0"
+                                style="-fx-background-color: transparent; -fx-background-radius: 8; -fx-text-fill: #272727; -fx-font-size: 13px; -fx-font-weight: 600; -fx-padding: 10 14 10 14; -fx-cursor: hand;"
+                                text="Students">
+                            <graphic>
+                                <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
+                                    <image><Image url="@assets/admin/aside/student.png" /></image>
+                                </ImageView>
+                            </graphic>
+                        </Button>
+
+                        <!-- Settings — active / selected -->
+                        <Button alignment="CENTER_LEFT" graphicTextGap="12.0"
+                                prefHeight="28.0"
+                                style="-fx-background-color: #111111; -fx-background-radius: 8; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: 700; -fx-padding: 10 14 10 14; -fx-cursor: hand;"
+                                text="Settings">
+                            <graphic>
+                                <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
+                                    <image><Image url="@assets/admin/aside/setting.png" /></image>
+                                </ImageView>
+                            </graphic>
+                        </Button>
+                    </children>
+                </VBox>
+
+                <Region VBox.vgrow="ALWAYS" />
+
+                <!-- Logout -->
+                <Button fx:id="logoutButton" alignment="CENTER_LEFT" graphicTextGap="12.0"
+                        onAction="#handleLogout" prefHeight="40.0"
+                        style="-fx-background-color: transparent; -fx-text-fill: #272727; -fx-font-size: 13px; -fx-font-weight: 600; -fx-padding: 10 14 10 14; -fx-cursor: hand;"
+                        text="Logout">
+                    <graphic>
+                        <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
+                            <image><Image url="@assets/admin/aside/logout.png" /></image>
+                        </ImageView>
+                    </graphic>
+                </Button>
+
+            </children>
+        </VBox>
+    </left>
+
+    <!-- ═══════════════════  MAIN CONTENT  ═══════════════════ -->
+    <center>
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" pannable="true"
+                    style="-fx-background: transparent; -fx-background-color: transparent;">
+            <content>
+                <VBox spacing="22.0"
+                      style="-fx-padding: 24 28 28 28; -fx-background-color: transparent;">
+                    <children>
+
+                        <!-- Top bar: title + user pill -->
+                        <HBox alignment="CENTER_LEFT" spacing="16.0">
+                            <children>
+                                <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                                    <children>
+                                        <Label style="-fx-font-size: 28px; -fx-font-weight: 800; -fx-text-fill: #171717;"
+                                               text="Settings" />
+                                        <Label style="-fx-font-size: 14px; -fx-text-fill: #8a8a8a;"
+                                               text="Manage your portal preferences" />
+                                    </children>
+                                </VBox>
+
+                                <!-- User pill -->
+                                <HBox alignment="CENTER_LEFT" spacing="10.0"
+                                      style="-fx-background-color: white; -fx-background-radius: 999; -fx-border-color: #ebe9e4; -fx-border-radius: 999; -fx-padding: 8 14 8 10;">
+                                    <children>
+                                        <Label fx:id="userInitialsLabel"
+                                               style="-fx-background-color: #1d1d1d; -fx-background-radius: 999; -fx-text-fill: white; -fx-font-size: 11px; -fx-font-weight: 800; -fx-min-width: 28; -fx-min-height: 28; -fx-pref-width: 28; -fx-pref-height: 28; -fx-alignment: center;"
+                                               text="AD" />
+                                        <Label fx:id="userNameLabel"
+                                               style="-fx-text-fill: #1f1f1f; -fx-font-size: 13px; -fx-font-weight: 700;"
+                                               text="admin" />
+                                    </children>
+                                </HBox>
+                            </children>
+                        </HBox>
+
+                        <!-- Separator -->
+                        <Separator style="-fx-opacity: 0.5;" />
+
+                        <!-- ── Profile Settings card ── -->
+                        <VBox spacing="18.0"
+                              style="-fx-background-color: white; -fx-background-radius: 16; -fx-border-color: #e8e6e1; -fx-border-radius: 16; -fx-padding: 24; -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.07), 16, 0.12, 0, 4);">
+                            <children>
+
+                                <!-- Card header -->
+                                <VBox spacing="4.0">
+                                    <children>
+                                        <Label style="-fx-font-size: 18px; -fx-font-weight: 800; -fx-text-fill: #171717;"
+                                               text="Profile Settings" />
+                                        <Label style="-fx-font-size: 13px; -fx-text-fill: #8a8a8a;"
+                                               text="Update your account profile information" />
+                                    </children>
+                                </VBox>
+
+                                <!-- Avatar + Display Name row -->
+                                <HBox alignment="CENTER_LEFT" spacing="20.0">
+                                    <children>
+
+                                        <!-- Avatar circle -->
+                                        <Label fx:id="avatarLabel"
+                                               style="-fx-background-color: #1d1d1d; -fx-background-radius: 999; -fx-text-fill: white; -fx-font-size: 20px; -fx-font-weight: 800; -fx-min-width: 64; -fx-min-height: 64; -fx-pref-width: 64; -fx-pref-height: 64; -fx-alignment: center;"
+                                               text="AD" />
+
+                                        <!-- Display Name field + Save -->
+                                        <VBox spacing="8.0" HBox.hgrow="ALWAYS">
+                                            <children>
+                                                <Label style="-fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: #222222;"
+                                                       text="Display Name" />
+                                                <HBox spacing="12.0" alignment="CENTER_LEFT">
+                                                    <children>
+                                                        <TextField fx:id="displayNameField"
+                                                                   prefHeight="40.0"
+                                                                   HBox.hgrow="ALWAYS"
+                                                                   style="-fx-background-color: #fbfbfa; -fx-background-radius: 10; -fx-border-color: #e6e4df; -fx-border-radius: 10; -fx-padding: 0 12 0 12; -fx-font-size: 13px; -fx-text-fill: #222222; -fx-prompt-text-fill: #a0a0a0;" />
+                                                        <Button onAction="#handleSaveProfile"
+                                                                prefHeight="40.0"
+                                                                style="-fx-background-color: #171717; -fx-background-radius: 10; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: 700; -fx-padding: 0 18 0 14; -fx-cursor: hand;"
+                                                                text="Save Changes">
+                                                            <graphic>
+                                                                <ImageView fitHeight="14.0" fitWidth="14.0" preserveRatio="true">
+                                                                    <image><Image url="@assets/admin/settings/save.png" /></image>
+                                                                </ImageView>
+                                                            </graphic>
+                                                        </Button>
+                                                    </children>
+                                                </HBox>
+                                            </children>
+                                        </VBox>
+
+                                    </children>
+                                </HBox>
+
+                                <!-- Profile status message -->
+                                <Label fx:id="profileStatusLabel"
+                                       style="-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: #6b7280;"
+                                       wrapText="true" />
+
+                            </children>
+                        </VBox>
+
+                        <!-- ── Security card ── -->
+                        <VBox spacing="18.0"
+                              style="-fx-background-color: white; -fx-background-radius: 16; -fx-border-color: #e8e6e1; -fx-border-radius: 16; -fx-padding: 24; -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.07), 16, 0.12, 0, 4);">
+                            <children>
+
+                                <!-- Card header -->
+                                <VBox spacing="4.0">
+                                    <children>
+                                        <Label style="-fx-font-size: 18px; -fx-font-weight: 800; -fx-text-fill: #171717;"
+                                               text="Security" />
+                                        <Label style="-fx-font-size: 13px; -fx-text-fill: #8a8a8a;"
+                                               text="Manage your password and account security" />
+                                    </children>
+                                </VBox>
+
+                                <!-- Password section label -->
+                                <Label style="-fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: #222222;"
+                                       text="Password" />
+
+                                <!-- Three password fields -->
+                                <HBox spacing="14.0">
+                                    <children>
+
+                                        <VBox spacing="8.0" HBox.hgrow="ALWAYS">
+                                            <children>
+                                                <Label style="-fx-font-size: 13px; -fx-text-fill: #555555; -fx-font-weight: 600;"
+                                                       text="Current Password" />
+                                                <PasswordField fx:id="currentPasswordField"
+                                                               prefHeight="40.0"
+                                                               promptText="password"
+                                                               style="-fx-background-color: #fbfbfa; -fx-background-radius: 10; -fx-border-color: #e6e4df; -fx-border-radius: 10; -fx-padding: 0 12 0 12; -fx-font-size: 13px; -fx-text-fill: #222222; -fx-prompt-text-fill: #a0a0a0;" />
+                                            </children>
+                                        </VBox>
+
+                                        <VBox spacing="8.0" HBox.hgrow="ALWAYS">
+                                            <children>
+                                                <Label style="-fx-font-size: 13px; -fx-text-fill: #555555; -fx-font-weight: 600;"
+                                                       text="New Password" />
+                                                <PasswordField fx:id="newPasswordField"
+                                                               prefHeight="40.0"
+                                                               promptText="password"
+                                                               style="-fx-background-color: #fbfbfa; -fx-background-radius: 10; -fx-border-color: #e6e4df; -fx-border-radius: 10; -fx-padding: 0 12 0 12; -fx-font-size: 13px; -fx-text-fill: #222222; -fx-prompt-text-fill: #a0a0a0;" />
+                                            </children>
+                                        </VBox>
+
+                                        <VBox spacing="8.0" HBox.hgrow="ALWAYS">
+                                            <children>
+                                                <Label style="-fx-font-size: 13px; -fx-text-fill: #555555; -fx-font-weight: 600;"
+                                                       text="Confirm New Password" />
+                                                <PasswordField fx:id="confirmPasswordField"
+                                                               prefHeight="40.0"
+                                                               promptText="password"
+                                                               style="-fx-background-color: #fbfbfa; -fx-background-radius: 10; -fx-border-color: #e6e4df; -fx-border-radius: 10; -fx-padding: 0 12 0 12; -fx-font-size: 13px; -fx-text-fill: #222222; -fx-prompt-text-fill: #a0a0a0;" />
+                                            </children>
+                                        </VBox>
+
+                                    </children>
+                                </HBox>
+
+                                <!-- Update Password button -->
+                                <Button onAction="#handleUpdatePassword"
+                                        prefHeight="40.0"
+                                        style="-fx-background-color: #171717; -fx-background-radius: 10; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: 700; -fx-padding: 0 18 0 14; -fx-cursor: hand;"
+                                        text="Update Password">
+                                    <graphic>
+                                        <ImageView fitHeight="14.0" fitWidth="14.0" preserveRatio="true">
+                                            <image><Image url="@assets/admin/settings/password.png" /></image>
+                                        </ImageView>
+                                    </graphic>
+                                </Button>
+
+                                <!-- Security status message -->
+                                <Label fx:id="securityStatusLabel"
+                                       style="-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: #6b7280;"
+                                       wrapText="true" />
+
+                                <!-- Separator before Danger Zone -->
+                                <Separator style="-fx-opacity: 0.5;" />
+
+                                <!-- Danger Zone -->
+                                <Label style="-fx-font-size: 15px; -fx-font-weight: 800; -fx-text-fill: #dc2626;"
+                                       text="Danger Zone" />
+
+                                <!-- Delete Account row -->
+                                <HBox alignment="CENTER_LEFT" spacing="16.0"
+                                      style="-fx-background-color: #fff5f5; -fx-background-radius: 12; -fx-border-color: #fecaca; -fx-border-radius: 12; -fx-padding: 16 20 16 20;">
+                                    <children>
+                                        <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                                            <children>
+                                                <Label style="-fx-font-size: 14px; -fx-font-weight: 800; -fx-text-fill: #dc2626;"
+                                                       text="Delete Account" />
+                                                <Label style="-fx-font-size: 13px; -fx-text-fill: #6b7280;"
+                                                       text="This action is irreversible. All data will be lost." />
+                                            </children>
+                                        </VBox>
+                                        <Button onAction="#handleDeleteAccount"
+                                                prefHeight="38.0"
+                                                style="-fx-background-color: transparent; -fx-border-color: #dc2626; -fx-border-radius: 8; -fx-background-radius: 8; -fx-text-fill: #dc2626; -fx-font-size: 13px; -fx-font-weight: 700; -fx-padding: 0 16 0 12; -fx-cursor: hand;"
+                                                text="Delete Account">
+                                            <graphic>
+                                                <ImageView fitHeight="14.0" fitWidth="14.0" preserveRatio="true">
+                                                    <image><Image url="@assets/admin/settings/delete.png" /></image>
+                                                </ImageView>
+                                            </graphic>
+                                        </Button>
+                                    </children>
+                                </HBox>
+
+                            </children>
+                        </VBox>
+
+                    </children>
+                </VBox>
+            </content>
+        </ScrollPane>
+    </center>
+
+</BorderPane>
