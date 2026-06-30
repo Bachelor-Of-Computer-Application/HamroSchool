@@ -1,158 +1,99 @@
 package com.hammroschool.service.impl;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import com.hammroschool.config.AppConfig;
-import com.hammroschool.config.DatabaseSupport;
+import org.bson.Document;
+
+import com.hammroschool.config.MongoClientProvider;
 import com.hammroschool.model.auth.UserAccount;
 import com.hammroschool.model.auth.UserRole;
 import com.hammroschool.service.AuthService;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.Indexes;
+import com.mongodb.client.model.Updates;
 
 public final class InMemoryAuthService implements AuthService {
-    private static final InMemoryAuthService INSTANCE = new InMemoryAuthService(AppConfig.getInstance());
 
-    private final DatabaseSupport databaseSupport;
+    private static final InMemoryAuthService INSTANCE = new InMemoryAuthService();
 
-    InMemoryAuthService(AppConfig appConfig) {
-        this(appConfig.getDatabaseUrl(), appConfig.getDatabaseUsername(), appConfig.getDatabasePassword(), appConfig.getDatabaseDriver());
-    }
+    /** MongoDB collection name. */
+    private static final String COL = "user_accounts";
 
-    InMemoryAuthService(String databaseUrl, String databaseUsername, String databasePassword, String databaseDriver) {
-        this.databaseSupport = new DatabaseSupport(databaseUrl, databaseUsername, databasePassword, databaseDriver);
-        databaseSupport.initializeSchemaIfNeeded();
+    private final MongoCollection<Document> col;
+
+    private InMemoryAuthService() {
+        MongoDatabase db = MongoClientProvider.getInstance().getDatabase();
+        this.col = db.getCollection(COL);
+        // Unique index on username
+        col.createIndex(Indexes.ascending("username"),
+                new IndexOptions().unique(true).background(false));
         ensureDefaultAdmin();
     }
 
-    public static InMemoryAuthService getInstance() {
-        return INSTANCE;
-    }
+    public static InMemoryAuthService getInstance() { return INSTANCE; }
+
+    // ── AuthService ───────────────────────────────────────────────────────────
 
     @Override
-    public synchronized Optional<UserAccount> authenticate(String username, String password, UserRole role) {
-        if (isBlank(username) || isBlank(password) || role == null) {
-            return Optional.empty();
-        }
-
-        String normalizedUsername = normalize(username);
-        String sql = "SELECT username, password, role FROM user_accounts WHERE username = ? AND password = ? AND role = ?";
-        try (Connection connection = databaseSupport.openConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, normalizedUsername);
-            statement.setString(2, password);
-            statement.setString(3, role.name());
-
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    return Optional.of(mapAccount(resultSet));
-                }
-            }
-
-            return Optional.empty();
-        } catch (SQLException exception) {
-            throw new IllegalStateException("Unable to authenticate user " + normalizedUsername, exception);
-        }
+    public synchronized Optional<UserAccount> authenticate(String username, String password,
+                                                            UserRole role) {
+        if (blank(username) || blank(password) || role == null) return Optional.empty();
+        Document doc = col.find(Filters.and(
+                Filters.eq("username", normalize(username)),
+                Filters.eq("password", password),
+                Filters.eq("role",     role.name()))).first();
+        return doc == null ? Optional.empty() : Optional.of(map(doc));
     }
 
     @Override
     public synchronized boolean createAccount(String username, String password, UserRole role) {
-        if (isBlank(username) || isBlank(password) || role == null) {
-            return false;
-        }
-
-        String normalizedUsername = normalize(username);
-        String checkSql = "SELECT 1 FROM user_accounts WHERE username = ?";
-        String insertSql = "INSERT INTO user_accounts (username, password, role) VALUES (?, ?, ?)";
-        try (Connection connection = databaseSupport.openConnection();
-             PreparedStatement checkStatement = connection.prepareStatement(checkSql)) {
-            checkStatement.setString(1, normalizedUsername);
-
-            try (ResultSet resultSet = checkStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    return false;
-                }
-            }
-
-            try (PreparedStatement insertStatement = connection.prepareStatement(insertSql)) {
-                insertStatement.setString(1, normalizedUsername);
-                insertStatement.setString(2, password);
-                insertStatement.setString(3, role.name());
-                insertStatement.executeUpdate();
-                return true;
-            }
-        } catch (SQLException exception) {
-            throw new IllegalStateException("Unable to create account " + normalizedUsername, exception);
-        }
+        if (blank(username) || blank(password) || role == null) return false;
+        String norm = normalize(username);
+        if (col.find(Filters.eq("username", norm)).first() != null) return false;
+        col.insertOne(new Document("username", norm)
+                .append("password", password)
+                .append("role",     role.name()));
+        return true;
     }
 
     @Override
     public synchronized List<UserAccount> getAccounts() {
-        String sql = "SELECT username, password, role FROM user_accounts ORDER BY username";
-        List<UserAccount> accounts = new ArrayList<>();
-        try (Connection connection = databaseSupport.openConnection();
-             PreparedStatement statement = connection.prepareStatement(sql);
-             ResultSet resultSet = statement.executeQuery()) {
-            while (resultSet.next()) {
-                accounts.add(mapAccount(resultSet));
-            }
-            return accounts;
-        } catch (SQLException exception) {
-            throw new IllegalStateException("Unable to load accounts", exception);
+        List<UserAccount> list = new ArrayList<>();
+        for (Document d : col.find().sort(new Document("username", 1))) {
+            list.add(map(d));
         }
+        return list;
     }
 
     @Override
     public synchronized boolean updatePassword(String username, String newPassword) {
-        if (isBlank(username) || isBlank(newPassword)) {
-            return false;
-        }
-
-        String normalizedUsername = normalize(username);
-        String checkSql  = "SELECT 1 FROM user_accounts WHERE username = ?";
-        String updateSql = "UPDATE user_accounts SET password = ? WHERE username = ?";
-
-        try (Connection connection = databaseSupport.openConnection();
-             PreparedStatement checkStatement = connection.prepareStatement(checkSql)) {
-            checkStatement.setString(1, normalizedUsername);
-            try (ResultSet resultSet = checkStatement.executeQuery()) {
-                if (!resultSet.next()) {
-                    return false;   // account not found
-                }
-            }
-
-            try (PreparedStatement updateStatement = connection.prepareStatement(updateSql)) {
-                updateStatement.setString(1, newPassword);
-                updateStatement.setString(2, normalizedUsername);
-                updateStatement.executeUpdate();
-                return true;
-            }
-        } catch (SQLException exception) {
-            throw new IllegalStateException("Unable to update password for " + normalizedUsername, exception);
-        }
+        if (blank(username) || blank(newPassword)) return false;
+        String norm = normalize(username);
+        long matched = col.updateOne(
+                Filters.eq("username", norm),
+                Updates.set("password", newPassword)).getMatchedCount();
+        return matched > 0;
     }
 
-    private UserAccount mapAccount(ResultSet resultSet) throws SQLException {
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private UserAccount map(Document d) {
         return new UserAccount(
-                resultSet.getString("username"),
-                resultSet.getString("password"),
-                UserRole.valueOf(resultSet.getString("role")));
+                d.getString("username"),
+                d.getString("password"),
+                UserRole.valueOf(d.getString("role")));
     }
 
-    private boolean isBlank(String value) {
-        return value == null || value.trim().isEmpty();
-    }
-
-    private String normalize(String username) {
-        return username.trim().toLowerCase();
-    }
+    private boolean blank(String s)   { return s == null || s.trim().isEmpty(); }
+    private String  normalize(String s) { return s.trim().toLowerCase(); }
 
     private void ensureDefaultAdmin() {
-        if (!authenticate("admin", "admin123", UserRole.ADMIN).isPresent()) {
+        if (authenticate("admin", "admin123", UserRole.ADMIN).isEmpty()) {
             createAccount("admin", "admin123", UserRole.ADMIN);
         }
     }

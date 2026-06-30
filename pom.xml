@@ -30,10 +30,12 @@
             <version>21.0.6</version>
             <classifier>${javafx.platform}</classifier>
         </dependency>
+
+        <!-- MongoDB Java Driver (sync) -->
         <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <version>2.3.232</version>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongodb-driver-sync</artifactId>
+            <version>5.1.4</version>
         </dependency>
 
         <dependency>
@@ -74,7 +76,7 @@
                         <!-- Default configuration for running with: mvn clean javafx:run -->
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>com.hammroschool/com.hammroschool.HammroSchoolApplication</mainClass>
+                            <mainClass>com.hammroschool.HammroSchoolApplication</mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>
                             <jlinkImageName>app</jlinkImageName>

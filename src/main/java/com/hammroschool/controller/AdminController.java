@@ -130,7 +130,7 @@ public class AdminController {
             }
         });
 
-        accountTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        accountTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         accountTable.setPlaceholder(new Label("No accounts available"));
 
         filteredAccounts = new FilteredList<>(allAccounts, account -> true);
