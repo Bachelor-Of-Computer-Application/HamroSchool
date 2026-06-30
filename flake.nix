@@ -1,5 +1,5 @@
 {
-  description = "Hammro School Application - Development Environment";
+  description = "Hamro School Application - Development Environment";
 
   inputs.nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1";
 
@@ -85,7 +85,7 @@
           JAVA_HOME = "${pkgs.jdk}";
           MAVEN_OPTS = "-Xmx2048m";
           PROJECT_DIR = builtins.toString ./.;
-          DATABASE_FILE = "data/hammroschool";
+          DATABASE_FILE = "data/hamroschool";
 
           # IMPORTANT: native libs for JavaFX
           LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
