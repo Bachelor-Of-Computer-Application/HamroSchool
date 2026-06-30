@@ -28,7 +28,6 @@ public final class MarkServiceImpl implements MarkService {
 
     private static final MarkServiceImpl INSTANCE = new MarkServiceImpl();
 
-    // Collection names
     private static final String COL_MARKS    = "marks";
     private static final String COL_SUBJECTS = "teacher_subjects";
     private static final String COL_ACCOUNTS = "user_accounts";
@@ -43,16 +42,13 @@ public final class MarkServiceImpl implements MarkService {
         this.teacherSubjects = db.getCollection(COL_SUBJECTS);
         this.userAccounts    = db.getCollection(COL_ACCOUNTS);
 
-        // Compound unique index: student + subject + teacher + examType
         marks.createIndex(Indexes.ascending(
                 "studentUsername", "subjectName", "teacherUsername", "examType"));
-        // Unique index for teacher_subjects
         teacherSubjects.createIndex(Indexes.ascending("teacherUsername", "subjectName"));
     }
 
     public static MarkServiceImpl getInstance() { return INSTANCE; }
 
-    // ── Write ─────────────────────────────────────────────────────────────────
 
     @Override
     public synchronized long saveMark(String studentUsername, String subjectName,
@@ -90,7 +86,6 @@ public final class MarkServiceImpl implements MarkService {
         marks.deleteOne(Filters.eq("_numId", id));
     }
 
-    // ── Read ──────────────────────────────────────────────────────────────────
 
     @Override
     public synchronized List<Mark> getMarksByTeacher(String teacherUsername) {
@@ -138,7 +133,6 @@ public final class MarkServiceImpl implements MarkService {
                 String.class).into(new ArrayList<>());
     }
 
-    // ── Marksheet aggregation ─────────────────────────────────────────────────
 
     @Override
     public synchronized List<StudentMarkSummary> getMarksheet(String teacherUsername,
@@ -215,7 +209,6 @@ public final class MarkServiceImpl implements MarkService {
         return result;
     }
 
-    // ── Teacher subject assignments ───────────────────────────────────────────
 
     @Override
     public synchronized void assignSubject(String teacherUsername, String subjectName) {
@@ -246,15 +239,22 @@ public final class MarkServiceImpl implements MarkService {
         return result;
     }
 
-    // ── Map helper ────────────────────────────────────────────────────────────
 
     private Mark mapMark(Document d) {
         ObjectId oid = d.getObjectId("_id");
         long numId   = oid != null ? oid.getTimestamp() : -1;
-        Instant inst = d.get("createdAt", Instant.class);
-        LocalDateTime createdAt = inst != null
-                ? inst.atZone(ZoneId.systemDefault()).toLocalDateTime()
-                : LocalDateTime.now();
+
+        // createdAt may be stored as java.util.Date or Instant depending on driver version
+        LocalDateTime createdAt;
+        Object raw = d.get("createdAt");
+        if (raw instanceof java.util.Date date) {
+            createdAt = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+        } else if (raw instanceof Instant inst) {
+            createdAt = inst.atZone(ZoneId.systemDefault()).toLocalDateTime();
+        } else {
+            createdAt = LocalDateTime.now();
+        }
+
         return new Mark(numId,
                 d.getString("studentUsername"),
                 d.getString("subjectName"),
