@@ -48,6 +48,9 @@ public class TeacherDashboardController {
     /** Live map: studentUsername → current status (PRESENT/ABSENT/LATE) for today's session. */
     private final Map<String, String> pendingStatus = new HashMap<>();
 
+    /** Live map: studentUsername → attendance percentage, refreshed after each save. */
+    private Map<String, Double> attendancePctMap = new HashMap<>();
+
     // ── Top bar ──────────────────────────────────────────────────────────────
     @FXML private Label  pageTitle;
     @FXML private Label  pageSubtitle;
@@ -241,7 +244,23 @@ public class TeacherDashboardController {
             String status = pendingStatus.getOrDefault(s, "PRESENT");
             attendanceService.saveAttendance(s, teacherUsername, subject, attendanceDate, status);
         }
+        // Full refresh: re-read from MongoDB and update pct map + table
         refreshAttendance();
+        // Visual feedback on the save button
+        attSaveBtn.setText("✓ Saved!");
+        attSaveBtn.setStyle("-fx-background-color: #16a34a; -fx-background-radius: 8; " +
+                "-fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: 700; " +
+                "-fx-padding: 0 18 0 18; -fx-cursor: hand;");
+        // Reset button text after 2 seconds
+        new Thread(() -> {
+            try { Thread.sleep(2000); } catch (InterruptedException ignored) {}
+            javafx.application.Platform.runLater(() -> {
+                attSaveBtn.setText("💾 Save Attendance");
+                attSaveBtn.setStyle("-fx-background-color: #111111; -fx-background-radius: 8; " +
+                        "-fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: 700; " +
+                        "-fx-padding: 0 18 0 18; -fx-cursor: hand;");
+            });
+        }).start();
     }
 
     /** Called by the per-row Present/Late/Absent toggle buttons. */
@@ -262,15 +281,16 @@ public class TeacherDashboardController {
                 + " · Read-only context set by admin");
         subjectTagLabel.setText(assignedSubject.isBlank() ? "No Subject" : assignedSubject);
 
-        // Seed pendingStatus from DB for today
+        // Always re-sync pendingStatus from MongoDB so UI reflects saved state
         List<String> allStudents = markService.getAllStudentUsernames();
         for (String s : allStudents) {
-            if (!pendingStatus.containsKey(s)) {
-                String saved = attendanceService.getStatusForToday(
-                        s, teacherUsername, subject, attendanceDate);
-                pendingStatus.put(s, saved);
-            }
+            String saved = attendanceService.getStatusForToday(
+                    s, teacherUsername, subject, attendanceDate);
+            pendingStatus.put(s, saved);
         }
+
+        // Refresh attendance percentage map from DB
+        attendancePctMap = attendanceService.getAttendancePercentages(teacherUsername, subject);
 
         String query = attSearchField == null ? "" : attSearchField.getText();
         attTable.setItems(FXCollections.observableArrayList(getFilteredStudents(query)));
@@ -302,9 +322,6 @@ public class TeacherDashboardController {
     // ── Attendance table setup ────────────────────────────────────────────────
 
     private void setupAttendanceTable() {
-        String subject = assignedSubject.isBlank() ? "General" : assignedSubject;
-        Map<String, Double> pctMap = attendanceService.getAttendancePercentages(teacherUsername, subject);
-
         // Roll number column (1-based index)
         attColRoll.setCellValueFactory(c -> {
             int idx = attTable.getItems().indexOf(c.getValue());
@@ -341,9 +358,9 @@ public class TeacherDashboardController {
             }
         });
 
-        // Attendance % column
+        // Attendance % column — reads from live attendancePctMap field
         attColPct.setCellValueFactory(c -> {
-            double pct = pctMap.getOrDefault(c.getValue(), 0.0);
+            double pct = attendancePctMap.getOrDefault(c.getValue(), 0.0);
             return new ReadOnlyStringWrapper(pct + "%");
         });
         attColPct.setCellFactory(col -> new TableCell<>() {
