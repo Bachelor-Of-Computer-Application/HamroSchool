@@ -8,23 +8,19 @@ import com.hamroschool.model.entity.Mark;
 
 public interface MarkService {
 
-    /** Save or update a mark (MERGE on student+subject+teacher+examType). Returns generated id. */
     long saveMark(String studentUsername, String subjectName, String teacherUsername,
                   int score, int fullMarks, String examType, String remarks);
 
-    /** All marks entered by a specific teacher, newest first. */
     List<Mark> getMarksByTeacher(String teacherUsername);
 
-    /** All marks for a specific student entered by a specific teacher. */
     List<Mark> getMarksByStudentAndTeacher(String studentUsername, String teacherUsername);
 
-    /** Delete a mark by id. */
+    List<Mark> getMarksByStudent(String studentUsername);
+
     void deleteMark(long id);
 
-    /** Distinct subject names used by a teacher. */
     List<String> getSubjectsByTeacher(String teacherUsername);
 
-    /** All student usernames (STUDENT role). */
     List<String> getAllStudentUsernames();
 
     /**
@@ -34,13 +30,10 @@ public interface MarkService {
      */
     List<StudentMarkSummary> getMarksheet(String teacherUsername, String subjectName);
 
-    /** Stats: average percentage across all students with marks for this teacher+subject. */
     double getAverageMarks(String teacherUsername, String subjectName);
 
-    /** Stats: pass rate (percentage ≥ 40) for this teacher+subject. */
     double getPassRate(String teacherUsername, String subjectName);
 
-    /** Stats: top (highest total) score for this teacher+subject. */
     int getTopScore(String teacherUsername, String subjectName);
 
     /**
@@ -49,14 +42,10 @@ public interface MarkService {
      */
     List<ReportCardEntry> getReportCard(String teacherUsername, String subjectName);
 
-    // ── Teacher subject assignments ───────────────────────────────────────────
 
-    /** Assign a subject to a teacher (admin panel). Silently ignores duplicates. */
     void assignSubject(String teacherUsername, String subjectName);
 
-    /** Remove a subject assignment from a teacher. */
     void removeSubject(String teacherUsername, String subjectName);
 
-    /** All subjects assigned to a teacher via the admin panel. */
     List<String> getAssignedSubjects(String teacherUsername);
 }

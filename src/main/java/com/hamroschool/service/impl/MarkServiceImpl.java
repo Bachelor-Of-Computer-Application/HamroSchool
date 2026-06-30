@@ -116,6 +116,16 @@ public final class MarkServiceImpl implements MarkService {
     }
 
     @Override
+    public synchronized List<Mark> getMarksByStudent(String studentUsername) {
+        List<Mark> list = new ArrayList<>();
+        for (Document d : marks.find(Filters.eq("studentUsername", studentUsername))
+                .sort(Sorts.ascending("subjectName"))) {
+            list.add(mapMark(d));
+        }
+        return list;
+    }
+
+    @Override
     public synchronized List<String> getSubjectsByTeacher(String teacherUsername) {
         return marks.distinct("subjectName", Filters.eq("teacherUsername", teacherUsername),
                 String.class).into(new ArrayList<>());

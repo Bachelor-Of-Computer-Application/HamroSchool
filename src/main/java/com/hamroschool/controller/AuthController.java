@@ -132,7 +132,7 @@ public class AuthController {
                 title = "Teacher Dashboard";
             }
             default -> {
-                fxmlPath = "/com/hamroschool/student-view.fxml";
+                fxmlPath = "/com/hamroschool/student-dashboard-view.fxml";
                 title = "Student Dashboard";
             }
         }
