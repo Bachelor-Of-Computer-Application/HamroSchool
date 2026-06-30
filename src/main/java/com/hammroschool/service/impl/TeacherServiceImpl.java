@@ -11,6 +11,7 @@ import com.hammroschool.model.auth.UserAccount;
 import com.hammroschool.model.auth.UserRole;
 import com.hammroschool.service.TeacherService;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Sorts;
 import com.mongodb.client.model.Updates;
@@ -22,7 +23,8 @@ public class TeacherServiceImpl implements TeacherService {
     private final MongoCollection<Document> col;
 
     private TeacherServiceImpl() {
-        col = MongoClientProvider.getInstance().getDatabase().getCollection("user_accounts");
+        MongoDatabase db = MongoClientProvider.getInstance().getDatabase();
+        col = db.getCollection("user_accounts");
     }
 
     public static TeacherServiceImpl getInstance() { return INSTANCE; }

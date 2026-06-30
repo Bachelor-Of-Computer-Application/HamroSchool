@@ -41,9 +41,9 @@ public class TeacherDashboardController {
     private final AttendanceService attendanceService = AttendanceServiceImpl.getInstance();
     private final TeacherService    teacherService    = TeacherServiceImpl.getInstance();
 
-    private String    teacherUsername;
-    private String    assignedSubject;
-    private LocalDate attendanceDate = LocalDate.now();
+    private String          teacherUsername;
+    private String          assignedSubject;
+    private final LocalDate attendanceDate = LocalDate.now();
 
     /** Live map: studentUsername → current status (PRESENT/ABSENT/LATE) for today's session. */
     private final Map<String, String> pendingStatus = new HashMap<>();

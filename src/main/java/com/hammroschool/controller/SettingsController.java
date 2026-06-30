@@ -4,7 +4,7 @@ import java.util.Locale;
 
 import com.hammroschool.model.auth.UserAccount;
 import com.hammroschool.service.AuthService;
-import com.hammroschool.service.impl.InMemoryAuthService;
+import com.hammroschool.service.impl.MongoAuthService;
 import com.hammroschool.util.SceneSwitcher;
 import com.hammroschool.util.SessionContext;
 
@@ -16,7 +16,7 @@ import javafx.scene.control.TextField;
 
 public class SettingsController {
 
-    private final AuthService authService = InMemoryAuthService.getInstance();
+    private final AuthService authService = MongoAuthService.getInstance();
 
     // ── FXML nodes ──────────────────────────────────────────────────────────
 
