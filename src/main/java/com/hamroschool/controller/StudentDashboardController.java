@@ -58,7 +58,6 @@ public class StudentDashboardController {
     @FXML private Button navAttendanceBtn;
 
     @FXML private Label statSubjectsLabel;
-    @FXML private Label statAssignmentsLabel;
     @FXML private Label statGradeLabel;
     @FXML private Label statAttLabel;
 
@@ -174,16 +173,6 @@ public class StudentDashboardController {
 
         long subjectCount = allMarks.stream().map(Mark::getSubjectName).distinct().count();
         statSubjectsLabel.setText(subjectCount > 0 ? String.valueOf(subjectCount) : "0");
-
-        Map<String, List<Mark>> bySubject = allMarks.stream()
-                .collect(Collectors.groupingBy(Mark::getSubjectName));
-        long pending = bySubject.values().stream()
-                .filter(list -> {
-                    boolean hasMid   = list.stream().anyMatch(m -> m.getExamType() != null && m.getExamType().toLowerCase().contains("mid"));
-                    boolean hasFinal = list.stream().anyMatch(m -> m.getExamType() != null && m.getExamType().toLowerCase().contains("final"));
-                    return !hasMid || !hasFinal;
-                }).count();
-        statAssignmentsLabel.setText(String.valueOf(pending));
 
         double avg = allMarks.stream().mapToDouble(Mark::getPercentage).average().orElse(-1);
         statGradeLabel.setText(avg >= 0 ? gradeFromPct(avg) : "—");
