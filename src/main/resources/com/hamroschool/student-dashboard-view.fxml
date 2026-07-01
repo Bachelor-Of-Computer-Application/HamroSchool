@@ -44,19 +44,31 @@
                                 onAction="#handleNavDashboard" prefHeight="38.0" maxWidth="Infinity"
                                 style="-fx-background-color: #111111; -fx-background-radius: 8; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: 600; -fx-padding: 0 12 0 12; -fx-cursor: hand;"
                                 text="Dashboard">
-                            <graphic><Label style="-fx-text-fill: white; -fx-font-size: 14px;" text="⊞" /></graphic>
+                            <graphic>
+                                <ImageView fitHeight="14.0" fitWidth="14.0" preserveRatio="true">
+                                    <image><Image url="@assets/student-portal/aside/dashboard.png" /></image>
+                                </ImageView>
+                            </graphic>
                         </Button>
                         <Button fx:id="navGradesBtn" alignment="CENTER_LEFT" graphicTextGap="10.0"
                                 onAction="#handleNavGrades" prefHeight="38.0" maxWidth="Infinity"
                                 style="-fx-background-color: transparent; -fx-background-radius: 8; -fx-text-fill: #44403c; -fx-font-size: 13px; -fx-font-weight: 500; -fx-padding: 0 12 0 12; -fx-cursor: hand;"
                                 text="Grades">
-                            <graphic><Label style="-fx-text-fill: #78716c; -fx-font-size: 14px;" text="📊" /></graphic>
+                            <graphic>
+                                <ImageView fitHeight="14.0" fitWidth="14.0" preserveRatio="true">
+                                    <image><Image url="@assets/student-portal/aside/grades.png" /></image>
+                                </ImageView>
+                            </graphic>
                         </Button>
                         <Button fx:id="navAttendanceBtn" alignment="CENTER_LEFT" graphicTextGap="10.0"
                                 onAction="#handleNavAttendance" prefHeight="38.0" maxWidth="Infinity"
                                 style="-fx-background-color: transparent; -fx-background-radius: 8; -fx-text-fill: #44403c; -fx-font-size: 13px; -fx-font-weight: 500; -fx-padding: 0 12 0 12; -fx-cursor: hand;"
                                 text="Attendance">
-                            <graphic><Label style="-fx-text-fill: #78716c; -fx-font-size: 14px;" text="📅" /></graphic>
+                            <graphic>
+                                <ImageView fitHeight="14.0" fitWidth="14.0" preserveRatio="true">
+                                    <image><Image url="@assets/student-portal/main/attendance.png" /></image>
+                                </ImageView>
+                            </graphic>
                         </Button>
                     </children>
                 </VBox>
@@ -67,7 +79,11 @@
                         onAction="#handleLogout" prefHeight="38.0" maxWidth="Infinity"
                         style="-fx-background-color: transparent; -fx-background-radius: 8; -fx-text-fill: #44403c; -fx-font-size: 13px; -fx-font-weight: 500; -fx-padding: 0 12 0 12; -fx-cursor: hand;"
                         text="Logout">
-                    <graphic><Label style="-fx-text-fill: #78716c; -fx-font-size: 14px;" text="⇥" /></graphic>
+                    <graphic>
+                        <ImageView fitHeight="14.0" fitWidth="14.0" preserveRatio="true">
+                            <image><Image url="@assets/student-portal/aside/logout.png" /></image>
+                        </ImageView>
+                    </graphic>
                 </Button>
 
             </children>
@@ -126,7 +142,9 @@
                                                             </children>
                                                         </VBox>
                                                         <StackPane style="-fx-background-color: #f5f5f4; -fx-background-radius: 8; -fx-min-width: 34; -fx-min-height: 34; -fx-pref-width: 34; -fx-pref-height: 34;">
-                                                            <Label style="-fx-font-size: 16px;" text="📖" />
+                                                            <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
+                                                                <image><Image url="@assets/student-portal/main/enrolled.png" /></image>
+                                                            </ImageView>
                                                         </StackPane>
                                                     </children>
                                                 </HBox>
@@ -144,7 +162,9 @@
                                                             </children>
                                                         </VBox>
                                                         <StackPane style="-fx-background-color: #f5f5f4; -fx-background-radius: 8; -fx-min-width: 34; -fx-min-height: 34; -fx-pref-width: 34; -fx-pref-height: 34;">
-                                                            <Label style="-fx-font-size: 16px;" text="📋" />
+                                                            <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
+                                                                <image><Image url="@assets/student-portal/aside/courses.png" /></image>
+                                                            </ImageView>
                                                         </StackPane>
                                                     </children>
                                                 </HBox>
@@ -162,7 +182,9 @@
                                                             </children>
                                                         </VBox>
                                                         <StackPane style="-fx-background-color: #f5f5f4; -fx-background-radius: 8; -fx-min-width: 34; -fx-min-height: 34; -fx-pref-width: 34; -fx-pref-height: 34;">
-                                                            <Label style="-fx-font-size: 16px;" text="📈" />
+                                                            <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
+                                                                <image><Image url="@assets/student-portal/main/average.png" /></image>
+                                                            </ImageView>
                                                         </StackPane>
                                                     </children>
                                                 </HBox>
@@ -180,7 +202,9 @@
                                                             </children>
                                                         </VBox>
                                                         <StackPane style="-fx-background-color: #f5f5f4; -fx-background-radius: 8; -fx-min-width: 34; -fx-min-height: 34; -fx-pref-width: 34; -fx-pref-height: 34;">
-                                                            <Label style="-fx-font-size: 16px;" text="📅" />
+                                                            <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
+                                                                <image><Image url="@assets/student-portal/main/attendance.png" /></image>
+                                                            </ImageView>
                                                         </StackPane>
                                                     </children>
                                                 </HBox>
@@ -206,7 +230,9 @@
                                                         </VBox>
                                                         <HBox alignment="CENTER_LEFT" spacing="6.0"
                                                               style="-fx-background-color: #f5f5f4; -fx-background-radius: 8; -fx-border-color: #e7e5e4; -fx-border-radius: 8; -fx-padding: 0 10 0 10;">
-                                                            <Label style="-fx-text-fill: #a8a29e; -fx-font-size: 13px;" text="🔍" />
+                                                            <ImageView fitHeight="13.0" fitWidth="13.0" preserveRatio="true">
+                                                                <image><Image url="@assets/student-portal/main/search.png" /></image>
+                                                            </ImageView>
                                                             <TextField fx:id="searchField" prefHeight="32.0" prefWidth="160.0"
                                                                        promptText="Search"
                                                                        style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-focus-color: transparent; -fx-faint-focus-color: transparent; -fx-font-size: 13px;" />
