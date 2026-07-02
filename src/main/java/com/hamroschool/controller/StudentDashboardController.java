@@ -8,12 +8,15 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.hamroschool.model.auth.UserAccount;
 import com.hamroschool.model.entity.Mark;
 import com.hamroschool.service.AttendanceService;
+import com.hamroschool.service.AuthService;
 import com.hamroschool.service.MarkService;
 import com.hamroschool.service.TeacherService;
 import com.hamroschool.service.impl.AttendanceServiceImpl;
 import com.hamroschool.service.impl.MarkServiceImpl;
+import com.hamroschool.service.impl.MongoAuthService;
 import com.hamroschool.service.impl.TeacherServiceImpl;
 import com.hamroschool.util.SceneSwitcher;
 import com.hamroschool.util.SessionContext;
@@ -25,6 +28,7 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -37,6 +41,7 @@ public class StudentDashboardController {
     private final MarkService       markService       = MarkServiceImpl.getInstance();
     private final AttendanceService attendanceService = AttendanceServiceImpl.getInstance();
     private final TeacherService    teacherService    = TeacherServiceImpl.getInstance();
+    private final AuthService       authService       = MongoAuthService.getInstance();
 
     private String studentUsername;
 
@@ -57,6 +62,7 @@ public class StudentDashboardController {
     @FXML private Button navDashboardBtn;
     @FXML private Button navGradesBtn;
     @FXML private Button navAttendanceBtn;
+    @FXML private Button navSettingsBtn;
 
     @FXML private Label statSubjectsLabel;
     @FXML private Label statGradeLabel;
@@ -65,6 +71,7 @@ public class StudentDashboardController {
     @FXML private VBox dashboardPane;
     @FXML private VBox gradesPane;
     @FXML private VBox attendancePane;
+    @FXML private VBox settingsPane;
 
     @FXML private TextField              searchField;
     @FXML private TableView<CourseRow>   coursesTable;
@@ -91,6 +98,12 @@ public class StudentDashboardController {
     @FXML private TableColumn<AttendanceRow, String> aColStatus;
     @FXML private Label                              attSummaryLabel;
 
+    @FXML private TextField     settingsDisplayNameField;
+    @FXML private PasswordField settingsCurrentPasswordField;
+    @FXML private PasswordField settingsNewPasswordField;
+    @FXML private PasswordField settingsConfirmPasswordField;
+    @FXML private Label         settingsStatusLabel;
+
 
     @FXML
     public void initialize() {
@@ -100,6 +113,8 @@ public class StudentDashboardController {
         welcomeSubLabel.setText("Welcome back, " + displayName + " — here's your learning overview");
         userInitialsLabel.setText(initials(studentUsername));
         userNameLabel.setText(displayName);
+        settingsDisplayNameField.setText(displayName);
+        settingsStatusLabel.setText("");
 
         setupCoursesTable();
         setupGradesTable();
@@ -117,6 +132,7 @@ public class StudentDashboardController {
     @FXML private void handleNavDashboard()  { showDashboard(); }
     @FXML private void handleNavGrades()     { showGrades(); }
     @FXML private void handleNavAttendance() { showAttendance(); }
+    @FXML private void handleNavSettings()   { showSettings(); }
 
     @FXML
     private void handleLogout() {
@@ -153,8 +169,13 @@ public class StudentDashboardController {
         loadAttendance();
     }
 
+    private void showSettings() {
+        setPane(settingsPane);
+        setActiveNav(navSettingsBtn);
+    }
+
     private void setPane(VBox target) {
-        for (VBox p : List.of(dashboardPane, gradesPane, attendancePane)) {
+        for (VBox p : List.of(dashboardPane, gradesPane, attendancePane, settingsPane)) {
             p.setVisible(p == target);
             p.setManaged(p == target);
         }
@@ -163,8 +184,59 @@ public class StudentDashboardController {
     private void setActiveNav(Button active) {
         String on  = "-fx-background-color: #111111; -fx-background-radius: 8; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: 600; -fx-padding: 0 12 0 12; -fx-cursor: hand;";
         String off = "-fx-background-color: transparent; -fx-background-radius: 8; -fx-text-fill: #44403c; -fx-font-size: 13px; -fx-font-weight: 500; -fx-padding: 0 12 0 12; -fx-cursor: hand;";
-        for (Button b : List.of(navDashboardBtn, navGradesBtn, navAttendanceBtn))
+        for (Button b : List.of(navDashboardBtn, navGradesBtn, navAttendanceBtn, navSettingsBtn))
             b.setStyle(b == active ? on : off);
+    }
+
+    @FXML
+    private void handleSaveSettings() {
+        String displayName = settingsDisplayNameField.getText() == null
+                ? ""
+                : settingsDisplayNameField.getText().trim();
+        if (displayName.isBlank()) {
+            setSettingsStatus("Display name cannot be empty.", false);
+            return;
+        }
+
+        userNameLabel.setText(displayName);
+        userInitialsLabel.setText(initials(displayName));
+        setSettingsStatus("Settings saved successfully.", true);
+    }
+
+    @FXML
+    private void handleUpdatePassword() {
+        String current = settingsCurrentPasswordField.getText();
+        String next = settingsNewPasswordField.getText();
+        String confirm = settingsConfirmPasswordField.getText();
+
+        if (current == null || next == null || confirm == null
+                || current.isBlank() || next.isBlank() || confirm.isBlank()) {
+            setSettingsStatus("All password fields are required.", false);
+            return;
+        }
+
+        if (!next.equals(confirm)) {
+            setSettingsStatus("New passwords do not match.", false);
+            return;
+        }
+
+        UserAccount user = SessionContext.getInstance().requireCurrentUser();
+        boolean currentValid = authService.authenticate(user.getUsername(), current, user.getRole()).isPresent();
+        if (!currentValid) {
+            setSettingsStatus("Current password is incorrect.", false);
+            return;
+        }
+
+        boolean updated = authService.updatePassword(user.getUsername(), next);
+        if (!updated) {
+            setSettingsStatus("Failed to update password. Please try again.", false);
+            return;
+        }
+
+        settingsCurrentPasswordField.clear();
+        settingsNewPasswordField.clear();
+        settingsConfirmPasswordField.clear();
+        setSettingsStatus("Password updated successfully.", true);
     }
 
 
@@ -474,5 +546,13 @@ public class StudentDashboardController {
         if (username == null || username.isBlank()) return "Unknown";
         String t = username.trim();
         return Character.toUpperCase(t.charAt(0)) + t.substring(1);
+    }
+
+    private void setSettingsStatus(String message, boolean success) {
+        settingsStatusLabel.setText(message);
+        settingsStatusLabel.setStyle(
+            "-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: " +
+            (success ? "#16a34a" : "#dc2626") + ";"
+        );
     }
 }
