@@ -30,7 +30,6 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 public class StudentDashboardController {
@@ -71,7 +70,6 @@ public class StudentDashboardController {
     @FXML private TableView<CourseRow>   coursesTable;
     @FXML private TableColumn<CourseRow, String> cColCourse;
     @FXML private TableColumn<CourseRow, String> cColInstructor;
-    @FXML private TableColumn<CourseRow, String> cColProgress;
     @FXML private TableColumn<CourseRow, String> cColGrade;
     @FXML private Label                  coursesSummaryLabel;
     @FXML private Button                 prevButton;
@@ -290,42 +288,6 @@ public class StudentDashboardController {
 
         cColInstructor.setCellValueFactory(c -> new ReadOnlyStringWrapper("Mr/Ms. " + fmt(c.getValue().teacher())));
         cColInstructor.setCellFactory(col -> plainCell("#44403c", false));
-
-        cColProgress.setCellValueFactory(c -> new ReadOnlyStringWrapper(String.valueOf(c.getValue().avgPct())));
-        cColProgress.setCellFactory(col -> new TableCell<>() {
-            @Override protected void updateItem(String val, boolean empty) {
-                super.updateItem(val, empty);
-                if (empty || val == null) { setGraphic(null); return; }
-                double pct = Double.parseDouble(val);
-                double clampedPct = Math.min(100, Math.max(0, pct));
-
-                StackPane track = new StackPane();
-                track.setPrefHeight(8);
-                track.setStyle("-fx-background-color: #e7e5e4; -fx-background-radius: 999;");
-
-                javafx.scene.layout.Region fill = new javafx.scene.layout.Region();
-                fill.setPrefHeight(8);
-                fill.setStyle("-fx-background-color: #111111; -fx-background-radius: 999;");
-
-                HBox bar = new HBox();
-                bar.setPrefHeight(8);
-                bar.setMaxWidth(160);
-                bar.setStyle("-fx-background-color: #e7e5e4; -fx-background-radius: 999;");
-
-                javafx.scene.layout.Region filled = new javafx.scene.layout.Region();
-                filled.setPrefHeight(8);
-                filled.setPrefWidth(160 * clampedPct / 100.0);
-                filled.setStyle("-fx-background-color: #111111; -fx-background-radius: 999;");
-
-                javafx.scene.layout.Region empty2 = new javafx.scene.layout.Region();
-                empty2.setPrefHeight(8);
-                empty2.setPrefWidth(160 * (1 - clampedPct / 100.0));
-                empty2.setStyle("-fx-background-color: #e7e5e4; -fx-background-radius: 999;");
-
-                bar.getChildren().addAll(filled, empty2);
-                setGraphic(bar); setText(null);
-            }
-        });
 
         cColGrade.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().grade()));
         cColGrade.setCellFactory(col -> new TableCell<>() {

@@ -222,7 +222,6 @@
                                                     <columns>
                                                         <TableColumn fx:id="cColCourse"    prefWidth="260.0" text="Course" />
                                                         <TableColumn fx:id="cColInstructor" prefWidth="180.0" text="Instructor" />
-                                                        <TableColumn fx:id="cColProgress"  prefWidth="200.0" text="Progress" />
                                                         <TableColumn fx:id="cColGrade"     prefWidth="100.0" text="Grade" />
                                                     </columns>
                                                 </TableView>
