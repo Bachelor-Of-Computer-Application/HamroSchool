@@ -1,6 +1,8 @@
 package com.hamroschool.controller;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -171,7 +173,12 @@ public class StudentDashboardController {
     private void refreshStats() {
         List<Mark> allMarks = markService.getMarksByStudent(studentUsername);
 
-        long subjectCount = allMarks.stream().map(Mark::getSubjectName).distinct().count();
+        LinkedHashSet<String> subjects = new LinkedHashSet<>(getAllAssignedSubjects());
+        allMarks.stream()
+            .map(Mark::getSubjectName)
+            .filter(s -> s != null && !s.isBlank())
+            .forEach(subjects::add);
+        long subjectCount = subjects.size();
         statSubjectsLabel.setText(subjectCount > 0 ? String.valueOf(subjectCount) : "0");
 
         double avg = allMarks.stream().mapToDouble(Mark::getPercentage).average().orElse(-1);
@@ -199,15 +206,24 @@ public class StudentDashboardController {
         List<Mark> allMarks = markService.getMarksByStudent(studentUsername);
 
         Map<String, List<Mark>> bySubject = allMarks.stream()
-                .collect(Collectors.groupingBy(Mark::getSubjectName));
+            .filter(m -> m.getSubjectName() != null && !m.getSubjectName().isBlank())
+            .collect(Collectors.groupingBy(Mark::getSubjectName));
+
+        Map<String, String> subjectTeacherMap = getAssignedSubjectTeacherMap();
+        LinkedHashSet<String> allSubjects = new LinkedHashSet<>(subjectTeacherMap.keySet());
+        allSubjects.addAll(bySubject.keySet());
 
         List<CourseRow> rows = new ArrayList<>();
-        for (Map.Entry<String, List<Mark>> entry : bySubject.entrySet()) {
-            String subject = entry.getKey();
-            List<Mark> marks = entry.getValue();
+        for (String subject : allSubjects) {
+            List<Mark> marks = bySubject.getOrDefault(subject, List.of());
             double avg = marks.stream().mapToDouble(Mark::getPercentage).average().orElse(0);
-            String teacher = marks.isEmpty() ? "—" : marks.get(0).getTeacherUsername();
-            rows.add(new CourseRow(subject, teacher, avg, gradeFromPct(avg)));
+
+            String teacher = marks.isEmpty()
+                ? subjectTeacherMap.getOrDefault(subject, "—")
+                : marks.get(0).getTeacherUsername();
+
+            String grade = marks.isEmpty() ? "—" : gradeFromPct(avg);
+            rows.add(new CourseRow(subject, teacher, avg, grade));
         }
 
         allCourses.setAll(rows);
@@ -231,9 +247,29 @@ public class StudentDashboardController {
         int from = currentPage * PAGE_SIZE;
         int to   = Math.min(from + PAGE_SIZE, filteredCourses.size());
         coursesTable.setItems(FXCollections.observableArrayList(filteredCourses.subList(from, to)));
-        coursesSummaryLabel.setText("Showing " + (from + 1) + "–" + to + " of " + filteredCourses.size() + " courses");
+        if (filteredCourses.isEmpty()) {
+            coursesSummaryLabel.setText("Showing 0 of 0 courses");
+        } else {
+            coursesSummaryLabel.setText("Showing " + (from + 1) + "–" + to + " of " + filteredCourses.size() + " courses");
+        }
         prevButton.setDisable(currentPage == 0);
         nextButton.setDisable(currentPage >= total - 1);
+    }
+
+    private List<String> getAllAssignedSubjects() {
+        return new ArrayList<>(getAssignedSubjectTeacherMap().keySet());
+    }
+
+    private Map<String, String> getAssignedSubjectTeacherMap() {
+        Map<String, String> subjectTeacherMap = new LinkedHashMap<>();
+        for (var teacher : teacherService.getAllTeachers()) {
+            String teacherUsername = teacher.getUsername();
+            teacherService.getSubject(teacherUsername)
+                    .map(String::trim)
+                    .filter(s -> !s.isBlank())
+                    .ifPresent(subject -> subjectTeacherMap.putIfAbsent(subject, teacherUsername));
+        }
+        return subjectTeacherMap;
     }
 
     private void setupCoursesTable() {
