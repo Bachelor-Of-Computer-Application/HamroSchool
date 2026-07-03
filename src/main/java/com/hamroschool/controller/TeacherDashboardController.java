@@ -47,6 +47,10 @@ public class TeacherDashboardController {
     private String          assignedSubject;
     private final LocalDate attendanceDate = LocalDate.now();
 
+    // ── Cache for background-loaded data ──────────────────────────────────────
+    private volatile List<String> cachedStudentList = List.of();
+    private volatile boolean      dataLoaded        = false;
+
     /** Live map: studentUsername → current status (PRESENT/ABSENT/LATE) for today's session. */
     private final Map<String, String> pendingStatus = new HashMap<>();
     /** Live map: studentUsername → feedback note for today's session. */
@@ -170,8 +174,6 @@ public class TeacherDashboardController {
         setupMarkTables();
         setupAttendanceTable();
 
-        List<String> students = markService.getAllStudentUsernames();
-        msStudentCombo.setItems(FXCollections.observableArrayList(students));
         msExamTypeCombo.setItems(FXCollections.observableArrayList(
                 "Terminal", "Mid-Term", "Final", "Unit Test", "Practical"));
         msExamTypeCombo.setValue("Terminal");
@@ -190,7 +192,22 @@ public class TeacherDashboardController {
 
         showPane(attendancePane, navAttendanceBtn, "Attendance",
                 "Mark and manage attendance for your assigned subject only");
-        refreshAttendance();
+
+        // Load student list once on background thread
+        Thread loader = new Thread(() -> {
+            try {
+                cachedStudentList = markService.getAllStudentUsernames();
+                dataLoaded = true;
+                javafx.application.Platform.runLater(() -> {
+                    msStudentCombo.setItems(FXCollections.observableArrayList(cachedStudentList));
+                    refreshAttendance();
+                });
+            } catch (Exception ex) {
+                System.err.println("[TeacherDashboard] Data load error: " + ex.getMessage());
+            }
+        }, "TeacherDataLoader");
+        loader.setDaemon(true);
+        loader.start();
     }
 
     // ── Nav ───────────────────────────────────────────────────────────────────
@@ -247,9 +264,9 @@ public class TeacherDashboardController {
 
     @FXML
     private void handleSaveAttendance() {
+        if (!dataLoaded) return;
         String subject = assignedSubject.isBlank() ? "General" : assignedSubject;
-        List<String> students = markService.getAllStudentUsernames();
-        for (String s : students) {
+        for (String s : cachedStudentList) {
             String status = pendingStatus.getOrDefault(s, "PRESENT");
             String feedback = pendingFeedback.getOrDefault(s, "");
             attendanceService.saveAttendance(s, teacherUsername, subject, attendanceDate, status, feedback);
@@ -272,6 +289,8 @@ public class TeacherDashboardController {
     // ── Attendance helpers ────────────────────────────────────────────────────
 
     private void refreshAttendance() {
+        if (!dataLoaded) return;
+        
         String subject = assignedSubject.isBlank() ? "General" : assignedSubject;
 
         attDateLabel.setText("Today, " +
@@ -291,8 +310,7 @@ public class TeacherDashboardController {
         todayRecords.forEach((student, record) -> savedStatusToday.put(student, record.getStatus()));
 
         // Seed pendingStatus from DB for today
-        List<String> allStudents = markService.getAllStudentUsernames();
-        for (String s : allStudents) {
+        for (String s : cachedStudentList) {
             String savedStatus = Optional.ofNullable(todayRecords.get(s))
                     .map(AttendanceRecord::getStatus)
                     .orElse("PRESENT");
@@ -307,15 +325,15 @@ public class TeacherDashboardController {
         recalculateLiveAttendancePercentages();
         String query = attSearchField == null ? "" : attSearchField.getText();
         attTable.setItems(FXCollections.observableArrayList(getFilteredStudents(query)));
-        attTotalLabel.setText(String.valueOf(allStudents.size()));
+        attTotalLabel.setText(String.valueOf(cachedStudentList.size()));
         updateAttendanceSummary();
     }
 
     private void updateAttendanceSummary() {
-        List<String> all = markService.getAllStudentUsernames();
-        long present = all.stream().filter(s -> "PRESENT".equals(pendingStatus.getOrDefault(s,"PRESENT"))).count();
-        long absent  = all.stream().filter(s -> "ABSENT".equals(pendingStatus.getOrDefault(s,"PRESENT"))).count();
-        long late    = all.stream().filter(s -> "LATE".equals(pendingStatus.getOrDefault(s,"PRESENT"))).count();
+        if (!dataLoaded) return;
+        long present = cachedStudentList.stream().filter(s -> "PRESENT".equals(pendingStatus.getOrDefault(s,"PRESENT"))).count();
+        long absent  = cachedStudentList.stream().filter(s -> "ABSENT".equals(pendingStatus.getOrDefault(s,"PRESENT"))).count();
+        long late    = cachedStudentList.stream().filter(s -> "LATE".equals(pendingStatus.getOrDefault(s,"PRESENT"))).count();
         attPresentLabel.setText(String.valueOf(present));
         attAbsentLabel.setText(String.valueOf(absent));
         attLateLabel.setText(String.valueOf(late));
@@ -326,16 +344,16 @@ public class TeacherDashboardController {
     }
 
     private List<String> getFilteredStudents(String query) {
-        List<String> all = markService.getAllStudentUsernames();
-        if (query == null || query.isBlank()) return all;
+        if (!dataLoaded) return List.of();
+        if (query == null || query.isBlank()) return cachedStudentList;
         String q = query.trim().toLowerCase(Locale.ROOT);
-        return all.stream().filter(s -> s.toLowerCase(Locale.ROOT).contains(q)).toList();
+        return cachedStudentList.stream().filter(s -> s.toLowerCase(Locale.ROOT).contains(q)).toList();
     }
 
     private void recalculateLiveAttendancePercentages() {
+        if (!dataLoaded) return;
         liveAttendancePctMap.clear();
-        List<String> allStudents = markService.getAllStudentUsernames();
-        for (String student : allStudents) {
+        for (String student : cachedStudentList) {
             int[] baseline = attendanceTotalsMap.getOrDefault(student, new int[]{0, 0});
             int attended = baseline[0];
             int total = baseline[1];
@@ -548,8 +566,9 @@ public class TeacherDashboardController {
     }
 
     private void refreshReportCardStats() {
+        if (!dataLoaded) return;
         String subject = assignedSubject.isBlank() ? "General" : assignedSubject;
-        rcStatStudentsLabel.setText(String.valueOf(markService.getAllStudentUsernames().size()));
+        rcStatStudentsLabel.setText(String.valueOf(cachedStudentList.size()));
         double avg = markService.getAverageMarks(teacherUsername, subject);
         // average grade letter
         ReportCardEntry tmp = new ReportCardEntry(0, "", avg, 0);
@@ -788,9 +807,10 @@ public class TeacherDashboardController {
     }
 
     private void refreshMarkSheetStats() {
+        if (!dataLoaded) return;
         String subject = assignedSubject.isBlank() ? "General" : assignedSubject;
         msSheetTitle.setText((assignedSubject.isBlank() ? "General" : assignedSubject) + " Marksheet");
-        msStatStudentsLabel.setText(String.valueOf(markService.getAllStudentUsernames().size()));
+        msStatStudentsLabel.setText(String.valueOf(cachedStudentList.size()));
         double avg = markService.getAverageMarks(teacherUsername, subject);
         msStatAvgLabel.setText(avg > 0 ? String.format("%.0f%%", avg) : "—");
         double pass = markService.getPassRate(teacherUsername, subject);
