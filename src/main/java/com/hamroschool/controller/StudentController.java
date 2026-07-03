@@ -43,7 +43,6 @@ public class StudentController {
 
     @FXML private Label totalStudentsLabel;
     @FXML private Label activeStudentsLabel;
-    @FXML private Label newThisMonthLabel;
 
     @FXML private Label summaryLabel;
     @FXML private TextField searchField;
@@ -156,7 +155,6 @@ public class StudentController {
         totalStudentsLabel.setText(String.valueOf(allStudents.size()));
         // All student accounts are considered active; no separate status field yet
         activeStudentsLabel.setText(String.valueOf(allStudents.size()));
-        newThisMonthLabel.setText("—");
 
         currentPage = 0;
         applyFilterAndPage(searchField.getText());
