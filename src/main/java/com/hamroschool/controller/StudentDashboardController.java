@@ -43,8 +43,13 @@ public class StudentDashboardController {
     // ── Cache — populated ONCE in background thread ────────────────────────
     private volatile List<Mark>          cachedMarks          = List.of();
     private volatile Map<String, String> cachedSubjectTeacher = Map.of();
-    private volatile Map<String, Double> cachedAttendancePct  = Map.of();
     private volatile boolean             dataLoaded           = false;
+    
+    // ── Pre-computed aggregations for instant access ─────────────────────────
+    private volatile Map<String, List<Mark>> marksBySubject   = Map.of();
+    private volatile List<AttendanceRow>     attendanceRows   = List.of();
+    private volatile double                  cachedAvgGrade   = 0.0;
+    private volatile double                  cachedAvgAtt     = 0.0;
 
     // ── Row models ────────────────────────────────────────────────────────────
     public record CourseRow(String subject, String teacher, double avgPct, String grade) {}
@@ -125,6 +130,8 @@ public class StudentDashboardController {
         // Load ALL MongoDB data once on a background thread — UI never blocks
         Thread loader = new Thread(() -> {
             try {
+                long startTime = System.currentTimeMillis();
+                
                 List<Mark> marks = markService.getMarksByStudent(studentUsername);
 
                 java.util.LinkedHashMap<String, String> subTeach = new java.util.LinkedHashMap<>();
@@ -141,10 +148,36 @@ public class StudentDashboardController {
                     if (pct != null) attMap.put(subject, pct);
                 }
 
+                // Pre-compute aggregations
+                Map<String, List<Mark>> bySubject = marks.stream()
+                        .filter(m -> m.getSubjectName() != null && !m.getSubjectName().isBlank())
+                        .collect(Collectors.groupingBy(Mark::getSubjectName));
+                
+                double avgGrade = marks.isEmpty() ? -1
+                        : marks.stream().mapToDouble(Mark::getPercentage).average().orElse(-1);
+                
+                double avgAtt = attMap.isEmpty() ? -1
+                        : attMap.values().stream().mapToDouble(Double::doubleValue).average().orElse(-1);
+                
+                List<AttendanceRow> attRows = new ArrayList<>();
+                for (Map.Entry<String, Double> e : attMap.entrySet()) {
+                    String subject = e.getKey();
+                    String teacher = subTeach.getOrDefault(subject, "—");
+                    attRows.add(new AttendanceRow(subject, teacher, e.getValue()));
+                }
+
                 cachedMarks          = marks;
                 cachedSubjectTeacher = subTeach;
-                cachedAttendancePct  = attMap;
+                marksBySubject       = bySubject;
+                cachedAvgGrade       = avgGrade;
+                cachedAvgAtt         = avgAtt;
+                attendanceRows       = attRows;
                 dataLoaded           = true;
+
+                long loadTime = System.currentTimeMillis() - startTime;
+                if (loadTime > 100) {
+                    System.out.println("[StudentDashboard] Data loaded in " + loadTime + "ms");
+                }
 
                 javafx.application.Platform.runLater(() -> {
                     refreshStats();
@@ -222,21 +255,14 @@ public class StudentDashboardController {
 
         // Subjects = union of assigned subjects + subjects with marks
         java.util.LinkedHashSet<String> subjects = new java.util.LinkedHashSet<>(cachedSubjectTeacher.keySet());
-        cachedMarks.stream()
-                .map(Mark::getSubjectName)
-                .filter(s -> s != null && !s.isBlank())
-                .forEach(subjects::add);
+        subjects.addAll(marksBySubject.keySet());
         statSubjectsLabel.setText(String.valueOf(subjects.size()));
 
-        // Average grade letter
-        double avg = cachedMarks.isEmpty() ? -1
-                : cachedMarks.stream().mapToDouble(Mark::getPercentage).average().orElse(-1);
-        statGradeLabel.setText(avg >= 0 ? gradeFromPct(avg) : "—");
+        // Use pre-computed average grade
+        statGradeLabel.setText(cachedAvgGrade >= 0 ? gradeFromPct(cachedAvgGrade) : "—");
 
-        // Average attendance
-        double attAvg = cachedAttendancePct.isEmpty() ? -1
-                : cachedAttendancePct.values().stream().mapToDouble(Double::doubleValue).average().orElse(-1);
-        statAttLabel.setText(attAvg >= 0 ? String.format("%.0f%%", attAvg) : "—");
+        // Use pre-computed average attendance
+        statAttLabel.setText(cachedAvgAtt >= 0 ? String.format("%.0f%%", cachedAvgAtt) : "—");
     }
 
     // ── Courses table ─────────────────────────────────────────────────────────
@@ -244,16 +270,12 @@ public class StudentDashboardController {
     private void loadCourses() {
         if (!dataLoaded) return;
 
-        Map<String, List<Mark>> bySubject = cachedMarks.stream()
-                .filter(m -> m.getSubjectName() != null && !m.getSubjectName().isBlank())
-                .collect(Collectors.groupingBy(Mark::getSubjectName));
-
         java.util.LinkedHashSet<String> allSubjects = new java.util.LinkedHashSet<>(cachedSubjectTeacher.keySet());
-        allSubjects.addAll(bySubject.keySet());
+        allSubjects.addAll(marksBySubject.keySet());
 
         List<CourseRow> rows = new ArrayList<>();
         for (String subject : allSubjects) {
-            List<Mark> marks = bySubject.getOrDefault(subject, List.of());
+            List<Mark> marks = marksBySubject.getOrDefault(subject, List.of());
             double avg    = marks.isEmpty() ? 0 : marks.stream().mapToDouble(Mark::getPercentage).average().orElse(0);
             String teacher = marks.isEmpty() ? cachedSubjectTeacher.getOrDefault(subject, "—") : marks.get(0).getTeacherUsername();
             String grade   = marks.isEmpty() ? "—" : gradeFromPct(avg);
@@ -266,6 +288,7 @@ public class StudentDashboardController {
     }
 
     private void applyFilter(String query) {
+        if (!dataLoaded) return;
         String q = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
         filteredCourses = q.isBlank() ? new ArrayList<>(allCourses)
                 : allCourses.stream()
@@ -276,7 +299,7 @@ public class StudentDashboardController {
     }
 
     private void renderPage() {
-        if (filteredCourses.isEmpty()) {
+        if (!dataLoaded || filteredCourses.isEmpty()) {
             coursesTable.setItems(FXCollections.emptyObservableList());
             coursesSummaryLabel.setText("Showing 0 of 0 courses");
             prevButton.setDisable(true);
@@ -391,16 +414,10 @@ public class StudentDashboardController {
 
     private void loadAttendance() {
         if (!dataLoaded) return;
-        List<AttendanceRow> rows = new ArrayList<>();
-        for (Map.Entry<String, Double> e : cachedAttendancePct.entrySet()) {
-            String subject = e.getKey();
-            String teacher = cachedSubjectTeacher.getOrDefault(subject, "—");
-            rows.add(new AttendanceRow(subject, teacher, e.getValue()));
-        }
-        attTable.setItems(FXCollections.observableArrayList(rows));
-        attSummaryLabel.setText(rows.isEmpty()
+        attTable.setItems(FXCollections.observableArrayList(attendanceRows));
+        attSummaryLabel.setText(attendanceRows.isEmpty()
                 ? "No attendance records found."
-                : "Showing " + rows.size() + " subject" + (rows.size() == 1 ? "" : "s"));
+                : "Showing " + attendanceRows.size() + " subject" + (attendanceRows.size() == 1 ? "" : "s"));
     }
 
     private void setupAttendanceTable() {
