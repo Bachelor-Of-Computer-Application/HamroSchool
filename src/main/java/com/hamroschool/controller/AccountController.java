@@ -10,6 +10,7 @@ import com.hamroschool.service.AuthService;
 import com.hamroschool.service.impl.MongoAuthService;
 import com.hamroschool.util.SceneSwitcher;
 import com.hamroschool.util.SessionContext;
+import com.hamroschool.util.Utils;
 
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
@@ -83,7 +84,7 @@ public class AccountController {
                 super.updateItem(account, empty);
                 if (empty || account == null) { setGraphic(null); return; }
 
-                Label initialsLabel = new Label(getInitials(account.getUsername()));
+                Label initialsLabel = new Label(Utils.initials(account.getUsername()));
                 initialsLabel.setStyle(
                     "-fx-background-color: #111111; -fx-text-fill: white; " +
                     "-fx-font-size: 11px; -fx-font-weight: 800; " +
@@ -107,7 +108,7 @@ public class AccountController {
                     );
                 }
 
-                Label nameLabel = new Label(formatDisplayName(account.getUsername()));
+                Label nameLabel = new Label(Utils.formatName(account.getUsername()));
                 nameLabel.setStyle("-fx-text-fill: #222222; -fx-font-size: 13px; -fx-font-weight: 700;");
 
                 HBox container = new HBox(10, initialsLabel, nameLabel);
@@ -227,7 +228,7 @@ public class AccountController {
 
     private void refreshCurrentUser() {
         SessionContext.getInstance().getCurrentUser().ifPresent(user -> {
-            userInitialsLabel.setText(getInitials(user.getUsername()));
+            userInitialsLabel.setText(Utils.initials(user.getUsername()));
             userNameLabel.setText(user.getUsername());
         });
     }
@@ -278,19 +279,5 @@ public class AccountController {
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
-
-    private String getInitials(String username) {
-        if (username == null || username.isBlank()) return "?";
-        String[] parts = username.trim().split("\\s+");
-        if (parts.length == 1) {
-            return parts[0].substring(0, Math.min(2, parts[0].length())).toUpperCase(Locale.ROOT);
-        }
-        return (parts[0].substring(0, 1) + parts[1].substring(0, 1)).toUpperCase(Locale.ROOT);
-    }
-
-    private String formatDisplayName(String username) {
-        if (username == null || username.isBlank()) return "Unknown";
-        String trimmed = username.trim();
-        return Character.toUpperCase(trimmed.charAt(0)) + trimmed.substring(1);
-    }
+    // initials and formatDisplayName delegated to Utils
 }

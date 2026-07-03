@@ -20,6 +20,7 @@ import com.hamroschool.service.impl.MarkServiceImpl;
 import com.hamroschool.service.impl.TeacherServiceImpl;
 import com.hamroschool.util.SceneSwitcher;
 import com.hamroschool.util.SessionContext;
+import com.hamroschool.util.Utils;
 
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
@@ -159,7 +160,7 @@ public class TeacherDashboardController {
     @FXML
     public void initialize() {
         teacherUsername = SessionContext.getInstance().requireCurrentUser().getUsername();
-        userInitialsLabel.setText(initials(teacherUsername));
+        userInitialsLabel.setText(Utils.initials(teacherUsername));
         userNameLabel.setText(teacherUsername);
 
         // Resolve assigned subject
@@ -384,12 +385,12 @@ public class TeacherDashboardController {
             @Override protected void updateItem(String username, boolean empty) {
                 super.updateItem(username, empty);
                 if (empty || username == null) { setGraphic(null); return; }
-                Label avatar = new Label(initials(username));
+                Label avatar = new Label(Utils.initials(username));
                 avatar.setStyle("-fx-background-color: #e8e8e6; -fx-text-fill: #444444; " +
                     "-fx-font-size: 11px; -fx-font-weight: 800; -fx-background-radius: 999; " +
                     "-fx-min-width: 32; -fx-min-height: 32; -fx-pref-width: 32; -fx-pref-height: 32; " +
                     "-fx-alignment: center;");
-                Label name = new Label(fmt(username));
+                Label name = new Label(Utils.formatName(username));
                 name.setStyle("-fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: #222222;");
                 Label email = new Label(username + "@school.edu");
                 email.setStyle("-fx-font-size: 11px; -fx-text-fill: #888888;");
@@ -604,12 +605,12 @@ public class TeacherDashboardController {
             @Override protected void updateItem(String username, boolean empty) {
                 super.updateItem(username, empty);
                 if (empty || username == null) { setGraphic(null); return; }
-                Label avatar = new Label(initials(username));
+                Label avatar = new Label(Utils.initials(username));
                 avatar.setStyle("-fx-background-color: #e8e8e6; -fx-text-fill: #444444; " +
                     "-fx-font-size: 11px; -fx-font-weight: 800; -fx-background-radius: 999; " +
                     "-fx-min-width: 32; -fx-min-height: 32; -fx-pref-width: 32; -fx-pref-height: 32; " +
                     "-fx-alignment: center;");
-                Label name = new Label(fmt(username));
+                Label name = new Label(Utils.formatName(username));
                 name.setStyle("-fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: #222222;");
                 HBox box = new HBox(10, avatar, name);
                 box.setAlignment(Pos.CENTER_LEFT);
@@ -682,12 +683,12 @@ public class TeacherDashboardController {
             @Override protected void updateItem(String username, boolean empty) {
                 super.updateItem(username, empty);
                 if (empty || username == null) { setGraphic(null); return; }
-                Label avatar = new Label(initials(username));
+                Label avatar = new Label(Utils.initials(username));
                 avatar.setStyle("-fx-background-color: #e8e8e6; -fx-text-fill: #444444; " +
                     "-fx-font-size: 11px; -fx-font-weight: 800; -fx-background-radius: 999; " +
                     "-fx-min-width: 32; -fx-min-height: 32; -fx-pref-width: 32; -fx-pref-height: 32; " +
                     "-fx-alignment: center;");
-                Label name = new Label(fmt(username));
+                Label name = new Label(Utils.formatName(username));
                 name.setStyle("-fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: #222222;");
                 HBox box = new HBox(10, avatar, name);
                 box.setAlignment(Pos.CENTER_LEFT);
@@ -750,7 +751,7 @@ public class TeacherDashboardController {
 
         pfColRank.setCellValueFactory(c -> new ReadOnlyStringWrapper(
                 String.valueOf(performanceTable.getItems().indexOf(c.getValue()) + 1)));
-        pfColStudent.setCellValueFactory(c -> new ReadOnlyStringWrapper(fmt(c.getValue().getStudentUsername())));
+        pfColStudent.setCellValueFactory(c -> new ReadOnlyStringWrapper(Utils.formatName(c.getValue().getStudentUsername())));
         pfColSubject.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getSubjectName()));
         pfColScore.setCellValueFactory(c -> new ReadOnlyStringWrapper(
                 c.getValue().getScore() + " / " + c.getValue().getFullMarks()));
@@ -867,18 +868,5 @@ public class TeacherDashboardController {
             case "C"  -> "#d97706"; case "D"  -> "#ea580c";
             default   -> "#dc2626";
         };
-    }
-
-    private String initials(String name) {
-        if (name == null || name.isBlank()) return "?";
-        String[] p = name.trim().split("\\s+");
-        return p.length == 1 ? p[0].substring(0, Math.min(2, p[0].length())).toUpperCase(Locale.ROOT)
-                : (p[0].substring(0, 1) + p[1].substring(0, 1)).toUpperCase(Locale.ROOT);
-    }
-
-    private String fmt(String username) {
-        if (username == null || username.isBlank()) return "Unknown";
-        String t = username.trim();
-        return Character.toUpperCase(t.charAt(0)) + t.substring(1);
     }
 }

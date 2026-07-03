@@ -19,40 +19,20 @@ import javafx.scene.effect.ColorAdjust;
 import javafx.scene.image.ImageView;
 
 public class AuthController {
+
     private final AuthService authService = MongoAuthService.getInstance();
 
-    @FXML
-    private TextField usernameField;
-
-    @FXML
-    private PasswordField passwordField;
-
-    @FXML
-    private ChoiceBox<UserRole> roleChoiceBox;
-
-    @FXML
-    private ToggleGroup roleToggleGroup;
-
-    @FXML
-    private ToggleButton studentRoleButton;
-
-    @FXML
-    private ToggleButton teacherRoleButton;
-
-    @FXML
-    private ToggleButton adminRoleButton;
-
-    @FXML
-    private ImageView studentRoleIcon;
-
-    @FXML
-    private ImageView teacherRoleIcon;
-
-    @FXML
-    private ImageView adminRoleIcon;
-
-    @FXML
-    private Label statusLabel;
+    @FXML private TextField       usernameField;
+    @FXML private PasswordField   passwordField;
+    @FXML private ChoiceBox<UserRole> roleChoiceBox;
+    @FXML private ToggleGroup     roleToggleGroup;
+    @FXML private ToggleButton    studentRoleButton;
+    @FXML private ToggleButton    teacherRoleButton;
+    @FXML private ToggleButton    adminRoleButton;
+    @FXML private ImageView       studentRoleIcon;
+    @FXML private ImageView       teacherRoleIcon;
+    @FXML private ImageView       adminRoleIcon;
+    @FXML private Label           statusLabel;
 
     @FXML
     public void initialize() {
@@ -65,8 +45,8 @@ public class AuthController {
 
     @FXML
     private void selectRole(ActionEvent event) {
-        ToggleButton selectedButton = (ToggleButton) event.getSource();
-        roleChoiceBox.setValue(UserRole.valueOf(selectedButton.getUserData().toString()));
+        ToggleButton btn = (ToggleButton) event.getSource();
+        roleChoiceBox.setValue(UserRole.valueOf(btn.getUserData().toString()));
         updateRoleButtonStyles();
     }
 
@@ -74,16 +54,11 @@ public class AuthController {
     private void handleLogin() {
         String username = usernameField.getText();
         String password = passwordField.getText();
-        UserRole selectedRole = roleChoiceBox.getValue();
-
-        if (selectedRole == null) {
-            statusLabel.setText("Select a role before logging in.");
-            return;
-        }
-
-        authService.authenticate(username, password, selectedRole)
-                .ifPresentOrElse(this::openDashboard, () ->
-                        statusLabel.setText("Invalid username, password, or role."));
+        UserRole role   = roleChoiceBox.getValue();
+        if (role == null) { statusLabel.setText("Select a role before logging in."); return; }
+        authService.authenticate(username, password, role)
+                .ifPresentOrElse(this::openDashboard,
+                        () -> statusLabel.setText("Invalid username, password, or role."));
     }
 
     private void updateRoleButtonStyles() {
@@ -92,51 +67,39 @@ public class AuthController {
         styleRoleButton(adminRoleButton);
     }
 
-    private void styleRoleButton(ToggleButton button) {
-        if (button.isSelected()) {
-            button.setStyle("-fx-background-color: #191919; -fx-background-radius: 12; -fx-border-color: #191919; -fx-border-radius: 12; -fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: white; -fx-padding: 8 10 8 10; -fx-cursor: hand;");
-        } else {
-            button.setStyle("-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e3e3e3; -fx-border-radius: 12; -fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: #202020; -fx-padding: 8 10 8 10; -fx-cursor: hand;");
-        }
-        updateRoleIcon(button);
+    private void styleRoleButton(ToggleButton btn) {
+        btn.setStyle(btn.isSelected()
+                ? "-fx-background-color:#191919;-fx-background-radius:12;-fx-border-color:#191919;-fx-border-radius:12;-fx-font-size:14px;-fx-font-weight:700;-fx-text-fill:white;-fx-padding:8 10 8 10;-fx-cursor:hand;"
+                : "-fx-background-color:white;-fx-background-radius:12;-fx-border-color:#e3e3e3;-fx-border-radius:12;-fx-font-size:14px;-fx-font-weight:700;-fx-text-fill:#202020;-fx-padding:8 10 8 10;-fx-cursor:hand;");
+        updateRoleIcon(btn);
     }
 
-    private void updateRoleIcon(ToggleButton button) {
-        ImageView icon = switch (button.getUserData().toString()) {
+    private void updateRoleIcon(ToggleButton btn) {
+        String role = btn.getUserData().toString();
+        ImageView icon = switch (role) {
             case "TEACHER" -> teacherRoleIcon;
-            case "ADMIN" -> adminRoleIcon;
-            default -> studentRoleIcon;
+            case "ADMIN"   -> adminRoleIcon;
+            default        -> studentRoleIcon;
         };
-
-        if ("STUDENT".equals(button.getUserData().toString())) {
-            icon.setEffect(button.isSelected() ? null : new ColorAdjust(0, 0, -1, 0));
+        if ("STUDENT".equals(role)) {
+            icon.setEffect(btn.isSelected() ? null : new ColorAdjust(0, 0, -1, 0));
         } else {
-            icon.setEffect(button.isSelected() ? new ColorAdjust(0, 0, 1, 0) : null);
+            icon.setEffect(btn.isSelected() ? new ColorAdjust(0, 0, 1, 0) : null);
         }
     }
 
     private void openDashboard(UserAccount account) {
         SessionContext.getInstance().setCurrentUser(account);
-
-        String fxmlPath;
-        String title;
-        switch (account.getRole()) {
-            case ADMIN -> {
-                fxmlPath = "/com/hamroschool/admin-view.fxml";
-                title = "Admin Dashboard";
-                SceneSwitcher.showView(usernameField, fxmlPath, title, 1280, 860);
-                return;
-            }
-            case TEACHER -> {
-                fxmlPath = "/com/hamroschool/teacher-dashboard-view.fxml";
-                title = "Teacher Dashboard";
-            }
-            default -> {
-                fxmlPath = "/com/hamroschool/student-dashboard-view.fxml";
-                title = "Student Dashboard";
-            }
-        }
-
-        SceneSwitcher.showView(usernameField, fxmlPath, title, 1280, 860);
+        String path  = switch (account.getRole()) {
+            case ADMIN   -> "/com/hamroschool/admin-view.fxml";
+            case TEACHER -> "/com/hamroschool/teacher-dashboard-view.fxml";
+            default      -> "/com/hamroschool/student-dashboard-view.fxml";
+        };
+        String title = switch (account.getRole()) {
+            case ADMIN   -> "Admin Dashboard";
+            case TEACHER -> "Teacher Dashboard";
+            default      -> "Student Dashboard";
+        };
+        SceneSwitcher.showView(usernameField, path, title, 1280, 860);
     }
 }

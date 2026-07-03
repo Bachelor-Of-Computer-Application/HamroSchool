@@ -1,12 +1,11 @@
 package com.hamroschool.controller;
 
-import java.util.Locale;
-
 import com.hamroschool.model.auth.UserAccount;
 import com.hamroschool.service.AuthService;
 import com.hamroschool.service.impl.MongoAuthService;
 import com.hamroschool.util.SceneSwitcher;
 import com.hamroschool.util.SessionContext;
+import com.hamroschool.util.Utils;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -41,11 +40,11 @@ public class SettingsController {
     @FXML
     public void initialize() {
         SessionContext.getInstance().getCurrentUser().ifPresent(user -> {
-            String initials = getInitials(user.getUsername());
+            String initials = Utils.initials(user.getUsername());
             userInitialsLabel.setText(initials);
             userNameLabel.setText(user.getUsername());
             avatarLabel.setText(initials);
-            displayNameField.setText(formatDisplayName(user.getUsername()));
+            displayNameField.setText(Utils.formatName(user.getUsername()));
         });
     }
 
@@ -59,7 +58,7 @@ public class SettingsController {
             return;
         }
         // Display name is cosmetic only — no persistence layer for it yet
-        avatarLabel.setText(getInitials(displayName));
+        avatarLabel.setText(Utils.initials(displayName));
         userNameLabel.setText(displayName);
         setProfileStatus("Profile updated successfully.", true);
     }
@@ -154,20 +153,5 @@ public class SettingsController {
             "-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: " +
             (success ? "#16a34a" : "#dc2626") + ";"
         );
-    }
-
-    private String getInitials(String name) {
-        if (name == null || name.isBlank()) return "?";
-        String[] parts = name.trim().split("\\s+");
-        if (parts.length == 1) {
-            return parts[0].substring(0, Math.min(2, parts[0].length())).toUpperCase(Locale.ROOT);
-        }
-        return (parts[0].substring(0, 1) + parts[1].substring(0, 1)).toUpperCase(Locale.ROOT);
-    }
-
-    private String formatDisplayName(String username) {
-        if (username == null || username.isBlank()) return "";
-        String trimmed = username.trim();
-        return Character.toUpperCase(trimmed.charAt(0)) + trimmed.substring(1);
     }
 }

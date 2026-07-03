@@ -1,8 +1,6 @@
 package com.hamroschool.controller;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -17,6 +15,7 @@ import com.hamroschool.service.impl.MarkServiceImpl;
 import com.hamroschool.service.impl.TeacherServiceImpl;
 import com.hamroschool.util.SceneSwitcher;
 import com.hamroschool.util.SessionContext;
+import com.hamroschool.util.Utils;
 
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
@@ -34,21 +33,30 @@ import javafx.scene.layout.VBox;
 
 public class StudentDashboardController {
 
+    // ── Services ──────────────────────────────────────────────────────────────
     private final MarkService       markService       = MarkServiceImpl.getInstance();
     private final AttendanceService attendanceService = AttendanceServiceImpl.getInstance();
     private final TeacherService    teacherService    = TeacherServiceImpl.getInstance();
 
     private String studentUsername;
 
-    public record CourseRow(String subject, String teacher, double avgPct, String grade) {}
+    // ── Cache — populated ONCE in background thread ────────────────────────
+    private volatile List<Mark>          cachedMarks          = List.of();
+    private volatile Map<String, String> cachedSubjectTeacher = Map.of();
+    private volatile Map<String, Double> cachedAttendancePct  = Map.of();
+    private volatile boolean             dataLoaded           = false;
 
+    // ── Row models ────────────────────────────────────────────────────────────
+    public record CourseRow(String subject, String teacher, double avgPct, String grade) {}
     public record AttendanceRow(String subject, String teacher, double pct) {}
 
+    // ── Pagination ────────────────────────────────────────────────────────────
     private static final int PAGE_SIZE = 5;
     private final ObservableList<CourseRow> allCourses = FXCollections.observableArrayList();
     private List<CourseRow> filteredCourses = List.of();
     private int currentPage = 0;
 
+    // ── FXML injections ───────────────────────────────────────────────────────
     @FXML private Label  welcomeSubLabel;
     @FXML private Label  userInitialsLabel;
     @FXML private Label  userNameLabel;
@@ -58,61 +66,99 @@ public class StudentDashboardController {
     @FXML private Button navGradesBtn;
     @FXML private Button navAttendanceBtn;
 
+    // stat cards
     @FXML private Label statSubjectsLabel;
     @FXML private Label statGradeLabel;
     @FXML private Label statAttLabel;
 
+    // panes
     @FXML private VBox dashboardPane;
     @FXML private VBox gradesPane;
     @FXML private VBox attendancePane;
 
-    @FXML private TextField              searchField;
-    @FXML private TableView<CourseRow>   coursesTable;
+    // courses table
+    @FXML private TextField                      searchField;
+    @FXML private TableView<CourseRow>           coursesTable;
     @FXML private TableColumn<CourseRow, String> cColCourse;
     @FXML private TableColumn<CourseRow, String> cColInstructor;
     @FXML private TableColumn<CourseRow, String> cColGrade;
-    @FXML private Label                  coursesSummaryLabel;
-    @FXML private Button                 prevButton;
-    @FXML private Button                 nextButton;
+    @FXML private Label                          coursesSummaryLabel;
+    @FXML private Button                         prevButton;
+    @FXML private Button                         nextButton;
 
-    @FXML private TableView<Mark>         marksTable;
+    // grades table
+    @FXML private TableView<Mark>           marksTable;
     @FXML private TableColumn<Mark, String> mColSubject;
     @FXML private TableColumn<Mark, String> mColTeacher;
     @FXML private TableColumn<Mark, String> mColExam;
     @FXML private TableColumn<Mark, String> mColScore;
     @FXML private TableColumn<Mark, String> mColGrade;
     @FXML private TableColumn<Mark, String> mColRemarks;
-    @FXML private Label                   marksSummaryLabel;
+    @FXML private Label                     marksSummaryLabel;
 
-    @FXML private TableView<AttendanceRow>          attTable;
+    // attendance table
+    @FXML private TableView<AttendanceRow>           attTable;
     @FXML private TableColumn<AttendanceRow, String> aColSubject;
     @FXML private TableColumn<AttendanceRow, String> aColTeacher;
     @FXML private TableColumn<AttendanceRow, String> aColPct;
     @FXML private TableColumn<AttendanceRow, String> aColStatus;
     @FXML private Label                              attSummaryLabel;
 
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     @FXML
     public void initialize() {
         studentUsername = SessionContext.getInstance().requireCurrentUser().getUsername();
-
-        String displayName = fmt(studentUsername);
+        String displayName = Utils.formatName(studentUsername);
         welcomeSubLabel.setText("Welcome back, " + displayName + " — here's your learning overview");
-        userInitialsLabel.setText(initials(studentUsername));
+        userInitialsLabel.setText(Utils.initials(studentUsername));
         userNameLabel.setText(displayName);
 
         setupCoursesTable();
         setupGradesTable();
         setupAttendanceTable();
 
-        searchField.textProperty().addListener((obs, o, n) -> {
-            currentPage = 0;
-            applyFilter(n);
-        });
+        searchField.textProperty().addListener((obs, o, n) -> { currentPage = 0; applyFilter(n); });
 
         showDashboard();
+
+        // Load ALL MongoDB data once on a background thread — UI never blocks
+        Thread loader = new Thread(() -> {
+            try {
+                List<Mark> marks = markService.getMarksByStudent(studentUsername);
+
+                java.util.LinkedHashMap<String, String> subTeach = new java.util.LinkedHashMap<>();
+                java.util.LinkedHashMap<String, Double> attMap   = new java.util.LinkedHashMap<>();
+
+                for (var teacher : teacherService.getAllTeachers()) {
+                    String tName   = teacher.getUsername();
+                    String subject = teacherService.getSubject(tName).orElse(null);
+                    if (subject == null || subject.isBlank()) continue;
+                    subTeach.putIfAbsent(subject, tName);
+                    Double pct = attendanceService
+                            .getAttendancePercentages(tName, subject)
+                            .get(studentUsername);
+                    if (pct != null) attMap.put(subject, pct);
+                }
+
+                cachedMarks          = marks;
+                cachedSubjectTeacher = subTeach;
+                cachedAttendancePct  = attMap;
+                dataLoaded           = true;
+
+                javafx.application.Platform.runLater(() -> {
+                    refreshStats();
+                    loadCourses();
+                });
+            } catch (Exception ex) {
+                System.err.println("[StudentDashboard] Data load error: " + ex.getMessage());
+            }
+        }, "StudentDataLoader");
+        loader.setDaemon(true);
+        loader.start();
     }
 
+    // ── Nav handlers ──────────────────────────────────────────────────────────
 
     @FXML private void handleNavDashboard()  { showDashboard(); }
     @FXML private void handleNavGrades()     { showGrades(); }
@@ -133,12 +179,12 @@ public class StudentDashboardController {
         if (currentPage < total - 1) { currentPage++; renderPage(); }
     }
 
+    // ── Pane switching ────────────────────────────────────────────────────────
 
     private void showDashboard() {
         setPane(dashboardPane);
         setActiveNav(navDashboardBtn);
-        loadCourses();
-        refreshStats();
+        if (dataLoaded) { refreshStats(); loadCourses(); }
     }
 
     private void showGrades() {
@@ -161,66 +207,56 @@ public class StudentDashboardController {
     }
 
     private void setActiveNav(Button active) {
-        String on  = "-fx-background-color: #111111; -fx-background-radius: 8; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: 600; -fx-padding: 0 12 0 12; -fx-cursor: hand;";
-        String off = "-fx-background-color: transparent; -fx-background-radius: 8; -fx-text-fill: #44403c; -fx-font-size: 13px; -fx-font-weight: 500; -fx-padding: 0 12 0 12; -fx-cursor: hand;";
+        String on  = "-fx-background-color: #111111; -fx-background-radius: 8; -fx-text-fill: white; "
+                   + "-fx-font-size: 13px; -fx-font-weight: 600; -fx-padding: 0 12 0 12; -fx-cursor: hand;";
+        String off = "-fx-background-color: transparent; -fx-background-radius: 8; -fx-text-fill: #44403c; "
+                   + "-fx-font-size: 13px; -fx-font-weight: 500; -fx-padding: 0 12 0 12; -fx-cursor: hand;";
         for (Button b : List.of(navDashboardBtn, navGradesBtn, navAttendanceBtn))
             b.setStyle(b == active ? on : off);
     }
 
+    // ── Stats ─────────────────────────────────────────────────────────────────
 
     private void refreshStats() {
-        List<Mark> allMarks = markService.getMarksByStudent(studentUsername);
+        if (!dataLoaded) return;
 
-        LinkedHashSet<String> subjects = new LinkedHashSet<>(getAllAssignedSubjects());
-        allMarks.stream()
-            .map(Mark::getSubjectName)
-            .filter(s -> s != null && !s.isBlank())
-            .forEach(subjects::add);
-        long subjectCount = subjects.size();
-        statSubjectsLabel.setText(subjectCount > 0 ? String.valueOf(subjectCount) : "0");
+        // Subjects = union of assigned subjects + subjects with marks
+        java.util.LinkedHashSet<String> subjects = new java.util.LinkedHashSet<>(cachedSubjectTeacher.keySet());
+        cachedMarks.stream()
+                .map(Mark::getSubjectName)
+                .filter(s -> s != null && !s.isBlank())
+                .forEach(subjects::add);
+        statSubjectsLabel.setText(String.valueOf(subjects.size()));
 
-        double avg = allMarks.stream().mapToDouble(Mark::getPercentage).average().orElse(-1);
+        // Average grade letter
+        double avg = cachedMarks.isEmpty() ? -1
+                : cachedMarks.stream().mapToDouble(Mark::getPercentage).average().orElse(-1);
         statGradeLabel.setText(avg >= 0 ? gradeFromPct(avg) : "—");
 
-        double attPct = computeAvgAttendance();
-        statAttLabel.setText(attPct >= 0 ? String.format("%.0f%%", attPct) : "—");
+        // Average attendance
+        double attAvg = cachedAttendancePct.isEmpty() ? -1
+                : cachedAttendancePct.values().stream().mapToDouble(Double::doubleValue).average().orElse(-1);
+        statAttLabel.setText(attAvg >= 0 ? String.format("%.0f%%", attAvg) : "—");
     }
 
-    private double computeAvgAttendance() {
-        double total = 0; int count = 0;
-        for (var teacher : teacherService.getAllTeachers()) {
-            String tName   = teacher.getUsername();
-            String subject = teacherService.getSubject(tName).orElse(null);
-            if (subject == null) continue;
-            Map<String, Double> pctMap = attendanceService.getAttendancePercentages(tName, subject);
-            Double pct = pctMap.get(studentUsername);
-            if (pct != null) { total += pct; count++; }
-        }
-        return count > 0 ? total / count : -1;
-    }
-
+    // ── Courses table ─────────────────────────────────────────────────────────
 
     private void loadCourses() {
-        List<Mark> allMarks = markService.getMarksByStudent(studentUsername);
+        if (!dataLoaded) return;
 
-        Map<String, List<Mark>> bySubject = allMarks.stream()
-            .filter(m -> m.getSubjectName() != null && !m.getSubjectName().isBlank())
-            .collect(Collectors.groupingBy(Mark::getSubjectName));
+        Map<String, List<Mark>> bySubject = cachedMarks.stream()
+                .filter(m -> m.getSubjectName() != null && !m.getSubjectName().isBlank())
+                .collect(Collectors.groupingBy(Mark::getSubjectName));
 
-        Map<String, String> subjectTeacherMap = getAssignedSubjectTeacherMap();
-        LinkedHashSet<String> allSubjects = new LinkedHashSet<>(subjectTeacherMap.keySet());
+        java.util.LinkedHashSet<String> allSubjects = new java.util.LinkedHashSet<>(cachedSubjectTeacher.keySet());
         allSubjects.addAll(bySubject.keySet());
 
         List<CourseRow> rows = new ArrayList<>();
         for (String subject : allSubjects) {
             List<Mark> marks = bySubject.getOrDefault(subject, List.of());
-            double avg = marks.stream().mapToDouble(Mark::getPercentage).average().orElse(0);
-
-            String teacher = marks.isEmpty()
-                ? subjectTeacherMap.getOrDefault(subject, "—")
-                : marks.get(0).getTeacherUsername();
-
-            String grade = marks.isEmpty() ? "—" : gradeFromPct(avg);
+            double avg    = marks.isEmpty() ? 0 : marks.stream().mapToDouble(Mark::getPercentage).average().orElse(0);
+            String teacher = marks.isEmpty() ? cachedSubjectTeacher.getOrDefault(subject, "—") : marks.get(0).getTeacherUsername();
+            String grade   = marks.isEmpty() ? "—" : gradeFromPct(avg);
             rows.add(new CourseRow(subject, teacher, avg, grade));
         }
 
@@ -240,44 +276,33 @@ public class StudentDashboardController {
     }
 
     private void renderPage() {
-        int total = Math.max(1, (int) Math.ceil((double) filteredCourses.size() / PAGE_SIZE));
+        if (filteredCourses.isEmpty()) {
+            coursesTable.setItems(FXCollections.emptyObservableList());
+            coursesSummaryLabel.setText("Showing 0 of 0 courses");
+            prevButton.setDisable(true);
+            nextButton.setDisable(true);
+            return;
+        }
+        int total = (int) Math.ceil((double) filteredCourses.size() / PAGE_SIZE);
         if (currentPage >= total) currentPage = total - 1;
         int from = currentPage * PAGE_SIZE;
         int to   = Math.min(from + PAGE_SIZE, filteredCourses.size());
         coursesTable.setItems(FXCollections.observableArrayList(filteredCourses.subList(from, to)));
-        if (filteredCourses.isEmpty()) {
-            coursesSummaryLabel.setText("Showing 0 of 0 courses");
-        } else {
-            coursesSummaryLabel.setText("Showing " + (from + 1) + "–" + to + " of " + filteredCourses.size() + " courses");
-        }
+        coursesSummaryLabel.setText(
+                "Showing " + (from + 1) + "–" + to + " of " + filteredCourses.size() + " courses");
         prevButton.setDisable(currentPage == 0);
         nextButton.setDisable(currentPage >= total - 1);
     }
 
-    private List<String> getAllAssignedSubjects() {
-        return new ArrayList<>(getAssignedSubjectTeacherMap().keySet());
-    }
-
-    private Map<String, String> getAssignedSubjectTeacherMap() {
-        Map<String, String> subjectTeacherMap = new LinkedHashMap<>();
-        for (var teacher : teacherService.getAllTeachers()) {
-            String teacherUsername = teacher.getUsername();
-            teacherService.getSubject(teacherUsername)
-                    .map(String::trim)
-                    .filter(s -> !s.isBlank())
-                    .ifPresent(subject -> subjectTeacherMap.putIfAbsent(subject, teacherUsername));
-        }
-        return subjectTeacherMap;
-    }
-
     private void setupCoursesTable() {
+        // Course: icon + name
         cColCourse.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().subject()));
-        cColCourse.setCellFactory(col -> new TableCell<>() {
+        cColCourse.setCellFactory(col -> new TableCell<CourseRow, String>() {
             @Override protected void updateItem(String subject, boolean empty) {
                 super.updateItem(subject, empty);
                 if (empty || subject == null) { setGraphic(null); return; }
                 Label icon = new Label(subjectIcon(subject));
-                icon.setStyle("-fx-font-size: 15px; -fx-min-width: 28;");
+                icon.setStyle("-fx-font-size: 15px; -fx-min-width: 26;");
                 Label name = new Label(subject);
                 name.setStyle("-fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: #111111;");
                 HBox box = new HBox(10, icon, name);
@@ -286,35 +311,45 @@ public class StudentDashboardController {
             }
         });
 
-        cColInstructor.setCellValueFactory(c -> new ReadOnlyStringWrapper("Mr/Ms. " + fmt(c.getValue().teacher())));
+        // Instructor
+        cColInstructor.setCellValueFactory(c -> new ReadOnlyStringWrapper(Utils.formatName(c.getValue().teacher())));
         cColInstructor.setCellFactory(col -> plainCell("#44403c", false));
 
+        // Grade badge
         cColGrade.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().grade()));
-        cColGrade.setCellFactory(col -> new TableCell<>() {
+        cColGrade.setCellFactory(col -> new TableCell<CourseRow, String>() {
             @Override protected void updateItem(String grade, boolean empty) {
                 super.updateItem(grade, empty);
                 if (empty || grade == null) { setGraphic(null); setText(null); return; }
                 Label badge = new Label(grade);
-                badge.setStyle(
-                    "-fx-background-color: #f5f5f4; -fx-border-color: #e7e5e4; " +
-                    "-fx-border-radius: 6; -fx-background-radius: 6; " +
-                    "-fx-text-fill: #111111; -fx-font-size: 12px; -fx-font-weight: 700; " +
-                    "-fx-padding: 3 10 3 10;");
+                badge.setStyle("-fx-background-color: #f5f5f4; -fx-border-color: #e7e5e4; "
+                        + "-fx-border-radius: 6; -fx-background-radius: 6; "
+                        + "-fx-text-fill: #111111; -fx-font-size: 12px; -fx-font-weight: 700; "
+                        + "-fx-padding: 3 10 3 10;");
                 setGraphic(badge); setText(null);
             }
         });
 
         coursesTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
-        coursesTable.setPlaceholder(new Label("No courses found."));
+        coursesTable.setPlaceholder(new Label("No courses yet."));
         coursesTable.setStyle("-fx-background-color: transparent;");
     }
 
+    // ── Grades table ──────────────────────────────────────────────────────────
+
+    private void loadMarks() {
+        if (!dataLoaded) return;
+        marksTable.setItems(FXCollections.observableArrayList(cachedMarks));
+        marksSummaryLabel.setText(cachedMarks.isEmpty()
+                ? "No marks recorded yet."
+                : "Showing " + cachedMarks.size() + " record" + (cachedMarks.size() == 1 ? "" : "s"));
+    }
 
     private void setupGradesTable() {
         mColSubject.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getSubjectName()));
         mColSubject.setCellFactory(col -> plainCell("#111111", true));
 
-        mColTeacher.setCellValueFactory(c -> new ReadOnlyStringWrapper(fmt(c.getValue().getTeacherUsername())));
+        mColTeacher.setCellValueFactory(c -> new ReadOnlyStringWrapper(Utils.formatName(c.getValue().getTeacherUsername())));
         mColTeacher.setCellFactory(col -> plainCell("#44403c", false));
 
         mColExam.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getExamType()));
@@ -328,15 +363,15 @@ public class StudentDashboardController {
         mColScore.setCellFactory(col -> plainCell("#111111", true));
 
         mColGrade.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getGrade()));
-        mColGrade.setCellFactory(col -> new TableCell<>() {
+        mColGrade.setCellFactory(col -> new TableCell<Mark, String>() {
             @Override protected void updateItem(String grade, boolean empty) {
                 super.updateItem(grade, empty);
                 if (empty || grade == null) { setGraphic(null); setText(null); return; }
                 Label badge = new Label(grade);
-                badge.setStyle("-fx-background-color: #f5f5f4; -fx-border-color: #e7e5e4; " +
-                    "-fx-border-radius: 6; -fx-background-radius: 6; " +
-                    "-fx-text-fill: #111111; -fx-font-size: 12px; -fx-font-weight: 700; " +
-                    "-fx-padding: 3 10 3 10;");
+                badge.setStyle("-fx-background-color: #f5f5f4; -fx-border-color: #e7e5e4; "
+                        + "-fx-border-radius: 6; -fx-background-radius: 6; "
+                        + "-fx-text-fill: #111111; -fx-font-size: 12px; -fx-font-weight: 700; "
+                        + "-fx-padding: 3 10 3 10;");
                 setGraphic(badge); setText(null);
             }
         });
@@ -352,25 +387,32 @@ public class StudentDashboardController {
         marksTable.setStyle("-fx-background-color: transparent;");
     }
 
-    private void loadMarks() {
-        List<Mark> marks = markService.getMarksByStudent(studentUsername);
-        marksTable.setItems(FXCollections.observableArrayList(marks));
-        marksSummaryLabel.setText(marks.isEmpty()
-                ? "No marks recorded yet."
-                : "Showing " + marks.size() + " record" + (marks.size() == 1 ? "" : "s"));
-    }
+    // ── Attendance table ──────────────────────────────────────────────────────
 
+    private void loadAttendance() {
+        if (!dataLoaded) return;
+        List<AttendanceRow> rows = new ArrayList<>();
+        for (Map.Entry<String, Double> e : cachedAttendancePct.entrySet()) {
+            String subject = e.getKey();
+            String teacher = cachedSubjectTeacher.getOrDefault(subject, "—");
+            rows.add(new AttendanceRow(subject, teacher, e.getValue()));
+        }
+        attTable.setItems(FXCollections.observableArrayList(rows));
+        attSummaryLabel.setText(rows.isEmpty()
+                ? "No attendance records found."
+                : "Showing " + rows.size() + " subject" + (rows.size() == 1 ? "" : "s"));
+    }
 
     private void setupAttendanceTable() {
         aColSubject.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().subject()));
         aColSubject.setCellFactory(col -> plainCell("#111111", true));
 
-        aColTeacher.setCellValueFactory(c -> new ReadOnlyStringWrapper(fmt(c.getValue().teacher())));
+        aColTeacher.setCellValueFactory(c -> new ReadOnlyStringWrapper(Utils.formatName(c.getValue().teacher())));
         aColTeacher.setCellFactory(col -> plainCell("#44403c", false));
 
         aColPct.setCellValueFactory(c -> new ReadOnlyStringWrapper(
                 String.format("%.1f%%", c.getValue().pct())));
-        aColPct.setCellFactory(col -> new TableCell<>() {
+        aColPct.setCellFactory(col -> new TableCell<AttendanceRow, String>() {
             @Override protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
                 if (empty || v == null) { setText(null); return; }
@@ -385,7 +427,7 @@ public class StudentDashboardController {
             double p = c.getValue().pct();
             return new ReadOnlyStringWrapper(p >= 75 ? "Good" : p >= 50 ? "At Risk" : "Critical");
         });
-        aColStatus.setCellFactory(col -> new TableCell<>() {
+        aColStatus.setCellFactory(col -> new TableCell<AttendanceRow, String>() {
             @Override protected void updateItem(String s, boolean empty) {
                 super.updateItem(s, empty);
                 if (empty || s == null) { setGraphic(null); setText(null); return; }
@@ -408,25 +450,10 @@ public class StudentDashboardController {
         attTable.setStyle("-fx-background-color: transparent;");
     }
 
-    private void loadAttendance() {
-        List<AttendanceRow> rows = new ArrayList<>();
-        for (var teacher : teacherService.getAllTeachers()) {
-            String tName   = teacher.getUsername();
-            String subject = teacherService.getSubject(tName).orElse(null);
-            if (subject == null) continue;
-            Map<String, Double> pctMap = attendanceService.getAttendancePercentages(tName, subject);
-            Double pct = pctMap.get(studentUsername);
-            if (pct != null) rows.add(new AttendanceRow(subject, tName, pct));
-        }
-        attTable.setItems(FXCollections.observableArrayList(rows));
-        attSummaryLabel.setText(rows.isEmpty()
-                ? "No attendance records found."
-                : "Showing " + rows.size() + " subject" + (rows.size() == 1 ? "" : "s"));
-    }
-
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private <T> TableCell<T, String> plainCell(String color, boolean bold) {
-        return new TableCell<>() {
+        return new TableCell<T, String>() {
             @Override protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
                 if (empty || v == null) { setText(null); return; }
@@ -440,15 +467,15 @@ public class StudentDashboardController {
     private String subjectIcon(String subject) {
         if (subject == null) return "📚";
         String s = subject.toLowerCase(Locale.ROOT);
-        if (s.contains("math"))    return "Σ";
-        if (s.contains("chem"))    return "⚗";
-        if (s.contains("phys"))    return "⚛";
-        if (s.contains("hist"))    return "🏛";
-        if (s.contains("eng"))     return "📝";
-        if (s.contains("geo"))     return "🌐";
-        if (s.contains("bio"))     return "🧬";
+        if (s.contains("math"))                  return "Σ";
+        if (s.contains("chem"))                  return "⚗";
+        if (s.contains("phys"))                  return "⚛";
+        if (s.contains("hist"))                  return "🏛";
+        if (s.contains("eng"))                   return "📝";
+        if (s.contains("geo"))                   return "🌐";
+        if (s.contains("bio"))                   return "🧬";
         if (s.contains("comp") || s.contains("it")) return "💻";
-        if (s.contains("sci"))     return "🔬";
+        if (s.contains("sci"))                   return "🔬";
         return "📚";
     }
 
@@ -462,17 +489,4 @@ public class StudentDashboardController {
         return "F";
     }
 
-    private String initials(String name) {
-        if (name == null || name.isBlank()) return "?";
-        String[] p = name.trim().split("\\s+");
-        return p.length == 1
-                ? p[0].substring(0, Math.min(2, p[0].length())).toUpperCase(Locale.ROOT)
-                : (p[0].substring(0, 1) + p[1].substring(0, 1)).toUpperCase(Locale.ROOT);
-    }
-
-    private String fmt(String username) {
-        if (username == null || username.isBlank()) return "Unknown";
-        String t = username.trim();
-        return Character.toUpperCase(t.charAt(0)) + t.substring(1);
-    }
 }
