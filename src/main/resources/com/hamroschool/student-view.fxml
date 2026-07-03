@@ -200,7 +200,7 @@
                                                 <StackPane style="-fx-background-color: #f0fdf4; -fx-background-radius: 12; -fx-min-width: 38; -fx-min-height: 38; -fx-pref-width: 38; -fx-pref-height: 38;">
                                                     <children>
                                                         <ImageView fitHeight="18.0" fitWidth="18.0" preserveRatio="true">
-                                                            <image><Image url="@assets/admin/student/student.png" /></image>
+                                                            <image><Image url="@assets/admin/student/active.png" /></image>
                                                         </ImageView>
                                                     </children>
                                                 </StackPane>
