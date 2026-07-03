@@ -42,7 +42,6 @@ public class TeacherController {
 
     @FXML private Label totalTeachersLabel;
     @FXML private Label activeTeachersLabel;
-    @FXML private Label newThisMonthLabel;
 
     @FXML private Label summaryLabel;
     @FXML private TextField searchField;
@@ -151,7 +150,6 @@ public class TeacherController {
         totalTeachersLabel.setText(String.valueOf(allTeachers.size()));
         // All accounts created by admin are considered active; no separate status field exists yet
         activeTeachersLabel.setText(String.valueOf(allTeachers.size()));
-        newThisMonthLabel.setText("—");
 
         currentPage = 0;
         applyFilterAndPage(searchField.getText());
