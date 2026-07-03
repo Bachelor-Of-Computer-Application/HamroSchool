@@ -90,7 +90,7 @@
                                 text="Settings">
                             <graphic>
                                 <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
-                                    <image><Image url="@assets/admin/aside/setting.png" /></image>
+                                    <image><Image url="@assets/admin/aside/setting-dark.png" /></image>
                                 </ImageView>
                             </graphic>
                         </Button>
