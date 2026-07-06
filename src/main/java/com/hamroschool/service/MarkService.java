@@ -22,12 +22,6 @@ public interface MarkService {
     List<String> getSubjectsByTeacher(String teacherUsername);
 
     List<String> getAllStudentUsernames();
-
-    /**
-     * Returns per-student summary (midterm, final, total, status) for the given
-     * teacher and subject — one row per student who has at least one mark, plus
-     * a blank row for every student account that has no mark yet.
-     */
     List<StudentMarkSummary> getMarksheet(String teacherUsername, String subjectName);
 
     double getAverageMarks(String teacherUsername, String subjectName);
@@ -36,10 +30,6 @@ public interface MarkService {
 
     int getTopScore(String teacherUsername, String subjectName);
 
-    /**
-     * Returns a ranked report-card list for all students for the given
-     * teacher+subject (students without marks get percentage 0 and rank last).
-     */
     List<ReportCardEntry> getReportCard(String teacherUsername, String subjectName);
 
 
