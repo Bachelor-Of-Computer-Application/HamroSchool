@@ -30,7 +30,6 @@ public final class AppConfig {
 
     public static AppConfig getInstance() { return INSTANCE; }
 
-    // ── Public accessors ──────────────────────────────────────────────────────
 
     public String getAppName() {
         return resolve("APP_NAME", "app.name", "Hamro School");
@@ -54,26 +53,21 @@ public final class AppConfig {
         return resolve("MONGODB_DATABASE", "mongodb.database", "hamroschool");
     }
 
-    // ── Internal helpers ──────────────────────────────────────────────────────
 
     /**
      * Resolution order: JVM system property → OS env var → .env file value →
      * application.properties → hard-coded default.
      */
     private String resolve(String envKey, String propKey, String defaultValue) {
-        // 1. JVM -D flag
         String sys = System.getProperty(propKey);
         if (notBlank(sys)) return sys.trim();
 
-        // 2. Real OS environment variable
         String osEnv = System.getenv(envKey);
         if (notBlank(osEnv)) return strip(osEnv);
 
-        // 3. .env file (loaded into dotEnv)
         String dotVal = dotEnv.getProperty(envKey);
         if (notBlank(dotVal)) return strip(dotVal);
 
-        // 4. application.properties
         String propVal = appProp.getProperty(propKey);
         if (notBlank(propVal)) return propVal.trim();
 
@@ -89,7 +83,6 @@ public final class AppConfig {
             String line;
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
-                // Skip blanks and comments
                 if (line.isEmpty() || line.startsWith("#")) continue;
                 int eq = line.indexOf('=');
                 if (eq < 1) continue;

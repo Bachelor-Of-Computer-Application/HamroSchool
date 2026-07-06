@@ -15,6 +15,8 @@ import com.hamroschool.service.impl.MarkServiceImpl;
 import com.hamroschool.service.impl.TeacherServiceImpl;
 import com.hamroschool.util.SceneSwitcher;
 import com.hamroschool.util.SessionContext;
+import com.hamroschool.util.TableCellFactories;
+import com.hamroschool.util.TableUtils;
 import com.hamroschool.util.Utils;
 
 import javafx.beans.property.ReadOnlyStringWrapper;
@@ -259,7 +261,7 @@ public class StudentDashboardController {
         statSubjectsLabel.setText(String.valueOf(subjects.size()));
 
         // Use pre-computed average grade
-        statGradeLabel.setText(cachedAvgGrade >= 0 ? gradeFromPct(cachedAvgGrade) : "—");
+        statGradeLabel.setText(cachedAvgGrade >= 0 ? TableUtils.percentageToGrade(cachedAvgGrade) : "—");
 
         // Use pre-computed average attendance
         statAttLabel.setText(cachedAvgAtt >= 0 ? String.format("%.0f%%", cachedAvgAtt) : "—");
@@ -278,7 +280,7 @@ public class StudentDashboardController {
             List<Mark> marks = marksBySubject.getOrDefault(subject, List.of());
             double avg    = marks.isEmpty() ? 0 : marks.stream().mapToDouble(Mark::getPercentage).average().orElse(0);
             String teacher = marks.isEmpty() ? cachedSubjectTeacher.getOrDefault(subject, "—") : marks.get(0).getTeacherUsername();
-            String grade   = marks.isEmpty() ? "—" : gradeFromPct(avg);
+            String grade   = marks.isEmpty() ? "—" : TableUtils.percentageToGrade(avg);
             rows.add(new CourseRow(subject, teacher, avg, grade));
         }
 
@@ -324,7 +326,7 @@ public class StudentDashboardController {
             @Override protected void updateItem(String subject, boolean empty) {
                 super.updateItem(subject, empty);
                 if (empty || subject == null) { setGraphic(null); return; }
-                Label icon = new Label(subjectIcon(subject));
+                Label icon = new Label(TableUtils.getSubjectIcon(subject));
                 icon.setStyle("-fx-font-size: 15px; -fx-min-width: 26;");
                 Label name = new Label(subject);
                 name.setStyle("-fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: #111111;");
@@ -336,7 +338,7 @@ public class StudentDashboardController {
 
         // Instructor
         cColInstructor.setCellValueFactory(c -> new ReadOnlyStringWrapper(Utils.formatName(c.getValue().teacher())));
-        cColInstructor.setCellFactory(col -> plainCell("#44403c", false));
+        cColInstructor.setCellFactory(col -> TableCellFactories.plainTextCell("#44403c", false));
 
         // Grade badge
         cColGrade.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().grade()));
@@ -370,20 +372,20 @@ public class StudentDashboardController {
 
     private void setupGradesTable() {
         mColSubject.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getSubjectName()));
-        mColSubject.setCellFactory(col -> plainCell("#111111", true));
+        mColSubject.setCellFactory(col -> TableCellFactories.plainTextCell("#111111", true));
 
         mColTeacher.setCellValueFactory(c -> new ReadOnlyStringWrapper(Utils.formatName(c.getValue().getTeacherUsername())));
-        mColTeacher.setCellFactory(col -> plainCell("#44403c", false));
+        mColTeacher.setCellFactory(col -> TableCellFactories.plainTextCell("#44403c", false));
 
         mColExam.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getExamType()));
-        mColExam.setCellFactory(col -> plainCell("#44403c", false));
+        mColExam.setCellFactory(col -> TableCellFactories.plainTextCell("#44403c", false));
 
         mColScore.setCellValueFactory(c -> {
             Mark m = c.getValue();
             return new ReadOnlyStringWrapper(m.getScore() + " / " + m.getFullMarks()
                     + "  (" + m.getPercentage() + "%)");
         });
-        mColScore.setCellFactory(col -> plainCell("#111111", true));
+        mColScore.setCellFactory(col -> TableCellFactories.plainTextCell("#111111", true));
 
         mColGrade.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getGrade()));
         mColGrade.setCellFactory(col -> new TableCell<Mark, String>() {
@@ -403,7 +405,7 @@ public class StudentDashboardController {
             String r = c.getValue().getRemarks();
             return new ReadOnlyStringWrapper(r == null || r.isBlank() ? "—" : r);
         });
-        mColRemarks.setCellFactory(col -> plainCell("#78716c", false));
+        mColRemarks.setCellFactory(col -> TableCellFactories.plainTextCell("#78716c", false));
 
         marksTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         marksTable.setPlaceholder(new Label("No marks recorded yet."));
@@ -422,10 +424,10 @@ public class StudentDashboardController {
 
     private void setupAttendanceTable() {
         aColSubject.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().subject()));
-        aColSubject.setCellFactory(col -> plainCell("#111111", true));
+        aColSubject.setCellFactory(col -> TableCellFactories.plainTextCell("#111111", true));
 
         aColTeacher.setCellValueFactory(c -> new ReadOnlyStringWrapper(Utils.formatName(c.getValue().teacher())));
-        aColTeacher.setCellFactory(col -> plainCell("#44403c", false));
+        aColTeacher.setCellFactory(col -> TableCellFactories.plainTextCell("#44403c", false));
 
         aColPct.setCellValueFactory(c -> new ReadOnlyStringWrapper(
                 String.format("%.1f%%", c.getValue().pct())));
@@ -469,41 +471,6 @@ public class StudentDashboardController {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private <T> TableCell<T, String> plainCell(String color, boolean bold) {
-        return new TableCell<T, String>() {
-            @Override protected void updateItem(String v, boolean empty) {
-                super.updateItem(v, empty);
-                if (empty || v == null) { setText(null); return; }
-                setText(v);
-                setStyle("-fx-font-size: 13px; -fx-font-weight: " + (bold ? "600" : "400")
-                        + "; -fx-text-fill: " + color + ";");
-            }
-        };
-    }
 
-    private String subjectIcon(String subject) {
-        if (subject == null) return "📚";
-        String s = subject.toLowerCase(Locale.ROOT);
-        if (s.contains("math"))                  return "Σ";
-        if (s.contains("chem"))                  return "⚗";
-        if (s.contains("phys"))                  return "⚛";
-        if (s.contains("hist"))                  return "🏛";
-        if (s.contains("eng"))                   return "📝";
-        if (s.contains("geo"))                   return "🌐";
-        if (s.contains("bio"))                   return "🧬";
-        if (s.contains("comp") || s.contains("it")) return "💻";
-        if (s.contains("sci"))                   return "🔬";
-        return "📚";
-    }
-
-    private String gradeFromPct(double pct) {
-        if (pct >= 90) return "A+";
-        if (pct >= 80) return "A";
-        if (pct >= 70) return "B+";
-        if (pct >= 60) return "B";
-        if (pct >= 50) return "C";
-        if (pct >= 40) return "D";
-        return "F";
-    }
 
 }

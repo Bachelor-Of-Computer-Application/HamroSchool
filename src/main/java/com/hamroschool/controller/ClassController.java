@@ -6,9 +6,7 @@ import java.util.Optional;
 
 import com.hamroschool.model.auth.UserAccount;
 import com.hamroschool.model.entity.SchoolClass;
-import com.hamroschool.service.AuthService;
 import com.hamroschool.service.ClassService;
-import com.hamroschool.service.impl.MongoAuthService;
 import com.hamroschool.service.impl.MongoClassService;
 import com.hamroschool.util.SceneSwitcher;
 import com.hamroschool.util.SessionContext;
@@ -33,7 +31,6 @@ import javafx.scene.layout.VBox;
 public class ClassController {
 
     private final ClassService classService = MongoClassService.getInstance();
-    private final AuthService authService = MongoAuthService.getInstance();
 
     // ── Cache for background-loaded data ──────────────────────────────────────
     private volatile List<SchoolClass> cachedClasses = List.of();

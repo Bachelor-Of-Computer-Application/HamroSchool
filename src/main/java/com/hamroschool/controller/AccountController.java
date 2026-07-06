@@ -59,7 +59,6 @@ public class AccountController {
     @FXML private Button nextButton;
     @FXML private Button logoutButton;
 
-    // ── Lifecycle ───────────────────────────────────────────────────────────
 
     @FXML
     public void initialize() {
@@ -73,10 +72,8 @@ public class AccountController {
         });
     }
 
-    // ── Table setup ─────────────────────────────────────────────────────────
 
     private void setupTable() {
-        // User column — avatar initials + display name
         userColumn.setCellValueFactory(cell -> new ReadOnlyObjectWrapper<>(cell.getValue()));
         userColumn.setCellFactory(col -> new TableCell<>() {
             @Override
@@ -94,7 +91,6 @@ public class AccountController {
                     "-fx-alignment: center;"
                 );
 
-                // Admin gets solid black; others get a lighter grey avatar
                 if (account.getRole() == UserRole.ADMIN) {
                     initialsLabel.setStyle(initialsLabel.getStyle());
                 } else {
@@ -117,7 +113,6 @@ public class AccountController {
             }
         });
 
-        // Username column — muted text
         usernameColumn.setCellValueFactory(cell -> new ReadOnlyStringWrapper(cell.getValue().getUsername()));
         usernameColumn.setCellFactory(col -> new TableCell<>() {
             @Override
@@ -129,7 +124,6 @@ public class AccountController {
             }
         });
 
-        // Role column — pill badge
         roleColumn.setCellValueFactory(cell -> new ReadOnlyStringWrapper(cell.getValue().getRole().getDisplayName()));
         roleColumn.setCellFactory(col -> new TableCell<>() {
             @Override
@@ -150,7 +144,6 @@ public class AccountController {
             }
         });
 
-        // Actions column — three-dot button
         actionsColumn.setCellValueFactory(cell -> new ReadOnlyObjectWrapper<>(cell.getValue()));
         actionsColumn.setCellFactory(col -> new TableCell<>() {
             @Override
@@ -179,11 +172,9 @@ public class AccountController {
         accountTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         accountTable.setPlaceholder(new Label("No accounts found"));
 
-        // Remove default table focus glow
         accountTable.setStyle("-fx-background-color: transparent;");
     }
 
-    // ── Data loading ─────────────────────────────────────────────────────────
 
     private void loadAccounts() {
         allAccounts.setAll(authService.getAccounts());
@@ -224,7 +215,6 @@ public class AccountController {
         nextButton.setDisable(currentPage >= totalPages - 1);
     }
 
-    // ── Header user badge ─────────────────────────────────────────────────────
 
     private void refreshCurrentUser() {
         SessionContext.getInstance().getCurrentUser().ifPresent(user -> {
@@ -233,7 +223,6 @@ public class AccountController {
         });
     }
 
-    // ── FXML handlers ─────────────────────────────────────────────────────────
 
     @FXML
     private void handlePrevPage() {
@@ -277,7 +266,4 @@ public class AccountController {
         SessionContext.getInstance().clear();
         SceneSwitcher.showView(logoutButton, "/com/hamroschool/hello-view.fxml", "Hamro School", 920, 720);
     }
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
-    // initials and formatDisplayName delegated to Utils
 }

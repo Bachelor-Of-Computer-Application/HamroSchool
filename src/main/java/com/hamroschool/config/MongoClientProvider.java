@@ -41,10 +41,8 @@ public final class MongoClientProvider {
 
     public static MongoClientProvider getInstance() { return INSTANCE; }
 
-    /** Returns the application MongoDB database. */
     public MongoDatabase getDatabase() { return database; }
 
-    /** Call once when the JavaFX application stops. */
     public void close() {
         client.close();
         System.out.println("[MongoClientProvider] Connection closed.");

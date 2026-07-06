@@ -15,6 +15,7 @@ import com.hamroschool.service.impl.MongoClassService;
 import com.hamroschool.service.impl.TeacherServiceImpl;
 import com.hamroschool.util.SceneSwitcher;
 import com.hamroschool.util.SessionContext;
+import com.hamroschool.util.Utils;
 
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
@@ -74,21 +75,16 @@ public class AdminController {
 
     @FXML
     public void initialize() {
-        // Role choice box
         roleChoiceBox.setItems(FXCollections.observableArrayList(UserRole.values()));
         roleChoiceBox.getSelectionModel().select(UserRole.TEACHER);
 
-        // Load available classes
         loadClasses();
 
-        // Subject field — shown only when TEACHER is selected
-        // Class field — shown for TEACHER and STUDENT
         updateFieldVisibility(roleChoiceBox.getValue());
         roleChoiceBox.getSelectionModel().selectedItemProperty().addListener(
             (obs, oldRole, newRole) -> updateFieldVisibility(newRole)
         );
 
-        // Table columns
         userColumn.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue()));
         usernameColumn.setCellValueFactory(cellData -> new ReadOnlyStringWrapper(cellData.getValue().getUsername()));
         roleColumn.setCellValueFactory(cellData -> new ReadOnlyStringWrapper(cellData.getValue().getRole().getDisplayName()));
@@ -100,10 +96,10 @@ public class AdminController {
                 super.updateItem(account, empty);
                 if (empty || account == null) { setGraphic(null); return; }
 
-                Label initials = new Label(getInitials(account.getUsername()));
+                Label initials = new Label(Utils.initials(account.getUsername()));
                 initials.setStyle("-fx-background-color: #111111; -fx-text-fill: white; -fx-font-size: 11px; -fx-font-weight: 800; -fx-background-radius: 999; -fx-min-width: 28; -fx-min-height: 28; -fx-pref-width: 28; -fx-pref-height: 28; -fx-alignment: center;");
 
-                Label name = new Label(formatDisplayName(account.getUsername()));
+                Label name = new Label(Utils.formatName(account.getUsername()));
                 name.setStyle("-fx-text-fill: #222222; -fx-font-size: 13px; -fx-font-weight: 700;");
 
                 HBox container = new HBox(10, initials, name);
@@ -189,7 +185,6 @@ public class AdminController {
         if (authService.createAccount(username, password, role)) {
             String className = classChoiceBox.getValue();
             
-            // If teacher, save subject and assign to class
             if (role == UserRole.TEACHER) {
                 String subject = subjectField.getText().trim();
                 if (!subject.isEmpty()) {
@@ -203,7 +198,6 @@ public class AdminController {
                     statusLabel.setText("Teacher account created for " + username + " — Subject: " + subject + " (no class assigned).");
                 }
             } 
-            // If student, enroll in class
             else if (role == UserRole.STUDENT) {
                 if (className != null && !className.isEmpty()) {
                     classService.enrollStudent(className, username);
@@ -212,7 +206,6 @@ public class AdminController {
                     statusLabel.setText("Student account created for " + username + " (not enrolled in any class).");
                 }
             }
-            // Admin
             else {
                 statusLabel.setText("Account created for " + username + " as " + role.getDisplayName() + ".");
             }
@@ -289,16 +282,5 @@ public class AdminController {
         summaryLabel.setText("Showing " + filteredAccounts.size() + " of " + allAccounts.size() + " accounts");
     }
 
-    private String getInitials(String username) {
-        if (username == null || username.isBlank()) return "?";
-        String[] parts = username.trim().split("\\s+");
-        if (parts.length == 1) return parts[0].substring(0, Math.min(2, parts[0].length())).toUpperCase(Locale.ROOT);
-        return (parts[0].substring(0, 1) + parts[1].substring(0, 1)).toUpperCase(Locale.ROOT);
-    }
 
-    private String formatDisplayName(String username) {
-        if (username == null || username.isBlank()) return "Unknown user";
-        String trimmed = username.trim();
-        return Character.toUpperCase(trimmed.charAt(0)) + trimmed.substring(1);
-    }
 }
