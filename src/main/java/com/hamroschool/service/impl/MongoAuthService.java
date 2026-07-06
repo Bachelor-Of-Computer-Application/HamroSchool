@@ -110,6 +110,17 @@ public final class MongoAuthService implements AuthService {
         return result;
     }
 
+    // ── Get users by role ─────────────────────────────────────────────────────
+
+    @Override
+    public synchronized List<UserAccount> getAllUsersByRole(UserRole role) {
+        List<UserAccount> result = new ArrayList<>();
+        for (Document doc : accounts.find(Filters.eq("role", role.name())).sort(new Document("username", 1))) {
+            result.add(toUserAccount(doc));
+        }
+        return result;
+    }
+
     // ── Change password ───────────────────────────────────────────────────────
 
     @Override

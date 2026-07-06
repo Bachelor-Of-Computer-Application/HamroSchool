@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import com.hamroschool.config.AppConfig;
 import com.hamroschool.config.MongoClientProvider;
+import com.hamroschool.service.DataInitializationService;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -14,8 +15,9 @@ public class HamroSchoolApplication extends Application {
 
     @Override
     public void start(Stage stage) throws IOException {
-        // Warm up the MongoDB connection early (fails fast if not running)
         MongoClientProvider.getInstance();
+        
+        DataInitializationService.getInstance().initializeAllData();
 
         FXMLLoader fxmlLoader = new FXMLLoader(
                 HamroSchoolApplication.class.getResource("/com/hamroschool/hello-view.fxml"));
@@ -27,7 +29,6 @@ public class HamroSchoolApplication extends Application {
 
     @Override
     public void stop() {
-        // Close MongoDB connection cleanly when the JavaFX window closes
         MongoClientProvider.getInstance().close();
     }
 

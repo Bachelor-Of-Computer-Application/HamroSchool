@@ -48,6 +48,15 @@
                                 </ImageView>
                             </graphic>
                         </Button>
+                        <Button alignment="CENTER_LEFT" graphicTextGap="12.0" onAction="#handleNavClasses" prefHeight="28.0" style="-fx-background-color: transparent; -fx-background-radius: 8; -fx-text-fill: #272727; -fx-font-size: 13px; -fx-font-weight: 600; -fx-padding: 10 14 10 14; -fx-cursor: hand;" text="Classes">
+                            <graphic>
+                                <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
+                                    <image>
+                                        <Image url="@assets/admin/aside/account.png" />
+                                    </image>
+                                </ImageView>
+                            </graphic>
+                        </Button>
                         <Button alignment="CENTER_LEFT" graphicTextGap="12.0" onAction="#handleNavTeachers" prefHeight="28.0" style="-fx-background-color: transparent; -fx-background-radius: 8; -fx-text-fill: #272727; -fx-font-size: 13px; -fx-font-weight: 600; -fx-padding: 10 14 10 14; -fx-cursor: hand;" text="Teachers">
                             <graphic>
                                 <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
@@ -228,6 +237,13 @@
                                             <children>
                                                 <Label style="-fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: #222222;" text="Subject" />
                                                 <TextField fx:id="subjectField" prefHeight="40.0" promptText="e.g. Mathematics" style="-fx-background-color: #fbfbfa; -fx-background-radius: 10; -fx-border-color: #e6e4df; -fx-border-radius: 10; -fx-padding: 0 12 0 12; -fx-font-size: 13px; -fx-text-fill: #222222; -fx-prompt-text-fill: #a0a0a0;" />
+                                            </children>
+                                        </VBox>
+
+                                        <VBox fx:id="classRow" spacing="8.0">
+                                            <children>
+                                                <Label style="-fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: #222222;" text="Class" />
+                                                <ChoiceBox fx:id="classChoiceBox" prefHeight="40.0" prefWidth="9999.0" style="-fx-background-color: #fbfbfa; -fx-background-radius: 10; -fx-border-color: #e6e4df; -fx-border-radius: 10; -fx-padding: 4 8 4 8;" />
                                             </children>
                                         </VBox>
 

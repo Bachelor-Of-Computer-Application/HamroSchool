@@ -1,13 +1,17 @@
 package com.hamroschool.controller;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
 import com.hamroschool.model.auth.UserAccount;
 import com.hamroschool.model.auth.UserRole;
+import com.hamroschool.model.entity.SchoolClass;
 import com.hamroschool.service.AuthService;
+import com.hamroschool.service.ClassService;
 import com.hamroschool.service.TeacherService;
 import com.hamroschool.service.impl.MongoAuthService;
+import com.hamroschool.service.impl.MongoClassService;
 import com.hamroschool.service.impl.TeacherServiceImpl;
 import com.hamroschool.util.SceneSwitcher;
 import com.hamroschool.util.SessionContext;
@@ -35,6 +39,7 @@ import javafx.scene.layout.VBox;
 public class AdminController {
     private final AuthService authService = MongoAuthService.getInstance();
     private final TeacherService teacherService = TeacherServiceImpl.getInstance();
+    private final ClassService classService = MongoClassService.getInstance();
     private final ObservableList<UserAccount> allAccounts = FXCollections.observableArrayList();
 
     private FilteredList<UserAccount> filteredAccounts;
@@ -51,6 +56,10 @@ public class AdminController {
     /** Container VBox for the subject row — shown only when TEACHER role is selected */
     @FXML private VBox subjectRow;
     @FXML private TextField subjectField;
+    
+    /** Container VBox for the class row — shown for TEACHER and STUDENT roles */
+    @FXML private VBox classRow;
+    @FXML private ChoiceBox<String> classChoiceBox;
 
     @FXML private Label statusLabel;
 
@@ -69,10 +78,14 @@ public class AdminController {
         roleChoiceBox.setItems(FXCollections.observableArrayList(UserRole.values()));
         roleChoiceBox.getSelectionModel().select(UserRole.TEACHER);
 
+        // Load available classes
+        loadClasses();
+
         // Subject field — shown only when TEACHER is selected
-        updateSubjectRowVisibility(roleChoiceBox.getValue());
+        // Class field — shown for TEACHER and STUDENT
+        updateFieldVisibility(roleChoiceBox.getValue());
         roleChoiceBox.getSelectionModel().selectedItemProperty().addListener(
-            (obs, oldRole, newRole) -> updateSubjectRowVisibility(newRole)
+            (obs, oldRole, newRole) -> updateFieldVisibility(newRole)
         );
 
         // Table columns
@@ -143,10 +156,28 @@ public class AdminController {
         refreshView();
     }
 
-    private void updateSubjectRowVisibility(UserRole role) {
+    private void loadClasses() {
+        List<SchoolClass> classes = classService.getAllClasses();
+        List<String> classNames = classes.stream()
+                .map(SchoolClass::getClassName)
+                .sorted()
+                .toList();
+        
+        classChoiceBox.setItems(FXCollections.observableArrayList(classNames));
+        if (!classNames.isEmpty()) {
+            classChoiceBox.getSelectionModel().selectFirst();
+        }
+    }
+
+    private void updateFieldVisibility(UserRole role) {
         boolean isTeacher = role == UserRole.TEACHER;
+        boolean isTeacherOrStudent = role == UserRole.TEACHER || role == UserRole.STUDENT;
+        
         subjectRow.setVisible(isTeacher);
         subjectRow.setManaged(isTeacher);
+        
+        classRow.setVisible(isTeacherOrStudent);
+        classRow.setManaged(isTeacherOrStudent);
     }
 
     @FXML
@@ -156,18 +187,36 @@ public class AdminController {
         UserRole role = roleChoiceBox.getValue();
 
         if (authService.createAccount(username, password, role)) {
-            // If teacher, also save the typed subject
+            String className = classChoiceBox.getValue();
+            
+            // If teacher, save subject and assign to class
             if (role == UserRole.TEACHER) {
                 String subject = subjectField.getText().trim();
                 if (!subject.isEmpty()) {
                     teacherService.saveTeacherSubject(username, subject);
-                    statusLabel.setText("Teacher account created for " + username + " — Subject: " + subject + ".");
-                } else {
-                    statusLabel.setText("Teacher account created for " + username + " (no subject assigned).");
                 }
-            } else {
+                
+                if (className != null && !className.isEmpty()) {
+                    classService.assignTeacher(className, username);
+                    statusLabel.setText("Teacher account created for " + username + " — Subject: " + subject + ", Class: " + className);
+                } else {
+                    statusLabel.setText("Teacher account created for " + username + " — Subject: " + subject + " (no class assigned).");
+                }
+            } 
+            // If student, enroll in class
+            else if (role == UserRole.STUDENT) {
+                if (className != null && !className.isEmpty()) {
+                    classService.enrollStudent(className, username);
+                    statusLabel.setText("Student account created for " + username + " — Enrolled in: " + className);
+                } else {
+                    statusLabel.setText("Student account created for " + username + " (not enrolled in any class).");
+                }
+            }
+            // Admin
+            else {
                 statusLabel.setText("Account created for " + username + " as " + role.getDisplayName() + ".");
             }
+            
             usernameField.clear();
             passwordField.clear();
             subjectField.clear();
@@ -181,6 +230,11 @@ public class AdminController {
     @FXML
     private void handleNavAccounts() {
         SceneSwitcher.showView(welcomeLabel, "/com/hamroschool/account-view.fxml", "Accounts", 1280, 860);
+    }
+
+    @FXML
+    private void handleNavClasses() {
+        SceneSwitcher.showView(welcomeLabel, "/com/hamroschool/class-view.fxml", "Classes", 1280, 860);
     }
 
     @FXML

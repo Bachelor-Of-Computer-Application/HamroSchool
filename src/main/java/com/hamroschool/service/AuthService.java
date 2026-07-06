@@ -14,6 +14,11 @@ public interface AuthService {
     List<UserAccount> getAccounts();
 
     /**
+     * Get all users with a specific role
+     */
+    List<UserAccount> getAllUsersByRole(UserRole role);
+
+    /**
      * Updates the password for an existing account.
      *
      * @return {@code true} if the account was found and the password updated,
