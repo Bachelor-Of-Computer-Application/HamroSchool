@@ -32,11 +32,9 @@ public class ClassController {
 
     private final ClassService classService = MongoClassService.getInstance();
 
-    // ── Cache for background-loaded data ──────────────────────────────────────
     private volatile List<SchoolClass> cachedClasses = List.of();
     private volatile boolean dataLoaded = false;
 
-    // ── FXML injections ───────────────────────────────────────────────────────
     @FXML private Label userInitialsLabel;
     @FXML private Label userNameLabel;
     @FXML private Button logoutButton;
@@ -52,7 +50,6 @@ public class ClassController {
     @FXML private TableColumn<SchoolClass, String> colCreatedDate;
     @FXML private TableColumn<SchoolClass, SchoolClass> colActions;
 
-    // ── Class details pane ────────────────────────────────────────────────────
     @FXML private VBox detailsPane;
     @FXML private Label detailsClassName;
     @FXML private Label detailsTeacherCount;
@@ -75,7 +72,6 @@ public class ClassController {
 
     private SchoolClass selectedClass;
 
-    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     @FXML
     public void initialize() {
@@ -92,7 +88,6 @@ public class ClassController {
         searchField.textProperty().addListener((obs, o, n) -> filterClasses(n));
         addClassBtn.setOnAction(e -> handleAddClass());
         
-        // Load data in background
         Thread loader = new Thread(() -> {
             try {
                 List<SchoolClass> classes = classService.getAllClasses();
@@ -109,7 +104,6 @@ public class ClassController {
         loader.start();
     }
 
-    // ── Table setup ───────────────────────────────────────────────────────────
 
     private void setupClassTable() {
         colClassName.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getClassName()));
@@ -205,7 +199,6 @@ public class ClassController {
     }
 
     private void setupDetailsTable() {
-        // Teachers table
         colTeacherName.setCellValueFactory(c -> new ReadOnlyStringWrapper(Utils.formatName(c.getValue())));
         colTeacherActions.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue()));
         colTeacherActions.setCellFactory(col -> new TableCell<>() {
@@ -230,7 +223,6 @@ public class ClassController {
             }
         });
 
-        // Students table
         colStudentName.setCellValueFactory(c -> new ReadOnlyStringWrapper(Utils.formatName(c.getValue())));
         colStudentActions.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue()));
         colStudentActions.setCellFactory(col -> new TableCell<>() {
@@ -262,7 +254,6 @@ public class ClassController {
         closeDetailsBtn.setOnAction(e -> hideClassDetails());
     }
 
-    // ── Data loading ──────────────────────────────────────────────────────────
 
     private void loadClasses() {
         if (!dataLoaded) return;
@@ -282,7 +273,6 @@ public class ClassController {
         classSummaryLabel.setText("Showing " + filtered.size() + " of " + cachedClasses.size() + " classes");
     }
 
-    // ── Actions ───────────────────────────────────────────────────────────────
 
     @FXML
     private void handleAddClass() {
@@ -470,7 +460,6 @@ public class ClassController {
         SceneSwitcher.showView(logoutButton, "/com/hamroschool/hello-view.fxml", "Hamro School", 920, 720);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private void refreshData() {
         Thread loader = new Thread(() -> {
@@ -503,5 +492,31 @@ public class ClassController {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+
+    @FXML
+    private void handleNavDashboard() {
+        SceneSwitcher.showView(userNameLabel, "/com/hamroschool/admin-view.fxml", "Admin Dashboard", 1280, 860);
+    }
+
+    @FXML
+    private void handleNavAccounts() {
+        SceneSwitcher.showView(userNameLabel, "/com/hamroschool/account-view.fxml", "Accounts", 1280, 860);
+    }
+
+    @FXML
+    private void handleNavTeachers() {
+        SceneSwitcher.showView(userNameLabel, "/com/hamroschool/teacher-view.fxml", "Teachers", 1280, 860);
+    }
+
+    @FXML
+    private void handleNavStudents() {
+        SceneSwitcher.showView(userNameLabel, "/com/hamroschool/student-view.fxml", "Students", 1280, 860);
+    }
+
+    @FXML
+    private void handleNavSettings() {
+        SceneSwitcher.showView(userNameLabel, "/com/hamroschool/settings-view.fxml", "Settings", 1280, 860);
     }
 }

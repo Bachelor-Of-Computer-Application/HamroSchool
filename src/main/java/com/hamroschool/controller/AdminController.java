@@ -54,11 +54,9 @@ public class AdminController {
     @FXML private PasswordField passwordField;
     @FXML private ChoiceBox<UserRole> roleChoiceBox;
 
-    /** Container VBox for the subject row — shown only when TEACHER role is selected */
     @FXML private VBox subjectRow;
     @FXML private TextField subjectField;
     
-    /** Container VBox for the class row — shown for TEACHER and STUDENT roles */
     @FXML private VBox classRow;
     @FXML private ChoiceBox<String> classChoiceBox;
 
@@ -156,7 +154,15 @@ public class AdminController {
         List<SchoolClass> classes = classService.getAllClasses();
         List<String> classNames = classes.stream()
                 .map(SchoolClass::getClassName)
-                .sorted()
+                .sorted((a, b) -> {
+                    try {
+                        int numA = Integer.parseInt(a.replaceAll("\\D+", ""));
+                        int numB = Integer.parseInt(b.replaceAll("\\D+", ""));
+                        return Integer.compare(numA, numB);
+                    } catch (NumberFormatException e) {
+                        return a.compareTo(b); 
+                    }
+                })
                 .toList();
         
         classChoiceBox.setItems(FXCollections.observableArrayList(classNames));
