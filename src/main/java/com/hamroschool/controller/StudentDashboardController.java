@@ -31,39 +31,34 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 public class StudentDashboardController {
 
-    // ── Services ──────────────────────────────────────────────────────────────
     private final MarkService       markService       = MarkServiceImpl.getInstance();
     private final AttendanceService attendanceService = AttendanceServiceImpl.getInstance();
     private final TeacherService    teacherService    = TeacherServiceImpl.getInstance();
 
     private String studentUsername;
 
-    // ── Cache — populated ONCE in background thread ────────────────────────
     private volatile List<Mark>          cachedMarks          = List.of();
     private volatile Map<String, String> cachedSubjectTeacher = Map.of();
     private volatile boolean             dataLoaded           = false;
     
-    // ── Pre-computed aggregations for instant access ─────────────────────────
     private volatile Map<String, List<Mark>> marksBySubject   = Map.of();
     private volatile List<AttendanceRow>     attendanceRows   = List.of();
     private volatile double                  cachedAvgGrade   = 0.0;
     private volatile double                  cachedAvgAtt     = 0.0;
 
-    // ── Row models ────────────────────────────────────────────────────────────
     public record CourseRow(String subject, String teacher, double avgPct, String grade) {}
-    public record AttendanceRow(String subject, String teacher, double pct) {}
+    public record AttendanceRow(String subject, String teacher, double pct, int presentDays, int absentDays, int lateDays) {}
 
-    // ── Pagination ────────────────────────────────────────────────────────────
     private static final int PAGE_SIZE = 5;
     private final ObservableList<CourseRow> allCourses = FXCollections.observableArrayList();
     private List<CourseRow> filteredCourses = List.of();
     private int currentPage = 0;
 
-    // ── FXML injections ───────────────────────────────────────────────────────
     @FXML private Label  welcomeSubLabel;
     @FXML private Label  userInitialsLabel;
     @FXML private Label  userNameLabel;
@@ -73,17 +68,14 @@ public class StudentDashboardController {
     @FXML private Button navGradesBtn;
     @FXML private Button navAttendanceBtn;
 
-    // stat cards
     @FXML private Label statSubjectsLabel;
     @FXML private Label statGradeLabel;
     @FXML private Label statAttLabel;
 
-    // panes
     @FXML private VBox dashboardPane;
     @FXML private VBox gradesPane;
     @FXML private VBox attendancePane;
 
-    // courses table
     @FXML private TextField                      searchField;
     @FXML private TableView<CourseRow>           coursesTable;
     @FXML private TableColumn<CourseRow, String> cColCourse;
@@ -93,7 +85,6 @@ public class StudentDashboardController {
     @FXML private Button                         prevButton;
     @FXML private Button                         nextButton;
 
-    // grades table
     @FXML private TableView<Mark>           marksTable;
     @FXML private TableColumn<Mark, String> mColSubject;
     @FXML private TableColumn<Mark, String> mColTeacher;
@@ -103,15 +94,13 @@ public class StudentDashboardController {
     @FXML private TableColumn<Mark, String> mColRemarks;
     @FXML private Label                     marksSummaryLabel;
 
-    // attendance table
-    @FXML private TableView<AttendanceRow>           attTable;
-    @FXML private TableColumn<AttendanceRow, String> aColSubject;
-    @FXML private TableColumn<AttendanceRow, String> aColTeacher;
-    @FXML private TableColumn<AttendanceRow, String> aColPct;
-    @FXML private TableColumn<AttendanceRow, String> aColStatus;
-    @FXML private Label                              attSummaryLabel;
+    @FXML private Label attTodayLabel;
+    @FXML private Label attStatTotalLabel;
+    @FXML private Label attStatPresentLabel;
+    @FXML private Label attStatRateLabel;
+    @FXML private Label attDateLabel;
+    @FXML private VBox  subjectGridContainer;
 
-    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     @FXML
     public void initialize() {
@@ -129,7 +118,6 @@ public class StudentDashboardController {
 
         showDashboard();
 
-        // Load ALL MongoDB data once on a background thread — UI never blocks
         Thread loader = new Thread(() -> {
             try {
                 long startTime = System.currentTimeMillis();
@@ -138,19 +126,32 @@ public class StudentDashboardController {
 
                 java.util.LinkedHashMap<String, String> subTeach = new java.util.LinkedHashMap<>();
                 java.util.LinkedHashMap<String, Double> attMap   = new java.util.LinkedHashMap<>();
+                // Store per-subject status counts [present, absent, late]
+                java.util.LinkedHashMap<String, int[]> statusCountMap = new java.util.LinkedHashMap<>();
 
                 for (var teacher : teacherService.getAllTeachers()) {
                     String tName   = teacher.getUsername();
                     String subject = teacherService.getSubject(tName).orElse(null);
                     if (subject == null || subject.isBlank()) continue;
                     subTeach.putIfAbsent(subject, tName);
+
                     Double pct = attendanceService
                             .getAttendancePercentages(tName, subject)
                             .get(studentUsername);
-                    if (pct != null) attMap.put(subject, pct);
+                    if (pct != null) {
+                        attMap.put(subject, pct);
+
+                        // Get totals: [attended(present+late), total]
+                        int[] totals = attendanceService.getAttendanceTotals(tName, subject)
+                                .getOrDefault(studentUsername, new int[]{0, 0});
+                        int totalDays   = totals[1];
+                        int attendedDays = totals[0]; // present + late
+                        int absentDays  = totalDays - attendedDays;
+                        // Without separate late tracking, show attended as present
+                        statusCountMap.put(subject, new int[]{attendedDays, absentDays, 0});
+                    }
                 }
 
-                // Pre-compute aggregations
                 Map<String, List<Mark>> bySubject = marks.stream()
                         .filter(m -> m.getSubjectName() != null && !m.getSubjectName().isBlank())
                         .collect(Collectors.groupingBy(Mark::getSubjectName));
@@ -165,7 +166,8 @@ public class StudentDashboardController {
                 for (Map.Entry<String, Double> e : attMap.entrySet()) {
                     String subject = e.getKey();
                     String teacher = subTeach.getOrDefault(subject, "—");
-                    attRows.add(new AttendanceRow(subject, teacher, e.getValue()));
+                    int[] pal = statusCountMap.getOrDefault(subject, new int[]{0, 0, 0});
+                    attRows.add(new AttendanceRow(subject, teacher, e.getValue(), pal[0], pal[1], pal[2]));
                 }
 
                 cachedMarks          = marks;
@@ -193,7 +195,6 @@ public class StudentDashboardController {
         loader.start();
     }
 
-    // ── Nav handlers ──────────────────────────────────────────────────────────
 
     @FXML private void handleNavDashboard()  { showDashboard(); }
     @FXML private void handleNavGrades()     { showGrades(); }
@@ -214,7 +215,6 @@ public class StudentDashboardController {
         if (currentPage < total - 1) { currentPage++; renderPage(); }
     }
 
-    // ── Pane switching ────────────────────────────────────────────────────────
 
     private void showDashboard() {
         setPane(dashboardPane);
@@ -250,24 +250,19 @@ public class StudentDashboardController {
             b.setStyle(b == active ? on : off);
     }
 
-    // ── Stats ─────────────────────────────────────────────────────────────────
 
     private void refreshStats() {
         if (!dataLoaded) return;
 
-        // Subjects = union of assigned subjects + subjects with marks
         java.util.LinkedHashSet<String> subjects = new java.util.LinkedHashSet<>(cachedSubjectTeacher.keySet());
         subjects.addAll(marksBySubject.keySet());
         statSubjectsLabel.setText(String.valueOf(subjects.size()));
 
-        // Use pre-computed average grade
         statGradeLabel.setText(cachedAvgGrade >= 0 ? TableUtils.percentageToGrade(cachedAvgGrade) : "—");
 
-        // Use pre-computed average attendance
         statAttLabel.setText(cachedAvgAtt >= 0 ? String.format("%.0f%%", cachedAvgAtt) : "—");
     }
 
-    // ── Courses table ─────────────────────────────────────────────────────────
 
     private void loadCourses() {
         if (!dataLoaded) return;
@@ -320,7 +315,6 @@ public class StudentDashboardController {
     }
 
     private void setupCoursesTable() {
-        // Course: icon + name
         cColCourse.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().subject()));
         cColCourse.setCellFactory(col -> new TableCell<CourseRow, String>() {
             @Override protected void updateItem(String subject, boolean empty) {
@@ -336,11 +330,9 @@ public class StudentDashboardController {
             }
         });
 
-        // Instructor
         cColInstructor.setCellValueFactory(c -> new ReadOnlyStringWrapper(Utils.formatName(c.getValue().teacher())));
         cColInstructor.setCellFactory(col -> TableCellFactories.plainTextCell("#44403c", false));
 
-        // Grade badge
         cColGrade.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().grade()));
         cColGrade.setCellFactory(col -> new TableCell<CourseRow, String>() {
             @Override protected void updateItem(String grade, boolean empty) {
@@ -360,7 +352,6 @@ public class StudentDashboardController {
         coursesTable.setStyle("-fx-background-color: transparent;");
     }
 
-    // ── Grades table ──────────────────────────────────────────────────────────
 
     private void loadMarks() {
         if (!dataLoaded) return;
@@ -412,65 +403,130 @@ public class StudentDashboardController {
         marksTable.setStyle("-fx-background-color: transparent;");
     }
 
-    // ── Attendance table ──────────────────────────────────────────────────────
 
     private void loadAttendance() {
         if (!dataLoaded) return;
-        attTable.setItems(FXCollections.observableArrayList(attendanceRows));
-        attSummaryLabel.setText(attendanceRows.isEmpty()
-                ? "No attendance records found."
-                : "Showing " + attendanceRows.size() + " subject" + (attendanceRows.size() == 1 ? "" : "s"));
+        
+        // Update stats
+        int totalSubjects = attendanceRows.size();
+        long presentCount = attendanceRows.stream().filter(r -> r.pct() >= 75).count();
+        double avgRate = attendanceRows.isEmpty() ? 0 :
+            attendanceRows.stream().mapToDouble(AttendanceRow::pct).average().orElse(0);
+        
+        attStatTotalLabel.setText(String.valueOf(totalSubjects));
+        attStatPresentLabel.setText(String.valueOf(presentCount));
+        attStatRateLabel.setText(String.format("%.0f%%", avgRate));
+
+        java.time.format.DateTimeFormatter fmt = java.time.format.DateTimeFormatter.ofPattern("MMM d, yyyy");
+        attDateLabel.setText(java.time.LocalDate.now().format(fmt));
+        attTodayLabel.setText(java.time.LocalDate.now().format(fmt));
+
+        subjectGridContainer.getChildren().clear();
+
+        for (int i = 0; i < attendanceRows.size(); i += 2) {
+            HBox row = new HBox(14);
+
+            AttendanceRow att1 = attendanceRows.get(i);
+            VBox card1 = createSubjectCard(att1);
+            card1.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(card1, javafx.scene.layout.Priority.ALWAYS);
+            row.getChildren().add(card1);
+
+            if (i + 1 < attendanceRows.size()) {
+                AttendanceRow att2 = attendanceRows.get(i + 1);
+                VBox card2 = createSubjectCard(att2);
+                card2.setMaxWidth(Double.MAX_VALUE);
+                HBox.setHgrow(card2, javafx.scene.layout.Priority.ALWAYS);
+                row.getChildren().add(card2);
+            } else {
+                Region spacer = new Region();
+                spacer.setMaxWidth(Double.MAX_VALUE);
+                HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+                row.getChildren().add(spacer);
+            }
+
+            subjectGridContainer.getChildren().add(row);
+        }
+
+        if (attendanceRows.isEmpty()) {
+            Label empty = new Label("No attendance records found.");
+            empty.setStyle("-fx-text-fill: #78716c; -fx-font-size: 13px; -fx-padding: 20;");
+            subjectGridContainer.getChildren().add(empty);
+        }
+    }
+
+    private VBox createSubjectCard(AttendanceRow att) {
+        VBox card = new VBox(14);
+        card.setStyle("-fx-background-color: white; -fx-background-radius: 12; " +
+                      "-fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 18; " +
+                      "-fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);");
+
+        // Header: sbject name + badge
+        HBox header = new HBox();
+        header.setAlignment(Pos.CENTER_LEFT);
+
+        Label subjectName = new Label(att.subject());
+        subjectName.setStyle("-fx-font-size: 15px; -fx-font-weight: 800; -fx-text-fill: #111111;");
+        HBox.setHgrow(subjectName, javafx.scene.layout.Priority.ALWAYS);
+
+        String badgeText = att.pct() >= 75 ? "Good" : att.pct() >= 50 ? "At Risk" : "Critical";
+        String badgeBg   = att.pct() >= 75 ? "#dcfce7" : att.pct() >= 50 ? "#fef9c3" : "#fee2e2";
+        String badgeFg   = att.pct() >= 75 ? "#16a34a" : att.pct() >= 50 ? "#a16207" : "#dc2626";
+        Label badge = new Label(badgeText);
+        badge.setStyle("-fx-background-color: " + badgeBg + "; -fx-text-fill: " + badgeFg + "; " +
+                       "-fx-font-size: 11px; -fx-font-weight: 700; -fx-padding: 4 10; " +
+                       "-fx-background-radius: 999;");
+        header.getChildren().addAll(subjectName, badge);
+
+        HBox tiles = new HBox(8);
+
+        VBox presentTile = createStatTile("✓", "Present",
+                att.presentDays() + " days",
+                "#e8f5e9", "#16a34a");
+        VBox absentTile = createStatTile("✕", "Absent",
+                att.absentDays() + " days",
+                "#ffebee", "#dc2626");
+        VBox lateTile = createStatTile("⏱", "Late",
+                att.lateDays() + " days",
+                "#fff9e6", "#d97706");
+
+        for (VBox tile : new VBox[]{presentTile, absentTile, lateTile}) {
+            tile.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(tile, javafx.scene.layout.Priority.ALWAYS);
+        }
+        tiles.getChildren().addAll(presentTile, absentTile, lateTile);
+
+        card.getChildren().addAll(header, tiles);
+        return card;
+    }
+
+    private VBox createStatTile(String icon, String label, String days,
+                                String bgColor, String fgColor) {
+        VBox tile = new VBox(6);
+        tile.setAlignment(Pos.CENTER);
+        tile.setStyle("-fx-background-color: " + bgColor + "; -fx-background-radius: 10; -fx-padding: 14 8;");
+
+        Label iconLabel = new Label(icon);
+        iconLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: " + fgColor + ";");
+        iconLabel.setAlignment(Pos.CENTER);
+        iconLabel.setMaxWidth(Double.MAX_VALUE);
+
+        Label textLabel = new Label(label);
+        textLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: 700; -fx-text-fill: " + fgColor + ";");
+        textLabel.setAlignment(Pos.CENTER);
+        textLabel.setMaxWidth(Double.MAX_VALUE);
+
+        Label daysLabel = new Label(days);
+        daysLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #78716c;");
+        daysLabel.setAlignment(Pos.CENTER);
+        daysLabel.setMaxWidth(Double.MAX_VALUE);
+
+        tile.getChildren().addAll(iconLabel, textLabel, daysLabel);
+        return tile;
     }
 
     private void setupAttendanceTable() {
-        aColSubject.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().subject()));
-        aColSubject.setCellFactory(col -> TableCellFactories.plainTextCell("#111111", true));
-
-        aColTeacher.setCellValueFactory(c -> new ReadOnlyStringWrapper(Utils.formatName(c.getValue().teacher())));
-        aColTeacher.setCellFactory(col -> TableCellFactories.plainTextCell("#44403c", false));
-
-        aColPct.setCellValueFactory(c -> new ReadOnlyStringWrapper(
-                String.format("%.1f%%", c.getValue().pct())));
-        aColPct.setCellFactory(col -> new TableCell<AttendanceRow, String>() {
-            @Override protected void updateItem(String v, boolean empty) {
-                super.updateItem(v, empty);
-                if (empty || v == null) { setText(null); return; }
-                double pct = Double.parseDouble(v.replace("%", ""));
-                String color = pct >= 75 ? "#16a34a" : pct >= 50 ? "#d97706" : "#dc2626";
-                setText(v);
-                setStyle("-fx-font-weight: 700; -fx-font-size: 13px; -fx-text-fill: " + color + ";");
-            }
-        });
-
-        aColStatus.setCellValueFactory(c -> {
-            double p = c.getValue().pct();
-            return new ReadOnlyStringWrapper(p >= 75 ? "Good" : p >= 50 ? "At Risk" : "Critical");
-        });
-        aColStatus.setCellFactory(col -> new TableCell<AttendanceRow, String>() {
-            @Override protected void updateItem(String s, boolean empty) {
-                super.updateItem(s, empty);
-                if (empty || s == null) { setGraphic(null); setText(null); return; }
-                Label badge = new Label(s);
-                String bg, fg;
-                switch (s) {
-                    case "Good"    -> { bg = "#dcfce7"; fg = "#16a34a"; }
-                    case "At Risk" -> { bg = "#fef9c3"; fg = "#a16207"; }
-                    default        -> { bg = "#fee2e2"; fg = "#dc2626"; }
-                }
-                badge.setStyle("-fx-background-color:" + bg + "; -fx-text-fill:" + fg
-                        + "; -fx-padding:4 12 4 12; -fx-background-radius:999; "
-                        + "-fx-font-size:12px; -fx-font-weight:700;");
-                setGraphic(badge); setText(null);
-            }
-        });
-
-        attTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
-        attTable.setPlaceholder(new Label("No attendance records found."));
-        attTable.setStyle("-fx-background-color: transparent;");
+        // No longer using table view - will build subject cards dynamically in showAttendance()
     }
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
-
 
 }
