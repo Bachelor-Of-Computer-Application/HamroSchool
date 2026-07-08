@@ -135,6 +135,12 @@ public class AdminController {
         employmentStatusChoiceBox.setItems(FXCollections.observableArrayList("Full-time", "Part-time", "Contract"));
         guardianRelationChoiceBox.setItems(FXCollections.observableArrayList("Father", "Mother", "Guardian", "Other"));
 
+        classChoiceBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && rollNumberField != null) {
+                updateRollNumberForClass(newVal);
+            }
+        });
+
         setupTableColumns();
         accountTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         accountTable.setPlaceholder(new Label("No accounts found"));
@@ -336,7 +342,10 @@ public class AdminController {
         if (phoneField != null) phoneField.clear();
         if (studentEmailField != null) studentEmailField.clear();
         if (addressField != null) addressField.clear();
-        if (rollNumberField != null) rollNumberField.clear();
+        if (rollNumberField != null) {
+            // Roll number will be set when a class is selected
+            rollNumberField.clear();
+        }
         if (academicSessionField != null) academicSessionField.clear();
         if (guardianNameField != null) guardianNameField.clear();
         if (guardianPhoneField != null) guardianPhoneField.clear();
@@ -498,6 +507,49 @@ public class AdminController {
                 }).toList();
         classChoiceBox.setItems(FXCollections.observableArrayList(names));
         if (!names.isEmpty()) classChoiceBox.getSelectionModel().selectFirst();
+    }
+
+    /**
+     * Updates the roll number field based on the highest roll number in the selected class.
+     * If the class has no students, roll number starts at 1.
+     * If the class has students, roll number is max(existing roll numbers) + 1.
+     */
+    private void updateRollNumberForClass(String className) {
+        var classOpt = classService.getClassByName(className);
+        if (classOpt.isEmpty()) {
+            rollNumberField.setText("1");
+            return;
+        }
+
+        SchoolClass schoolClass = classOpt.get();
+        List<String> enrolledStudents = schoolClass.getEnrolledStudents();
+        
+        if (enrolledStudents == null || enrolledStudents.isEmpty()) {
+            rollNumberField.setText("1");
+            return;
+        }
+
+        int maxRollNumber = 0;
+        for (String studentUsername : enrolledStudents) {
+            var studentAccount = allAccounts.stream()
+                    .filter(a -> a.getUsername().equals(studentUsername) && 
+                                 a.getRole() == com.hamroschool.model.auth.UserRole.STUDENT)
+                    .findFirst();
+            
+            if (studentAccount.isPresent()) {
+                String rollNoStr = studentAccount.get().getRollNumber();
+                if (rollNoStr != null && !rollNoStr.isEmpty()) {
+                    try {
+                        int rollNo = Integer.parseInt(rollNoStr);
+                        maxRollNumber = Math.max(maxRollNumber, rollNo);
+                    } catch (NumberFormatException e) {
+                        // Ignore non-numeric roll numbers
+                    }
+                }
+            }
+        }
+
+        rollNumberField.setText(String.valueOf(maxRollNumber + 1));
     }
 
 
