@@ -151,7 +151,7 @@ public class AccountController {
                 ImageView dotIcon = new ImageView(new Image(
                     Objects.requireNonNull(
                         getClass().getResourceAsStream(
-                            "/com/hamroschool/images/account-dashboard/3dot-icon.png"))));
+                            "/com/hamroschool/assets/admin/account/three-dot.png"))));
                 dotIcon.setFitHeight(16);
                 dotIcon.setFitWidth(16);
                 dotIcon.setPreserveRatio(true);
