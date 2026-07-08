@@ -94,7 +94,6 @@
                 <VBox spacing="0" style="-fx-background-color: #f5f5f4;">
                     <children>
 
-                        <!-- Top Header -->
                         <VBox style="-fx-background-color: white; -fx-border-color: #e7e5e4; -fx-border-width: 0 0 1 0; -fx-padding: 20 28 20 28;">
                             <children>
                                 <HBox alignment="CENTER_LEFT">
@@ -102,10 +101,10 @@
                                         <VBox spacing="3.0" HBox.hgrow="ALWAYS">
                                             <children>
                                                 <Label style="-fx-font-size: 22px; -fx-font-weight: 800; -fx-text-fill: #111111;"
-                                                       text="Dashboard" />
+                                                       text="Student Dashboard" />
                                                 <Label fx:id="welcomeSubLabel"
                                                        style="-fx-font-size: 13px; -fx-text-fill: #78716c;"
-                                                       text="Overview of academic performance, attendance trends, and upcoming priorities." />
+                                                       text="Welcome back — here's your learning overview" />
                                             </children>
                                         </VBox>
                                         <HBox alignment="CENTER_LEFT" spacing="8.0"
@@ -113,15 +112,10 @@
                                             <children>
                                                 <Label fx:id="userInitialsLabel"
                                                        style="-fx-background-color: #111111; -fx-background-radius: 999; -fx-text-fill: white; -fx-font-size: 11px; -fx-font-weight: 800; -fx-min-width: 28; -fx-min-height: 28; -fx-pref-width: 28; -fx-pref-height: 28; -fx-alignment: center;"
-                                                       text="PO" />
-                                                <VBox>
-                                                    <children>
-                                                        <Label fx:id="userNameLabel"
-                                                               style="-fx-text-fill: #111111; -fx-font-size: 13px; -fx-font-weight: 700;"
-                                                               text="Pokemon" />
-                                                        <Label style="-fx-text-fill: #78716c; -fx-font-size: 10px;" text="Student" />
-                                                    </children>
-                                                </VBox>
+                                                       text="ST" />
+                                                <Label fx:id="userNameLabel"
+                                                       style="-fx-text-fill: #111111; -fx-font-size: 13px; -fx-font-weight: 700;"
+                                                       text="Student" />
                                             </children>
                                         </HBox>
                                     </children>
@@ -129,14 +123,11 @@
                             </children>
                         </VBox>
 
-                        <!-- Main Content Area -->
                         <VBox spacing="20.0" style="-fx-padding: 24 28 28 28;">
                             <children>
 
-                                <!-- Top 3 Stats Cards -->
                                 <HBox fx:id="statCardsBox" spacing="16.0">
                                     <children>
-                                        <!-- Total Subjects Card -->
                                         <VBox HBox.hgrow="ALWAYS" spacing="10.0"
                                               style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 18; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
                                             <children>
@@ -144,7 +135,7 @@
                                                     <children>
                                                         <VBox spacing="2.0" HBox.hgrow="ALWAYS">
                                                             <children>
-                                                                <Label style="-fx-text-fill: #78716c; -fx-font-size: 12px;" text="Total Subjects" />
+                                                                <Label style="-fx-text-fill: #78716c; -fx-font-size: 12px;" text="Enrolled Courses" />
                                                             </children>
                                                         </VBox>
                                                         <StackPane style="-fx-background-color: #f5f5f4; -fx-background-radius: 8; -fx-min-width: 34; -fx-min-height: 34; -fx-pref-width: 34; -fx-pref-height: 34;">
@@ -154,11 +145,9 @@
                                                         </StackPane>
                                                     </children>
                                                 </HBox>
-                                                <Label fx:id="statSubjectsLabel" style="-fx-text-fill: #111111; -fx-font-size: 32px; -fx-font-weight: 800;" text="8" />
+                                                <Label fx:id="statSubjectsLabel" style="-fx-text-fill: #111111; -fx-font-size: 32px; -fx-font-weight: 800;" text="—" />
                                             </children>
                                         </VBox>
-
-                                        <!-- Attendance Rate Card -->
                                         <VBox HBox.hgrow="ALWAYS" spacing="10.0"
                                               style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 18; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
                                             <children>
@@ -166,207 +155,98 @@
                                                     <children>
                                                         <VBox spacing="2.0" HBox.hgrow="ALWAYS">
                                                             <children>
-                                                                <Label style="-fx-text-fill: #78716c; -fx-font-size: 12px;" text="Overall" />
-                                                                <Label style="-fx-text-fill: #78716c; -fx-font-size: 12px;" text="Attendance Rate" />
+                                                                <Label style="-fx-text-fill: #78716c; -fx-font-size: 12px;" text="Average Grade" />
                                                             </children>
                                                         </VBox>
-                                                        <StackPane style="-fx-background-color: #f0fdf4; -fx-background-radius: 8; -fx-min-width: 34; -fx-min-height: 34; -fx-pref-width: 34; -fx-pref-height: 34;">
-                                                            <Label style="-fx-text-fill: #16a34a; -fx-font-size: 18px;" text="✓" />
-                                                        </StackPane>
-                                                    </children>
-                                                </HBox>
-                                                <Label fx:id="statAttLabel" style="-fx-text-fill: #111111; -fx-font-size: 32px; -fx-font-weight: 800;" text="87%" />
-                                            </children>
-                                        </VBox>
-
-                                        <!-- GPA Card -->
-                                        <VBox HBox.hgrow="ALWAYS" spacing="10.0"
-                                              style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 18; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
-                                            <children>
-                                                <HBox alignment="CENTER_LEFT">
-                                                    <children>
-                                                        <VBox spacing="2.0" HBox.hgrow="ALWAYS">
-                                                            <children>
-                                                                <Label style="-fx-text-fill: #78716c; -fx-font-size: 12px;" text="Overall Grade /" />
-                                                                <Label style="-fx-text-fill: #78716c; -fx-font-size: 12px;" text="GPA" />
-                                                            </children>
-                                                        </VBox>
-                                                        <StackPane style="-fx-background-color: #eff6ff; -fx-background-radius: 8; -fx-min-width: 34; -fx-min-height: 34; -fx-pref-width: 34; -fx-pref-height: 34;">
+                                                        <StackPane style="-fx-background-color: #f5f5f4; -fx-background-radius: 8; -fx-min-width: 34; -fx-min-height: 34; -fx-pref-width: 34; -fx-pref-height: 34;">
                                                             <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
                                                                 <image><Image url="@assets/student-portal/grades/highestgrade.png" /></image>
                                                             </ImageView>
                                                         </StackPane>
                                                     </children>
                                                 </HBox>
-                                                <Label fx:id="statGradeLabel" style="-fx-text-fill: #111111; -fx-font-size: 32px; -fx-font-weight: 800;" text="3.8" />
+                                                <Label fx:id="statGradeLabel" style="-fx-text-fill: #111111; -fx-font-size: 32px; -fx-font-weight: 800;" text="—" />
+                                            </children>
+                                        </VBox>
+                                        <VBox HBox.hgrow="ALWAYS" spacing="10.0"
+                                              style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 18; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
+                                            <children>
+                                                <HBox alignment="CENTER_LEFT">
+                                                    <children>
+                                                        <VBox spacing="2.0" HBox.hgrow="ALWAYS">
+                                                            <children>
+                                                                <Label style="-fx-text-fill: #78716c; -fx-font-size: 12px;" text="Attendance" />
+                                                            </children>
+                                                        </VBox>
+                                                        <StackPane style="-fx-background-color: #f5f5f4; -fx-background-radius: 8; -fx-min-width: 34; -fx-min-height: 34; -fx-pref-width: 34; -fx-pref-height: 34;">
+                                                            <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
+                                                                <image><Image url="@assets/student-portal/grades/lowestgrade.png" /></image>
+                                                            </ImageView>
+                                                        </StackPane>
+                                                    </children>
+                                                </HBox>
+                                                <Label fx:id="statAttLabel" style="-fx-text-fill: #111111; -fx-font-size: 32px; -fx-font-weight: 800;" text="—" />
                                             </children>
                                         </VBox>
                                     </children>
                                 </HBox>
 
-                                <!-- Student Details Card -->
-                                <VBox spacing="14.0"
-                                      style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
-                                    <children>
-                                        <HBox alignment="CENTER_LEFT">
-                                            <children>
-                                                <VBox spacing="2.0" HBox.hgrow="ALWAYS">
-                                                    <children>
-                                                        <Label style="-fx-font-size: 18px; -fx-font-weight: 800; -fx-text-fill: #111111;" text="Student Information" />
-                                                        <Label style="-fx-font-size: 12px; -fx-text-fill: #78716c;" text="Personal and academic details" />
-                                                    </children>
-                                                </VBox>
-                                            </children>
-                                        </HBox>
-
-                                        <!-- Student Details Grid -->
-                                        <GridPane hgap="20.0" vgap="12.0">
-                                            <columnConstraints>
-                                                <ColumnConstraints percentWidth="25.0" />
-                                                <ColumnConstraints percentWidth="25.0" />
-                                                <ColumnConstraints percentWidth="25.0" />
-                                                <ColumnConstraints percentWidth="25.0" />
-                                            </columnConstraints>
-
-                                            <!-- Row 1 -->
-                                            <VBox spacing="4.0" GridPane.columnIndex="0" GridPane.rowIndex="0">
-                                                <children>
-                                                    <Label style="-fx-text-fill: #78716c; -fx-font-size: 11px; -fx-font-weight: 600;" text="STUDENT ID" />
-                                                    <Label fx:id="detailStudentId" style="-fx-text-fill: #111111; -fx-font-size: 13px; -fx-font-weight: 700;" text="—" />
-                                                </children>
-                                            </VBox>
-
-                                            <VBox spacing="4.0" GridPane.columnIndex="1" GridPane.rowIndex="0">
-                                                <children>
-                                                    <Label style="-fx-text-fill: #78716c; -fx-font-size: 11px; -fx-font-weight: 600;" text="FULL NAME" />
-                                                    <Label fx:id="detailFullName" style="-fx-text-fill: #111111; -fx-font-size: 13px; -fx-font-weight: 700;" text="—" />
-                                                </children>
-                                            </VBox>
-
-                                            <VBox spacing="4.0" GridPane.columnIndex="2" GridPane.rowIndex="0">
-                                                <children>
-                                                    <Label style="-fx-text-fill: #78716c; -fx-font-size: 11px; -fx-font-weight: 600;" text="GENDER" />
-                                                    <Label fx:id="detailGender" style="-fx-text-fill: #111111; -fx-font-size: 13px; -fx-font-weight: 700;" text="—" />
-                                                </children>
-                                            </VBox>
-
-                                            <VBox spacing="4.0" GridPane.columnIndex="3" GridPane.rowIndex="0">
-                                                <children>
-                                                    <Label style="-fx-text-fill: #78716c; -fx-font-size: 11px; -fx-font-weight: 600;" text="DATE OF BIRTH" />
-                                                    <Label fx:id="detailDob" style="-fx-text-fill: #111111; -fx-font-size: 13px; -fx-font-weight: 700;" text="—" />
-                                                </children>
-                                            </VBox>
-
-                                            <!-- Row 2 -->
-                                            <VBox spacing="4.0" GridPane.columnIndex="0" GridPane.rowIndex="1">
-                                                <children>
-                                                    <Label style="-fx-text-fill: #78716c; -fx-font-size: 11px; -fx-font-weight: 600;" text="CLASS" />
-                                                    <Label fx:id="detailClass" style="-fx-text-fill: #111111; -fx-font-size: 13px; -fx-font-weight: 700;" text="—" />
-                                                </children>
-                                            </VBox>
-
-                                            <VBox spacing="4.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                                                <children>
-                                                    <Label style="-fx-text-fill: #78716c; -fx-font-size: 11px; -fx-font-weight: 600;" text="ROLL NUMBER" />
-                                                    <Label fx:id="detailRollNo" style="-fx-text-fill: #111111; -fx-font-size: 13px; -fx-font-weight: 700;" text="—" />
-                                                </children>
-                                            </VBox>
-
-                                            <VBox spacing="4.0" GridPane.columnIndex="2" GridPane.rowIndex="1">
-                                                <children>
-                                                    <Label style="-fx-text-fill: #78716c; -fx-font-size: 11px; -fx-font-weight: 600;" text="PHONE" />
-                                                    <Label fx:id="detailPhone" style="-fx-text-fill: #111111; -fx-font-size: 13px; -fx-font-weight: 700;" text="—" />
-                                                </children>
-                                            </VBox>
-
-                                            <VBox spacing="4.0" GridPane.columnIndex="3" GridPane.rowIndex="1">
-                                                <children>
-                                                    <Label style="-fx-text-fill: #78716c; -fx-font-size: 11px; -fx-font-weight: 600;" text="EMAIL" />
-                                                    <Label fx:id="detailEmail" style="-fx-text-fill: #111111; -fx-font-size: 13px; -fx-font-weight: 700;" text="—" />
-                                                </children>
-                                            </VBox>
-
-                                            <!-- Row 3 -->
-                                            <VBox spacing="4.0" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="2">
-                                                <children>
-                                                    <Label style="-fx-text-fill: #78716c; -fx-font-size: 11px; -fx-font-weight: 600;" text="ADDRESS" />
-                                                    <Label fx:id="detailAddress" style="-fx-text-fill: #111111; -fx-font-size: 13px; -fx-font-weight: 700;" text="—" />
-                                                </children>
-                                            </VBox>
-
-                                            <VBox spacing="4.0" GridPane.columnIndex="2" GridPane.rowIndex="2">
-                                                <children>
-                                                    <Label style="-fx-text-fill: #78716c; -fx-font-size: 11px; -fx-font-weight: 600;" text="GUARDIAN NAME" />
-                                                    <Label fx:id="detailGuardianName" style="-fx-text-fill: #111111; -fx-font-size: 13px; -fx-font-weight: 700;" text="—" />
-                                                </children>
-                                            </VBox>
-
-                                            <VBox spacing="4.0" GridPane.columnIndex="3" GridPane.rowIndex="2">
-                                                <children>
-                                                    <Label style="-fx-text-fill: #78716c; -fx-font-size: 11px; -fx-font-weight: 600;" text="GUARDIAN PHONE" />
-                                                    <Label fx:id="detailGuardianPhone" style="-fx-text-fill: #111111; -fx-font-size: 13px; -fx-font-weight: 700;" text="—" />
-                                                </children>
-                                            </VBox>
-                                        </GridPane>
-                                    </children>
-                                </VBox>
-
-                                <!-- StackPane for Dashboard/Grades/Attendance Views -->
                                 <StackPane VBox.vgrow="ALWAYS">
                                     <children>
 
-                                        <!-- Dashboard Pane - Two Columns Layout -->
-                                        <HBox fx:id="dashboardPane" spacing="16.0">
+                                        <VBox fx:id="dashboardPane" spacing="14.0"
+                                              style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
                                             <children>
-
-                                                <!-- Left Column - Recent Grades -->
-                                                <VBox HBox.hgrow="ALWAYS" spacing="14.0"
-                                                      style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
+                                                <HBox alignment="CENTER_LEFT" spacing="14.0">
                                                     <children>
-                                                        <HBox alignment="CENTER_LEFT">
+                                                        <VBox HBox.hgrow="ALWAYS" spacing="2.0">
                                                             <children>
-                                                                <VBox spacing="2.0" HBox.hgrow="ALWAYS">
-                                                                    <children>
-                                                                        <Label style="-fx-font-size: 18px; -fx-font-weight: 800; -fx-text-fill: #111111;" text="Recent Grades" />
-                                                                        <Label style="-fx-font-size: 12px; -fx-text-fill: #78716c;" text="Latest subject performance snapshot" />
-                                                                    </children>
-                                                                </VBox>
-                                                                <Label style="-fx-background-color: #f5f5f4; -fx-text-fill: #78716c; -fx-font-size: 11px; -fx-font-weight: 700; -fx-padding: 6 14; -fx-background-radius: 999; -fx-border-color: #e7e5e4; -fx-border-radius: 999;" text="This Week" />
+                                                                <Label style="-fx-font-size: 16px; -fx-font-weight: 800; -fx-text-fill: #111111;" text="My Courses" />
+                                                                <Label style="-fx-font-size: 12px; -fx-text-fill: #78716c;" text="All currently enrolled courses" />
+                                                            </children>
+                                                        </VBox>
+                                                        <HBox alignment="CENTER_LEFT" spacing="6.0"
+                                                              style="-fx-background-color: #f5f5f4; -fx-background-radius: 8; -fx-border-color: #e7e5e4; -fx-border-radius: 8; -fx-padding: 0 10 0 10;">
+                                                            <ImageView fitHeight="13.0" fitWidth="13.0" preserveRatio="true">
+                                                                <image><Image url="@assets/student-portal/grades/search.png" /></image>
+                                                            </ImageView>
+                                                            <TextField fx:id="searchField" prefHeight="32.0" prefWidth="160.0"
+                                                                       promptText="Search"
+                                                                       style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-focus-color: transparent; -fx-faint-focus-color: transparent; -fx-font-size: 13px;" />
+                                                        </HBox>
+                                                    </children>
+                                                </HBox>
+
+                                                <TableView fx:id="coursesTable" VBox.vgrow="ALWAYS" prefHeight="400.0"
+                                                           style="-fx-background-color: transparent; -fx-border-color: transparent;">
+                                                    <columns>
+                                                        <TableColumn fx:id="cColCourse"    prefWidth="260.0" text="Course" />
+                                                        <TableColumn fx:id="cColInstructor" prefWidth="180.0" text="Instructor" />
+                                                        <TableColumn fx:id="cColGrade"     prefWidth="100.0" text="Grade" />
+                                                    </columns>
+                                                </TableView>
+
+                                                <HBox alignment="CENTER_LEFT">
+                                                    <children>
+                                                        <Label fx:id="coursesSummaryLabel"
+                                                               style="-fx-text-fill: #78716c; -fx-font-size: 13px;"
+                                                               text="Showing 0 courses" />
+                                                        <Region HBox.hgrow="ALWAYS" />
+                                                        <HBox spacing="8.0">
+                                                            <children>
+                                                                <Button fx:id="prevButton" onAction="#handlePrevPage"
+                                                                        style="-fx-background-color: white; -fx-border-color: #e7e5e4; -fx-border-radius: 8; -fx-background-radius: 8; -fx-text-fill: #44403c; -fx-font-size: 13px; -fx-font-weight: 600; -fx-padding: 7 16 7 16; -fx-cursor: hand;"
+                                                                        text="Previous" />
+                                                                <Button fx:id="nextButton" onAction="#handleNextPage"
+                                                                        style="-fx-background-color: white; -fx-border-color: #e7e5e4; -fx-border-radius: 8; -fx-background-radius: 8; -fx-text-fill: #44403c; -fx-font-size: 13px; -fx-font-weight: 600; -fx-padding: 7 16 7 16; -fx-cursor: hand;"
+                                                                        text="Next" />
                                                             </children>
                                                         </HBox>
-
-                                                        <VBox fx:id="recentGradesContainer" spacing="10.0">
-                                                            <!-- Grade items will be added dynamically -->
-                                                        </VBox>
                                                     </children>
-                                                </VBox>
-
-                                                <!-- Right Column - Recent Attendance -->
-                                                <VBox HBox.hgrow="ALWAYS" spacing="14.0"
-                                                      style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
-                                                    <children>
-                                                        <HBox alignment="CENTER_LEFT">
-                                                            <children>
-                                                                <VBox spacing="2.0" HBox.hgrow="ALWAYS">
-                                                                    <children>
-                                                                        <Label style="-fx-font-size: 18px; -fx-font-weight: 800; -fx-text-fill: #111111;" text="Recent Attendance" />
-                                                                        <Label style="-fx-font-size: 12px; -fx-text-fill: #78716c;" text="Subject-wise status overview" />
-                                                                    </children>
-                                                                </VBox>
-                                                                <Label fx:id="attTodayLabelDash" style="-fx-background-color: #f5f5f4; -fx-text-fill: #78716c; -fx-font-size: 11px; -fx-font-weight: 700; -fx-padding: 6 14; -fx-background-radius: 999; -fx-border-color: #e7e5e4; -fx-border-radius: 999;" text="Today" />
-                                                            </children>
-                                                        </HBox>
-
-                                                        <VBox fx:id="recentAttendanceContainer" spacing="10.0">
-                                                            <!-- Attendance items will be added dynamically -->
-                                                        </VBox>
-                                                    </children>
-                                                </VBox>
-
+                                                </HBox>
                                             </children>
-                                        </HBox>
+                                        </VBox>
 
-                                        <!-- Grades Pane (existing) -->
                                         <VBox fx:id="gradesPane" spacing="14.0" visible="false" managed="false"
                                               style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
                                             <children>
@@ -387,9 +267,9 @@
                                             </children>
                                         </VBox>
 
-                                        <!-- Attendance Pane (existing) -->
                                         <VBox fx:id="attendancePane" spacing="20.0" visible="false" managed="false">
                                             <children>
+                                                <!-- Top Section: Title and Stats -->
                                                 <VBox spacing="16.0"
                                                       style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 24; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
                                                     <children>
@@ -405,6 +285,7 @@
                                                             </children>
                                                         </HBox>
 
+                                                        <!-- Stats Cards -->
                                                         <HBox spacing="14.0">
                                                             <children>
                                                                 <VBox HBox.hgrow="ALWAYS" spacing="8.0"
@@ -459,9 +340,26 @@
                                                     </children>
                                                 </VBox>
 
-                                                <VBox fx:id="subjectGridContainer" spacing="14.0">
-                                                    <!-- Subject cards will be added dynamically -->
+                                                <!-- Subject Attendance Grid -->
+                                                <VBox spacing="14.0"
+                                                      style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 24; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
+                                                    <children>
+                                                        <HBox alignment="CENTER_LEFT">
+                                                            <children>
+                                                                <Label style="-fx-font-size: 18px; -fx-font-weight: 800; -fx-text-fill: #111111;" text="Subject Attendance" />
+                                                                <Region HBox.hgrow="ALWAYS" />
+                                                                <Label fx:id="attDateLabel" style="-fx-text-fill: #78716c; -fx-font-size: 12px; -fx-font-weight: 600;" text="Today" />
+                                                            </children>
+                                                        </HBox>
+                                                        <Label style="-fx-text-fill: #78716c; -fx-font-size: 13px;" text="Choose a status for each subject" />
+
+                                                        <!-- Subject Cards Grid -->
+                                                        <VBox fx:id="subjectGridContainer" spacing="14.0">
+                                                            <!-- Subject cards will be dynamically added here -->
+                                                        </VBox>
+                                                    </children>
                                                 </VBox>
+
                                             </children>
                                         </VBox>
 
@@ -470,7 +368,6 @@
 
                             </children>
                         </VBox>
-
                     </children>
                 </VBox>
             </content>

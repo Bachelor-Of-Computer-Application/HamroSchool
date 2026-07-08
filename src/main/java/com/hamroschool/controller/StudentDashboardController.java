@@ -72,9 +72,13 @@ public class StudentDashboardController {
     @FXML private Label statGradeLabel;
     @FXML private Label statAttLabel;
 
-    @FXML private VBox dashboardPane;
+    @FXML private HBox dashboardPane;
     @FXML private VBox gradesPane;
     @FXML private VBox attendancePane;
+    
+    @FXML private VBox recentGradesContainer;
+    @FXML private VBox recentAttendanceContainer;
+    @FXML private Label attTodayLabelDash;
 
     @FXML private TextField                      searchField;
     @FXML private TableView<CourseRow>           coursesTable;
@@ -98,23 +102,32 @@ public class StudentDashboardController {
     @FXML private Label attStatTotalLabel;
     @FXML private Label attStatPresentLabel;
     @FXML private Label attStatRateLabel;
-    @FXML private Label attDateLabel;
     @FXML private VBox  subjectGridContainer;
+
+    @FXML private Label detailStudentId;
+    @FXML private Label detailFullName;
+    @FXML private Label detailGender;
+    @FXML private Label detailDob;
+    @FXML private Label detailClass;
+    @FXML private Label detailRollNo;
+    @FXML private Label detailPhone;
+    @FXML private Label detailEmail;
+    @FXML private Label detailAddress;
+    @FXML private Label detailGuardianName;
+    @FXML private Label detailGuardianPhone;
 
 
     @FXML
     public void initialize() {
         studentUsername = SessionContext.getInstance().requireCurrentUser().getUsername();
         String displayName = Utils.formatName(studentUsername);
-        welcomeSubLabel.setText("Welcome back, " + displayName + " — here's your learning overview");
+        welcomeSubLabel.setText("Overview of academic performance, attendance trends, and upcoming priorities.");
         userInitialsLabel.setText(Utils.initials(studentUsername));
         userNameLabel.setText(displayName);
 
-        setupCoursesTable();
         setupGradesTable();
         setupAttendanceTable();
-
-        searchField.textProperty().addListener((obs, o, n) -> { currentPage = 0; applyFilter(n); });
+        loadStudentDetails();
 
         showDashboard();
 
@@ -126,7 +139,6 @@ public class StudentDashboardController {
 
                 java.util.LinkedHashMap<String, String> subTeach = new java.util.LinkedHashMap<>();
                 java.util.LinkedHashMap<String, Double> attMap   = new java.util.LinkedHashMap<>();
-                // Store per-subject status counts [present, absent, late]
                 java.util.LinkedHashMap<String, int[]> statusCountMap = new java.util.LinkedHashMap<>();
 
                 for (var teacher : teacherService.getAllTeachers()) {
@@ -141,13 +153,11 @@ public class StudentDashboardController {
                     if (pct != null) {
                         attMap.put(subject, pct);
 
-                        // Get totals: [attended(present+late), total]
                         int[] totals = attendanceService.getAttendanceTotals(tName, subject)
                                 .getOrDefault(studentUsername, new int[]{0, 0});
                         int totalDays   = totals[1];
                         int attendedDays = totals[0]; // present + late
                         int absentDays  = totalDays - attendedDays;
-                        // Without separate late tracking, show attended as present
                         statusCountMap.put(subject, new int[]{attendedDays, absentDays, 0});
                     }
                 }
@@ -185,7 +195,7 @@ public class StudentDashboardController {
 
                 javafx.application.Platform.runLater(() -> {
                     refreshStats();
-                    loadCourses();
+                    loadDashboardView();
                 });
             } catch (Exception ex) {
                 System.err.println("[StudentDashboard] Data load error: " + ex.getMessage());
@@ -195,6 +205,22 @@ public class StudentDashboardController {
         loader.start();
     }
 
+
+    private void loadStudentDetails() {
+        var user = SessionContext.getInstance().requireCurrentUser();
+        
+        detailStudentId.setText(user.getUserId().isEmpty() ? "—" : user.getUserId());
+        detailFullName.setText(user.getFullName().isEmpty() ? "—" : user.getFullName());
+        detailGender.setText(user.getGender().isEmpty() ? "—" : user.getGender());
+        detailDob.setText(user.getDateOfBirth().isEmpty() ? "—" : user.getDateOfBirth());
+        detailClass.setText(user.getAssignedClass().isEmpty() ? "—" : user.getAssignedClass());
+        detailRollNo.setText(user.getRollNumber().isEmpty() ? "—" : user.getRollNumber());
+        detailPhone.setText(user.getPhone().isEmpty() ? "—" : user.getPhone());
+        detailEmail.setText(user.getEmail().isEmpty() ? "—" : user.getEmail());
+        detailAddress.setText(user.getAddress().isEmpty() ? "—" : user.getAddress());
+        detailGuardianName.setText(user.getGuardianName().isEmpty() ? "—" : user.getGuardianName());
+        detailGuardianPhone.setText(user.getGuardianPhone().isEmpty() ? "—" : user.getGuardianPhone());
+    }
 
     @FXML private void handleNavDashboard()  { showDashboard(); }
     @FXML private void handleNavGrades()     { showGrades(); }
@@ -219,7 +245,10 @@ public class StudentDashboardController {
     private void showDashboard() {
         setPane(dashboardPane);
         setActiveNav(navDashboardBtn);
-        if (dataLoaded) { refreshStats(); loadCourses(); }
+        if (dataLoaded) {
+            refreshStats();
+            loadDashboardView();
+        }
     }
 
     private void showGrades() {
@@ -234,11 +263,13 @@ public class StudentDashboardController {
         loadAttendance();
     }
 
-    private void setPane(VBox target) {
-        for (VBox p : List.of(dashboardPane, gradesPane, attendancePane)) {
-            p.setVisible(p == target);
-            p.setManaged(p == target);
-        }
+    private void setPane(javafx.scene.layout.Region target) {
+        dashboardPane.setVisible(dashboardPane == target);
+        dashboardPane.setManaged(dashboardPane == target);
+        gradesPane.setVisible(gradesPane == target);
+        gradesPane.setManaged(gradesPane == target);
+        attendancePane.setVisible(attendancePane == target);
+        attendancePane.setManaged(attendancePane == target);
     }
 
     private void setActiveNav(Button active) {
@@ -261,6 +292,140 @@ public class StudentDashboardController {
         statGradeLabel.setText(cachedAvgGrade >= 0 ? TableUtils.percentageToGrade(cachedAvgGrade) : "—");
 
         statAttLabel.setText(cachedAvgAtt >= 0 ? String.format("%.0f%%", cachedAvgAtt) : "—");
+    }
+
+
+    private void loadDashboardView() {
+        if (!dataLoaded) return;
+
+        recentGradesContainer.getChildren().clear();
+        
+        List<String> recentSubjects = marksBySubject.keySet().stream()
+                .limit(3)
+                .toList();
+        
+        for (String subject : recentSubjects) {
+            List<Mark> marks = marksBySubject.get(subject);
+            if (marks.isEmpty()) continue;
+            
+            double avg = marks.stream().mapToDouble(Mark::getPercentage).average().orElse(0);
+            String grade = TableUtils.percentageToGrade(avg);
+            String desc = marks.get(0).getExamType() + " average";
+            
+            HBox gradeRow = createGradeRow(subject, desc, grade);
+            recentGradesContainer.getChildren().add(gradeRow);
+        }
+        
+        if (recentGradesContainer.getChildren().isEmpty()) {
+            Label empty = new Label("No grades recorded yet");
+            empty.setStyle("-fx-text-fill: #78716c; -fx-font-size: 13px;");
+            recentGradesContainer.getChildren().add(empty);
+        }
+
+        recentAttendanceContainer.getChildren().clear();
+        
+        List<AttendanceRow> recentAtt = attendanceRows.stream()
+                .limit(4)
+                .toList();
+        
+        java.time.format.DateTimeFormatter fmt = java.time.format.DateTimeFormatter.ofPattern("MMM d, yyyy");
+        attTodayLabelDash.setText(java.time.LocalDate.now().format(fmt));
+        
+        for (AttendanceRow att : recentAtt) {
+            HBox attRow = createAttendanceRow(att.subject(), att.teacher(), getAttendanceStatus(att.pct()));
+            recentAttendanceContainer.getChildren().add(attRow);
+        }
+        
+        if (recentAttendanceContainer.getChildren().isEmpty()) {
+            Label empty = new Label("No attendance records yet");
+            empty.setStyle("-fx-text-fill: #78716c; -fx-font-size: 13px;");
+            recentAttendanceContainer.getChildren().add(empty);
+        }
+    }
+
+    private HBox createGradeRow(String subject, String description, String grade) {
+        HBox row = new HBox(12);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setStyle("-fx-background-color: #fafaf9; -fx-background-radius: 10; -fx-padding: 14 16; -fx-border-color: #e7e5e4; -fx-border-radius: 10;");
+
+        String icon = TableUtils.getSubjectIcon(subject);
+        Label iconLabel = new Label(icon);
+        iconLabel.setStyle("-fx-font-size: 20px; -fx-min-width: 36; -fx-alignment: center;");
+        
+        VBox textBox = new VBox(2);
+        textBox.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(textBox, javafx.scene.layout.Priority.ALWAYS);
+        
+        Label subjectLabel = new Label(subject);
+        subjectLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: 800; -fx-text-fill: #111111;");
+        
+        Label descLabel = new Label(description);
+        descLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #78716c;");
+        
+        textBox.getChildren().addAll(subjectLabel, descLabel);
+        
+        Label gradeBadge = new Label(grade);
+        String gradeColor = getGradeColor(grade);
+        gradeBadge.setStyle("-fx-background-color: " + gradeColor + "; -fx-text-fill: " + getGradeTextColor(grade) + "; " +
+                           "-fx-font-size: 13px; -fx-font-weight: 800; -fx-padding: 6 16; -fx-background-radius: 8; -fx-min-width: 50; -fx-alignment: center;");
+        
+        row.getChildren().addAll(iconLabel, textBox, gradeBadge);
+        return row;
+    }
+
+    private HBox createAttendanceRow(String subject, String teacher, String status) {
+        HBox row = new HBox(12);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setStyle("-fx-background-color: #fafaf9; -fx-background-radius: 10; -fx-padding: 14 16; -fx-border-color: #e7e5e4; -fx-border-radius: 10;");
+
+        VBox textBox = new VBox(2);
+        textBox.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(textBox, javafx.scene.layout.Priority.ALWAYS);
+        
+        Label subjectLabel = new Label(subject);
+        subjectLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: 800; -fx-text-fill: #111111;");
+        
+        Label teacherLabel = new Label(teacher);
+        teacherLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #78716c;");
+        
+        textBox.getChildren().addAll(subjectLabel, teacherLabel);
+        
+        Label statusBadge = new Label(status);
+        String[] colors = getStatusColors(status);
+        statusBadge.setStyle("-fx-background-color: " + colors[0] + "; -fx-text-fill: " + colors[1] + "; " +
+                            "-fx-font-size: 12px; -fx-font-weight: 700; -fx-padding: 6 16; -fx-background-radius: 999; -fx-min-width: 70; -fx-alignment: center;");
+        
+        row.getChildren().addAll(textBox, statusBadge);
+        return row;
+    }
+
+    private String getAttendanceStatus(double percentage) {
+        if (percentage >= 75) return "Present";
+        if (percentage >= 50) return "Late";
+        return "Absent";
+    }
+
+    private String[] getStatusColors(String status) {
+        return switch (status) {
+            case "Present" -> new String[]{"#dcfce7", "#16a34a"};
+            case "Late" -> new String[]{"#fef9c3", "#a16207"};
+            case "Absent" -> new String[]{"#fee2e2", "#dc2626"};
+            default -> new String[]{"#f5f5f4", "#78716c"};
+        };
+    }
+
+    private String getGradeColor(String grade) {
+        if (grade.startsWith("A")) return "#dcfce7";
+        if (grade.startsWith("B")) return "#dbeafe";
+        if (grade.startsWith("C")) return "#fef9c3";
+        return "#fee2e2";
+    }
+
+    private String getGradeTextColor(String grade) {
+        if (grade.startsWith("A")) return "#16a34a";
+        if (grade.startsWith("B")) return "#2563eb";
+        if (grade.startsWith("C")) return "#a16207";
+        return "#dc2626";
     }
 
 
@@ -407,7 +572,6 @@ public class StudentDashboardController {
     private void loadAttendance() {
         if (!dataLoaded) return;
         
-        // Update stats
         int totalSubjects = attendanceRows.size();
         long presentCount = attendanceRows.stream().filter(r -> r.pct() >= 75).count();
         double avgRate = attendanceRows.isEmpty() ? 0 :
@@ -418,7 +582,6 @@ public class StudentDashboardController {
         attStatRateLabel.setText(String.format("%.0f%%", avgRate));
 
         java.time.format.DateTimeFormatter fmt = java.time.format.DateTimeFormatter.ofPattern("MMM d, yyyy");
-        attDateLabel.setText(java.time.LocalDate.now().format(fmt));
         attTodayLabel.setText(java.time.LocalDate.now().format(fmt));
 
         subjectGridContainer.getChildren().clear();
@@ -461,7 +624,6 @@ public class StudentDashboardController {
                       "-fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 18; " +
                       "-fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);");
 
-        // Header: sbject name + badge
         HBox header = new HBox();
         header.setAlignment(Pos.CENTER_LEFT);
 
