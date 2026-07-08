@@ -98,6 +98,12 @@ public class StudentDashboardController {
     @FXML private TableColumn<Mark, String> mColRemarks;
     @FXML private Label                     marksSummaryLabel;
 
+    @FXML private Label gradeStatGPA;
+    @FXML private Label gradeStatTotal;
+    @FXML private Label gradeStatHighest;
+    @FXML private Label gradeStatImproved;
+    @FXML private VBox  subjectGradesContainer;
+
     @FXML private Label attTodayLabel;
     @FXML private Label attStatTotalLabel;
     @FXML private Label attStatPresentLabel;
@@ -125,7 +131,6 @@ public class StudentDashboardController {
         userInitialsLabel.setText(Utils.initials(studentUsername));
         userNameLabel.setText(displayName);
 
-        setupGradesTable();
         setupAttendanceTable();
         loadStudentDetails();
 
@@ -254,7 +259,7 @@ public class StudentDashboardController {
     private void showGrades() {
         setPane(gradesPane);
         setActiveNav(navGradesBtn);
-        loadMarks();
+        loadGradesView();
     }
 
     private void showAttendance() {
@@ -517,6 +522,235 @@ public class StudentDashboardController {
         coursesTable.setStyle("-fx-background-color: transparent;");
     }
 
+
+    private void loadGradesView() {
+        if (!dataLoaded) return;
+
+        // Calculate stats
+        java.util.LinkedHashSet<String> subjects = new java.util.LinkedHashSet<>(cachedSubjectTeacher.keySet());
+        subjects.addAll(marksBySubject.keySet());
+        
+        gradeStatTotal.setText(String.valueOf(subjects.size()));
+        gradeStatGPA.setText(cachedAvgGrade >= 0 ? TableUtils.percentageToGrade(cachedAvgGrade) : "—");
+        
+        // Find highest grade
+        String highestGrade = "—";
+        if (!cachedMarks.isEmpty()) {
+            double maxPct = cachedMarks.stream().mapToDouble(Mark::getPercentage).max().orElse(0);
+            highestGrade = TableUtils.percentageToGrade(maxPct);
+        }
+        gradeStatHighest.setText(highestGrade);
+        
+        // Count improved subjects (placeholder - would need historical data)
+        gradeStatImproved.setText("—");
+
+        // Build subject cards
+        subjectGradesContainer.getChildren().clear();
+        
+        List<String> subjectList = new ArrayList<>(subjects);
+        for (int i = 0; i < subjectList.size(); i += 2) {
+            HBox row = new HBox(14);
+            
+            String subject1 = subjectList.get(i);
+            VBox card1 = createSubjectGradeCard(subject1);
+            card1.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(card1, javafx.scene.layout.Priority.ALWAYS);
+            row.getChildren().add(card1);
+            
+            if (i + 1 < subjectList.size()) {
+                String subject2 = subjectList.get(i + 1);
+                VBox card2 = createSubjectGradeCard(subject2);
+                card2.setMaxWidth(Double.MAX_VALUE);
+                HBox.setHgrow(card2, javafx.scene.layout.Priority.ALWAYS);
+                row.getChildren().add(card2);
+            } else {
+                Region spacer = new Region();
+                spacer.setMaxWidth(Double.MAX_VALUE);
+                HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+                row.getChildren().add(spacer);
+            }
+            
+            subjectGradesContainer.getChildren().add(row);
+        }
+        
+        if (subjects.isEmpty()) {
+            Label empty = new Label("No grades recorded yet");
+            empty.setStyle("-fx-text-fill: #78716c; -fx-font-size: 13px; -fx-padding: 20;");
+            subjectGradesContainer.getChildren().add(empty);
+        }
+    }
+
+    private VBox createSubjectGradeCard(String subject) {
+        VBox card = new VBox(14);
+        card.setStyle("-fx-background-color: #fafaf9; -fx-background-radius: 12; " +
+                      "-fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 18;");
+
+        // Get marks for this subject
+        List<Mark> marks = marksBySubject.getOrDefault(subject, List.of());
+        String teacher = marks.isEmpty() ? cachedSubjectTeacher.getOrDefault(subject, "—") 
+                                         : marks.get(0).getTeacherUsername();
+        
+        // Determine subject type/category
+        String category = getSubjectCategory(subject);
+        
+        // Header
+        HBox header = new HBox();
+        header.setAlignment(Pos.CENTER_LEFT);
+        
+        VBox titleBox = new VBox(4);
+        Label subjectName = new Label(subject);
+        subjectName.setStyle("-fx-font-size: 16px; -fx-font-weight: 800; -fx-text-fill: #111111;");
+        Label teacherInfo = new Label(getTeacherInfo(teacher, subject));
+        teacherInfo.setStyle("-fx-font-size: 12px; -fx-text-fill: #78716c;");
+        titleBox.getChildren().addAll(subjectName, teacherInfo);
+        HBox.setHgrow(titleBox, javafx.scene.layout.Priority.ALWAYS);
+        
+        Label categoryBadge = new Label(category);
+        categoryBadge.setStyle("-fx-background-color: #f5f5f4; -fx-text-fill: #78716c; " +
+                               "-fx-font-size: 11px; -fx-font-weight: 700; -fx-padding: 4 10; " +
+                               "-fx-background-radius: 6;");
+        
+        header.getChildren().addAll(titleBox, categoryBadge);
+        
+        // Exam type cards
+        HBox examCards = new HBox(8);
+        
+        // Group marks by exam type
+        Map<String, List<Mark>> marksByExam = marks.stream()
+                .collect(Collectors.groupingBy(Mark::getExamType));
+        
+        // Create cards for each exam type
+        String[] examTypes = {"Midterm", "Assignment", "Final"};
+        for (String examType : examTypes) {
+            List<Mark> examMarks = marksByExam.get(examType);
+            VBox examCard = createExamTypeCard(examType, examMarks);
+            examCard.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(examCard, javafx.scene.layout.Priority.ALWAYS);
+            examCards.getChildren().add(examCard);
+        }
+        
+        card.getChildren().addAll(header, examCards);
+        return card;
+    }
+
+    private VBox createExamTypeCard(String examType, List<Mark> marks) {
+        VBox card = new VBox(8);
+        card.setAlignment(Pos.CENTER);
+        
+        // Determine grade and color
+        String grade = "—";
+        String bgColor = "#ffffff";
+        String textColor = "#78716c";
+        String icon = "";
+        
+        if (marks != null && !marks.isEmpty()) {
+            double avg = marks.stream().mapToDouble(Mark::getPercentage).average().orElse(0);
+            grade = TableUtils.percentageToGrade(avg);
+            
+            if (examType.equals("Midterm")) {
+                icon = "✓";
+                if (grade.startsWith("A")) {
+                    bgColor = "#d1fae5";
+                    textColor = "#065f46";
+                } else if (grade.startsWith("B")) {
+                    bgColor = "#d1fae5";
+                    textColor = "#047857";
+                } else if (grade.startsWith("C")) {
+                    bgColor = "#fef9c3";
+                    textColor = "#92400e";
+                } else {
+                    bgColor = "#fee2e2";
+                    textColor = "#991b1b";
+                }
+            } else if (examType.equals("Assignment")) {
+                icon = "📄";
+                if (grade.startsWith("A")) {
+                    bgColor = "#fef3c7";
+                    textColor = "#78350f";
+                } else if (grade.startsWith("B")) {
+                    bgColor = "#fef3c7";
+                    textColor = "#92400e";
+                } else if (grade.startsWith("C")) {
+                    bgColor = "#fef3c7";
+                    textColor = "#a16207";
+                } else {
+                    bgColor = "#fee2e2";
+                    textColor = "#991b1b";
+                }
+            } else { // Final
+                icon = "🎓";
+                if (grade.startsWith("A")) {
+                    bgColor = "#cffafe";
+                    textColor = "#155e75";
+                } else if (grade.startsWith("B")) {
+                    bgColor = "#cffafe";
+                    textColor = "#0e7490";
+                } else if (grade.startsWith("C")) {
+                    bgColor = "#fef9c3";
+                    textColor = "#92400e";
+                } else {
+                    bgColor = "#fecdd3";
+                    textColor = "#be123c";
+                }
+            }
+        } else {
+            bgColor = "#f5f5f4";
+            textColor = "#a8a29e";
+            icon = examType.equals("Midterm") ? "✓" : examType.equals("Assignment") ? "📄" : "🎓";
+        }
+        
+        card.setStyle("-fx-background-color: " + bgColor + "; -fx-background-radius: 10; -fx-padding: 14;");
+        
+        Label iconLabel = new Label(icon);
+        iconLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: " + textColor + ";");
+        
+        Label typeLabel = new Label(examType);
+        typeLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: 700; -fx-text-fill: " + textColor + ";");
+        
+        Label gradeLabel = new Label(grade);
+        gradeLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: 800; -fx-text-fill: " + textColor + ";");
+        
+        card.getChildren().addAll(iconLabel, typeLabel, gradeLabel);
+        return card;
+    }
+
+    private String getSubjectCategory(String subject) {
+        String lower = subject.toLowerCase();
+        if (lower.contains("math") || lower.contains("science") || lower.contains("physics") || 
+            lower.contains("chemistry") || lower.contains("biology")) {
+            return "Core";
+        } else if (lower.contains("english") || lower.contains("nepali")) {
+            return "Language";
+        } else if (lower.contains("computer") || lower.contains("it")) {
+            return "Elective";
+        } else if (lower.contains("social") || lower.contains("history") || lower.contains("geography")) {
+            return "Core";
+        }
+        return "Other";
+    }
+
+    private String getTeacherInfo(String teacherUsername, String subject) {
+        // Format: "Room 204 • Prof. Sharma" or "Block A • Mr. Lewis" etc.
+        String formattedName = Utils.formatName(teacherUsername);
+        // Generate a room/block based on subject (placeholder logic)
+        String location = getClassroomLocation(subject);
+        return location + " • " + formattedName;
+    }
+
+    private String getClassroomLocation(String subject) {
+        // Placeholder logic to generate classroom locations
+        int hash = Math.abs(subject.hashCode());
+        int roomNum = 100 + (hash % 150);
+        
+        if (subject.toLowerCase().contains("math") || subject.toLowerCase().contains("science")) {
+            return "Room " + roomNum;
+        } else if (subject.toLowerCase().contains("english") || subject.toLowerCase().contains("language")) {
+            return "Block " + (char)('A' + (hash % 5));
+        } else if (subject.toLowerCase().contains("computer")) {
+            return "Lab " + (1 + (hash % 3));
+        }
+        return "Room " + roomNum;
+    }
 
     private void loadMarks() {
         if (!dataLoaded) return;

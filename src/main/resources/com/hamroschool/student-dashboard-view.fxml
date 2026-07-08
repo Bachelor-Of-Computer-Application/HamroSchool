@@ -366,24 +366,105 @@
                                             </children>
                                         </HBox>
 
-                                        <!-- Grades Pane (existing) -->
-                                        <VBox fx:id="gradesPane" spacing="14.0" visible="false" managed="false"
-                                              style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
+                                        <!-- Grades Pane (New Modern Design) -->
+                                        <VBox fx:id="gradesPane" spacing="20.0" visible="false" managed="false">
                                             <children>
-                                                <Label style="-fx-font-size: 16px; -fx-font-weight: 800; -fx-text-fill: #111111;" text="My Grades" />
-                                                <Label style="-fx-font-size: 12px; -fx-text-fill: #78716c;" text="All recorded marks across subjects" />
-                                                <TableView fx:id="marksTable" VBox.vgrow="ALWAYS" prefHeight="400.0"
-                                                           style="-fx-background-color: transparent; -fx-border-color: transparent;">
-                                                    <columns>
-                                                        <TableColumn fx:id="mColSubject"  prefWidth="200.0" text="Subject" />
-                                                        <TableColumn fx:id="mColTeacher"  prefWidth="160.0" text="Teacher" />
-                                                        <TableColumn fx:id="mColExam"     prefWidth="120.0" text="Exam Type" />
-                                                        <TableColumn fx:id="mColScore"    prefWidth="150.0" text="Score" />
-                                                        <TableColumn fx:id="mColGrade"    prefWidth="90.0"  text="Grade" />
-                                                        <TableColumn fx:id="mColRemarks"  prefWidth="180.0" text="Remarks" />
-                                                    </columns>
-                                                </TableView>
-                                                <Label fx:id="marksSummaryLabel" style="-fx-text-fill: #78716c; -fx-font-size: 13px;" text="" />
+                                                <!-- Top Stats Cards -->
+                                                <HBox spacing="14.0">
+                                                    <children>
+                                                        <!-- Overall GPA Card -->
+                                                        <VBox HBox.hgrow="ALWAYS" spacing="12.0"
+                                                              style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
+                                                            <children>
+                                                                <HBox alignment="CENTER_LEFT">
+                                                                    <children>
+                                                                        <Label style="-fx-text-fill: #78716c; -fx-font-size: 13px; -fx-font-weight: 600;" text="Overall GPA" HBox.hgrow="ALWAYS" />
+                                                                        <StackPane style="-fx-background-color: #dcfce7; -fx-background-radius: 8; -fx-min-width: 32; -fx-min-height: 32;">
+                                                                            <Label style="-fx-text-fill: #16a34a; -fx-font-size: 16px;" text="🏆" />
+                                                                        </StackPane>
+                                                                    </children>
+                                                                </HBox>
+                                                                <Label fx:id="gradeStatGPA" style="-fx-text-fill: #111111; -fx-font-size: 36px; -fx-font-weight: 800;" text="3.8" />
+                                                            </children>
+                                                        </VBox>
+
+                                                        <!-- Total Subjects Card -->
+                                                        <VBox HBox.hgrow="ALWAYS" spacing="12.0"
+                                                              style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
+                                                            <children>
+                                                                <HBox alignment="CENTER_LEFT">
+                                                                    <children>
+                                                                        <Label style="-fx-text-fill: #78716c; -fx-font-size: 13px; -fx-font-weight: 600;" text="Total Subjects" HBox.hgrow="ALWAYS" />
+                                                                        <StackPane style="-fx-background-color: #f5f5f4; -fx-background-radius: 8; -fx-min-width: 32; -fx-min-height: 32;">
+                                                                            <Label style="-fx-text-fill: #111111; -fx-font-size: 16px;" text="📚" />
+                                                                        </StackPane>
+                                                                    </children>
+                                                                </HBox>
+                                                                <Label fx:id="gradeStatTotal" style="-fx-text-fill: #111111; -fx-font-size: 36px; -fx-font-weight: 800;" text="8" />
+                                                            </children>
+                                                        </VBox>
+
+                                                        <!-- Highest Grade Card -->
+                                                        <VBox HBox.hgrow="ALWAYS" spacing="12.0"
+                                                              style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
+                                                            <children>
+                                                                <HBox alignment="CENTER_LEFT">
+                                                                    <children>
+                                                                        <Label style="-fx-text-fill: #78716c; -fx-font-size: 13px; -fx-font-weight: 600;" text="Highest Grade" HBox.hgrow="ALWAYS" />
+                                                                        <StackPane style="-fx-background-color: #fff7ed; -fx-background-radius: 8; -fx-min-width: 32; -fx-min-height: 32;">
+                                                                            <Label style="-fx-text-fill: #ea580c; -fx-font-size: 16px;" text="📈" />
+                                                                        </StackPane>
+                                                                    </children>
+                                                                </HBox>
+                                                                <Label fx:id="gradeStatHighest" style="-fx-text-fill: #111111; -fx-font-size: 36px; -fx-font-weight: 800;" text="A+" />
+                                                            </children>
+                                                        </VBox>
+
+                                                        <!-- Subjects Improved Card -->
+                                                        <VBox HBox.hgrow="ALWAYS" spacing="12.0"
+                                                              style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
+                                                            <children>
+                                                                <HBox alignment="CENTER_LEFT">
+                                                                    <children>
+                                                                        <VBox HBox.hgrow="ALWAYS" spacing="2.0">
+                                                                            <children>
+                                                                                <Label style="-fx-text-fill: #78716c; -fx-font-size: 13px; -fx-font-weight: 600;" text="Subjects" />
+                                                                                <Label style="-fx-text-fill: #78716c; -fx-font-size: 13px; -fx-font-weight: 600;" text="Improved" />
+                                                                            </children>
+                                                                        </VBox>
+                                                                        <StackPane style="-fx-background-color: #dbeafe; -fx-background-radius: 8; -fx-min-width: 32; -fx-min-height: 32;">
+                                                                            <Label style="-fx-text-fill: #2563eb; -fx-font-size: 16px;" text="📊" />
+                                                                        </StackPane>
+                                                                    </children>
+                                                                </HBox>
+                                                                <Label fx:id="gradeStatImproved" style="-fx-text-fill: #111111; -fx-font-size: 36px; -fx-font-weight: 800;" text="5" />
+                                                            </children>
+                                                        </VBox>
+                                                    </children>
+                                                </HBox>
+
+                                                <!-- Subject Grades Section -->
+                                                <VBox spacing="14.0"
+                                                      style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
+                                                    <children>
+                                                        <HBox alignment="CENTER_LEFT">
+                                                            <children>
+                                                                <VBox spacing="2.0" HBox.hgrow="ALWAYS">
+                                                                    <children>
+                                                                        <Label style="-fx-font-size: 18px; -fx-font-weight: 800; -fx-text-fill: #111111;" text="Subject Grades" />
+                                                                        <Label style="-fx-font-size: 12px; -fx-text-fill: #78716c;" text="Review recent assessments and performance by subject" />
+                                                                    </children>
+                                                                </VBox>
+                                                                <Label style="-fx-background-color: #f5f5f4; -fx-text-fill: #78716c; -fx-font-size: 11px; -fx-font-weight: 700; -fx-padding: 6 14; -fx-background-radius: 999; -fx-border-color: #e7e5e4; -fx-border-radius: 999;" text="This Term" />
+                                                            </children>
+                                                        </HBox>
+
+                                                        <!-- Subject Cards Container (2 columns) -->
+                                                        <VBox fx:id="subjectGradesContainer" spacing="14.0">
+                                                            <!-- Subject cards will be added dynamically -->
+                                                        </VBox>
+                                                    </children>
+                                                </VBox>
                                             </children>
                                         </VBox>
 
