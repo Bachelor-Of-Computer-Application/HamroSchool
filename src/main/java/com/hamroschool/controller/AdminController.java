@@ -73,7 +73,7 @@ public class AdminController {
 
     @FXML
     public void initialize() {
-        roleChoiceBox.setItems(FXCollections.observableArrayList(UserRole.values()));
+        roleChoiceBox.setItems(FXCollections.observableArrayList(UserRole.TEACHER, UserRole.STUDENT));
         roleChoiceBox.getSelectionModel().select(UserRole.TEACHER);
 
         loadClasses();
@@ -173,13 +173,13 @@ public class AdminController {
 
     private void updateFieldVisibility(UserRole role) {
         boolean isTeacher = role == UserRole.TEACHER;
-        boolean isTeacherOrStudent = role == UserRole.TEACHER || role == UserRole.STUDENT;
+        boolean isStudent = role == UserRole.STUDENT;
         
         subjectRow.setVisible(isTeacher);
         subjectRow.setManaged(isTeacher);
         
-        classRow.setVisible(isTeacherOrStudent);
-        classRow.setManaged(isTeacherOrStudent);
+        classRow.setVisible(isStudent);
+        classRow.setManaged(isStudent);
     }
 
     @FXML
