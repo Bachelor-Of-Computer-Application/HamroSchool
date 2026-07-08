@@ -11,6 +11,12 @@ public interface AuthService {
 
     boolean createAccount(String username, String password, UserRole role);
 
+    /**
+     * Creates an account with full profile details.
+     * All extra fields are stored in MongoDB alongside credentials.
+     */
+    boolean createFullAccount(UserAccount account);
+
     List<UserAccount> getAccounts();
 
     /**

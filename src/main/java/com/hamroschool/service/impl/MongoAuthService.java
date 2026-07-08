@@ -28,24 +28,19 @@ import com.mongodb.client.model.Updates;
  */
 public final class MongoAuthService implements AuthService {
 
-    // Singleton — one instance for the whole app
     private static final MongoAuthService INSTANCE = new MongoAuthService();
 
-    // MongoDB collection that stores all user accounts
     private final MongoCollection<Document> accounts;
 
     private MongoAuthService() {
-        // Get the database and find the collection
         accounts = MongoClientProvider.getInstance()
                 .getDatabase()
                 .getCollection("user_accounts");
 
-        // Make sure usernames are always unique in the database
         accounts.createIndex(
                 Indexes.ascending("username"),
                 new IndexOptions().unique(true));
 
-        // Create the default admin account on first run
         createDefaultAdmin();
     }
 
@@ -54,29 +49,24 @@ public final class MongoAuthService implements AuthService {
         return INSTANCE;
     }
 
-    // ── Log in ────────────────────────────────────────────────────────────────
 
     @Override
     public synchronized Optional<UserAccount> authenticate(String username,
                                                            String password,
                                                            UserRole role) {
-        // Reject empty inputs immediately
         if (isBlank(username) || isBlank(password) || role == null) {
             return Optional.empty();
         }
 
-        // Look for a document that matches username + password + role
         Document found = accounts.find(Filters.and(
                 Filters.eq("username", normalize(username)),
                 Filters.eq("password", password),
                 Filters.eq("role",     role.name())
         )).first();
 
-        // Return empty if not found, otherwise wrap in UserAccount
         return found == null ? Optional.empty() : Optional.of(toUserAccount(found));
     }
 
-    // ── Create account ────────────────────────────────────────────────────────
 
     @Override
     public synchronized boolean createAccount(String username,
@@ -85,32 +75,57 @@ public final class MongoAuthService implements AuthService {
         if (isBlank(username) || isBlank(password) || role == null) return false;
 
         String normalUsername = normalize(username);
+        if (accounts.find(Filters.eq("username", normalUsername)).first() != null) return false;
 
-        // Username must be unique — reject if it already exists
-        if (accounts.find(Filters.eq("username", normalUsername)).first() != null) {
-            return false;
-        }
-
-        // Insert the new account document
         accounts.insertOne(new Document("username", normalUsername)
                 .append("password", password)
                 .append("role",     role.name()));
         return true;
     }
 
-    // ── List all accounts ─────────────────────────────────────────────────────
+
+    @Override
+    public synchronized boolean createFullAccount(UserAccount account) {
+        if (account == null || isBlank(account.getUsername()) || isBlank(account.getPassword())) return false;
+
+        String normalUsername = normalize(account.getUsername());
+        if (accounts.find(Filters.eq("username", normalUsername)).first() != null) return false;
+
+        Document doc = new Document("username",         normalUsername)
+                .append("password",         account.getPassword())
+                .append("role",             account.getRole().name())
+                .append("fullName",         account.getFullName())
+                .append("gender",           account.getGender())
+                .append("dateOfBirth",      account.getDateOfBirth())
+                .append("phone",            account.getPhone())
+                .append("email",            account.getEmail())
+                .append("address",          account.getAddress())
+                .append("userId",           account.getUserId())
+                .append("assignedClass",    account.getAssignedClass())
+                .append("rollNumber",       account.getRollNumber())
+                .append("academicSession",  account.getAcademicSession())
+                .append("guardianName",     account.getGuardianName())
+                .append("guardianRelation", account.getGuardianRelation())
+                .append("guardianPhone",    account.getGuardianPhone())
+                .append("guardianEmail",    account.getGuardianEmail())
+                .append("subject",          account.getSubject())
+                .append("qualification",    account.getQualification())
+                .append("employmentStatus", account.getEmploymentStatus());
+
+        accounts.insertOne(doc);
+        return true;
+    }
+
 
     @Override
     public synchronized List<UserAccount> getAccounts() {
         List<UserAccount> result = new ArrayList<>();
-        // Sort alphabetically by username
         for (Document doc : accounts.find().sort(new Document("username", 1))) {
             result.add(toUserAccount(doc));
         }
         return result;
     }
 
-    // ── Get users by role ─────────────────────────────────────────────────────
 
     @Override
     public synchronized List<UserAccount> getAllUsersByRole(UserRole role) {
@@ -121,7 +136,6 @@ public final class MongoAuthService implements AuthService {
         return result;
     }
 
-    // ── Change password ───────────────────────────────────────────────────────
 
     @Override
     public synchronized boolean updatePassword(String username, String newPassword) {
@@ -135,27 +149,47 @@ public final class MongoAuthService implements AuthService {
         return updatedCount > 0;
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────────
 
     /** Convert a MongoDB document into a UserAccount object. */
     private UserAccount toUserAccount(Document doc) {
         return new UserAccount(
                 doc.getString("username"),
                 doc.getString("password"),
-                UserRole.valueOf(doc.getString("role")));
+                UserRole.valueOf(doc.getString("role")),
+                s(doc, "fullName"),
+                s(doc, "gender"),
+                s(doc, "dateOfBirth"),
+                s(doc, "phone"),
+                s(doc, "email"),
+                s(doc, "address"),
+                s(doc, "userId"),
+                s(doc, "assignedClass"),
+                s(doc, "rollNumber"),
+                s(doc, "academicSession"),
+                s(doc, "guardianName"),
+                s(doc, "guardianRelation"),
+                s(doc, "guardianPhone"),
+                s(doc, "guardianEmail"),
+                // teacher
+                s(doc, "subject"),
+                s(doc, "qualification"),
+                s(doc, "employmentStatus")
+        );
     }
 
-    /** True if the string is null or contains only whitespace. */
+    private String s(Document doc, String key) {
+        String v = doc.getString(key);
+        return v == null ? "" : v;
+    }
+
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
     }
 
-    /** Lowercase and trim — all usernames are stored this way. */
     private String normalize(String username) {
         return username.trim().toLowerCase();
     }
 
-    /** Create admin/admin123 on first run if it doesn't exist yet. */
     private void createDefaultAdmin() {
         if (authenticate("admin", "admin123", UserRole.ADMIN).isEmpty()) {
             createAccount("admin", "admin123", UserRole.ADMIN);
