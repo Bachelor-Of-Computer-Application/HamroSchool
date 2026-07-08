@@ -53,17 +53,14 @@ public class AdminController {
     private int currentPage = 0;
     private UserRole selectedRole = UserRole.STUDENT;
 
-    // ── Header ────────────────────────────────────────────────────────────────
     @FXML private Label welcomeLabel;
     @FXML private Label userInitialsLabel;
     @FXML private Label userNameLabel;
 
-    // ── Stats ─────────────────────────────────────────────────────────────────
     @FXML private Label totalAccountsLabel;
     @FXML private Label teacherCountLabel;
     @FXML private Label studentCountLabel;
 
-    // ── Table toolbar ─────────────────────────────────────────────────────────
     @FXML private TextField searchField;
     @FXML private Button    filterRoleBtn;
     @FXML private Button    filterStatusBtn;
@@ -71,7 +68,6 @@ public class AdminController {
     @FXML private HBox      bulkActionBar;
     @FXML private Label     selectedCountLabel;
 
-    // ── Table ─────────────────────────────────────────────────────────────────
     @FXML private TableView<UserAccount>                accountTable;
     @FXML private TableColumn<UserAccount, UserAccount> selectColumn;
     @FXML private TableColumn<UserAccount, UserAccount> userColumn;
@@ -86,13 +82,11 @@ public class AdminController {
     @FXML private Button prevButton;
     @FXML private Button nextButton;
 
-    // ── Modal skeleton ────────────────────────────────────────────────────────
     @FXML private StackPane modalOverlay;
     @FXML private VBox      step1Pane;
     @FXML private VBox      step2TeacherPane;
     @FXML private VBox      step2StudentPane;
 
-    // Step 1
     @FXML private TextField     usernameField;
     @FXML private PasswordField passwordField;
     @FXML private PasswordField confirmPasswordField;
@@ -103,7 +97,6 @@ public class AdminController {
     @FXML private Button        roleTeacherBtn;
     @FXML private Button        roleAdminBtn;
 
-    // Step 2 – Teacher
     @FXML private TextField         teacherFullNameField;
     @FXML private ChoiceBox<String> teacherGenderChoiceBox;
     @FXML private TextField         teacherPhoneField;
@@ -114,7 +107,6 @@ public class AdminController {
     @FXML private ChoiceBox<String> employmentStatusChoiceBox;
     @FXML private Label             teacherStatusLabel;
 
-    // Step 2 – Student
     @FXML private TextField         studentFullNameField;
     @FXML private Label             fullNameError;
     @FXML private ChoiceBox<String> genderChoiceBox;
@@ -133,7 +125,6 @@ public class AdminController {
     @FXML private Label             studentStatusLabel;
 
 
-    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     @FXML
     public void initialize() {
@@ -154,7 +145,6 @@ public class AdminController {
         refreshView();
     }
 
-    // ── Table setup ───────────────────────────────────────────────────────────
 
     private void setupTableColumns() {
         userColumn.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue()));
@@ -162,11 +152,14 @@ public class AdminController {
             @Override protected void updateItem(UserAccount acc, boolean empty) {
                 super.updateItem(acc, empty);
                 if (empty || acc == null) { setGraphic(null); return; }
-                Label avatar = new Label(Utils.initials(acc.getUsername()));
+                String initStr = acc.getFullName().isEmpty()
+                        ? Utils.initials(acc.getUsername())
+                        : Utils.initialsFromFull(acc.getFullName());
+                Label avatar = new Label(initStr);
                 avatar.setStyle("-fx-background-color: #111111; -fx-text-fill: white; -fx-font-size: 11px; " +
                         "-fx-font-weight: 800; -fx-background-radius: 999; -fx-min-width: 30; -fx-min-height: 30; " +
                         "-fx-pref-width: 30; -fx-pref-height: 30; -fx-alignment: center;");
-                Label name = new Label(Utils.formatName(acc.getUsername()));
+                Label name = new Label(acc.getDisplayName());
                 name.setStyle("-fx-text-fill: #111111; -fx-font-size: 13px; -fx-font-weight: 700;");
                 HBox box = new HBox(8, avatar, name);
                 box.setAlignment(Pos.CENTER_LEFT);
@@ -190,13 +183,18 @@ public class AdminController {
         });
 
         phoneColumn.setCellValueFactory(c -> {
+            String p = c.getValue().getPhone();
+            if (!p.isEmpty()) return new ReadOnlyStringWrapper(p);
             int idx = allAccounts.indexOf(c.getValue());
             return new ReadOnlyStringWrapper(String.format("+977 980000%04d", idx + 1));
         });
         phoneColumn.setCellFactory(col -> greyCell());
 
-        emailColumn.setCellValueFactory(c ->
-                new ReadOnlyStringWrapper(c.getValue().getUsername().toLowerCase(Locale.ROOT) + "@hamro.edu"));
+        emailColumn.setCellValueFactory(c -> {
+            String e = c.getValue().getEmail();
+            if (!e.isEmpty()) return new ReadOnlyStringWrapper(e);
+            return new ReadOnlyStringWrapper(c.getValue().getUsername().toLowerCase(Locale.ROOT) + "@hamro.edu");
+        });
         emailColumn.setCellFactory(col -> greyCell());
 
         statusColumn.setCellValueFactory(c -> {
@@ -261,7 +259,6 @@ public class AdminController {
         };
     }
 
-    // ── Data ──────────────────────────────────────────────────────────────────
 
     private void refreshView() {
         UserAccount cu = SessionContext.getInstance().requireCurrentUser();
@@ -309,7 +306,6 @@ public class AdminController {
         if (currentPage < pages - 1) { currentPage++; renderPage(); }
     }
 
-    // ── Toolbar stubs ─────────────────────────────────────────────────────────
     @FXML private void handleImportStudents()  { /* stub */ }
     @FXML private void handleExportData()      { /* stub */ }
     @FXML private void handleManageRoles()     { /* stub */ }
@@ -321,7 +317,6 @@ public class AdminController {
     @FXML private void handleBulkExport()      { /* stub */ }
     @FXML private void handleBulkChangeRole()  { /* stub */ }
 
-    // ── Modal: open ───────────────────────────────────────────────────────────
 
     @FXML
     private void handleCreateAccount() {
@@ -332,12 +327,10 @@ public class AdminController {
     }
 
     private void resetModal() {
-        // Step 1
         usernameField.clear(); passwordField.clear(); confirmPasswordField.clear();
         hideError(usernameError); hideError(passwordError); hideError(confirmError);
         selectedRole = UserRole.STUDENT;
         refreshRoleButtons();
-        // Student
         if (studentFullNameField != null) studentFullNameField.clear();
         if (dobField != null) dobField.clear();
         if (phoneField != null) phoneField.clear();
@@ -353,7 +346,6 @@ public class AdminController {
         if (fullNameError != null) hideError(fullNameError);
         if (studentIdLabel != null) studentIdLabel.setText(String.format("STU-%04d", allAccounts.size() + 1));
         if (studentStatusLabel != null) { studentStatusLabel.setVisible(false); studentStatusLabel.setManaged(false); }
-        // Teacher
         if (teacherFullNameField != null) teacherFullNameField.clear();
         if (teacherPhoneField != null) teacherPhoneField.clear();
         if (teacherEmailField != null) teacherEmailField.clear();
@@ -370,7 +362,6 @@ public class AdminController {
         modalOverlay.setManaged(false);
     }
 
-    // ── Modal: role toggle ────────────────────────────────────────────────────
 
     @FXML private void handleRoleStudent() { selectedRole = UserRole.STUDENT;  refreshRoleButtons(); }
     @FXML private void handleRoleTeacher() { selectedRole = UserRole.TEACHER;  refreshRoleButtons(); }
@@ -388,7 +379,6 @@ public class AdminController {
                 : "-fx-background-color: transparent; -fx-background-radius: 8; -fx-text-fill: #44403c; -fx-font-size: 13px; -fx-font-weight: 600; -fx-cursor: hand;");
     }
 
-    // ── Modal: step navigation ────────────────────────────────────────────────
 
     @FXML
     private void handleStep1Next() {
@@ -412,7 +402,6 @@ public class AdminController {
 
     @FXML
     private void handleSubmitCreateAccount() {
-        // Validate student required fields
         if (selectedRole == UserRole.STUDENT) {
             if (studentFullNameField.getText().trim().isEmpty()) {
                 showError(fullNameError);
@@ -429,24 +418,57 @@ public class AdminController {
 
         Label errLabel = selectedRole == UserRole.TEACHER ? teacherStatusLabel : studentStatusLabel;
 
-        if (!authService.createAccount(username, password, selectedRole)) {
+        UserAccount account;
+        if (selectedRole == UserRole.STUDENT) {
+            String studentId = studentIdLabel != null ? studentIdLabel.getText() : "";
+            account = new UserAccount(
+                    username, password, UserRole.STUDENT,
+                    val(studentFullNameField), val(genderChoiceBox),
+                    val(dobField), val(phoneField), val(studentEmailField),
+                    val(addressField), studentId,
+                    val(classChoiceBox), val(rollNumberField), val(academicSessionField),
+                    val(guardianNameField), val(guardianRelationChoiceBox),
+                    val(guardianPhoneField), val(guardianEmailField),
+                    "", "", ""
+            );
+        } else if (selectedRole == UserRole.TEACHER) {
+            String teacherId = teacherIdLabel != null ? teacherIdLabel.getText() : "";
+            account = new UserAccount(
+                    username, password, UserRole.TEACHER,
+                    val(teacherFullNameField), val(teacherGenderChoiceBox),
+                    "", val(teacherPhoneField), val(teacherEmailField),
+                    "", teacherId,
+                    "", "", "", "", "", "", "",
+                    val(subjectField), val(qualificationField), val(employmentStatusChoiceBox)
+            );
+        } else {
+            account = new UserAccount(username, password, UserRole.ADMIN);
+        }
+
+        if (!authService.createFullAccount(account)) {
             showStatusError(errLabel, "✗ Username already taken or fields are empty.");
             return;
         }
 
         if (selectedRole == UserRole.TEACHER) {
-            String subject = subjectField != null ? subjectField.getText().trim() : "";
+            String subject = val(subjectField);
             if (!subject.isEmpty()) teacherService.saveTeacherSubject(username, subject);
         } else if (selectedRole == UserRole.STUDENT) {
-            String cls = classChoiceBox != null ? classChoiceBox.getValue() : null;
-            if (cls != null && !cls.isEmpty()) classService.enrollStudent(cls, username);
+            String cls = val(classChoiceBox);
+            if (!cls.isEmpty()) classService.enrollStudent(cls, username);
         }
 
         handleCloseModal();
         refreshView();
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    private String val(TextField f) { return f == null ? "" : f.getText().trim(); }
+    private String val(ChoiceBox<String> cb) {
+        if (cb == null) return "";
+        String v = cb.getValue();
+        return v == null ? "" : v;
+    }
+
 
     private void setStep(int step) {
         step1Pane.setVisible(step == 1);        step1Pane.setManaged(step == 1);
@@ -478,7 +500,6 @@ public class AdminController {
         if (!names.isEmpty()) classChoiceBox.getSelectionModel().selectFirst();
     }
 
-    // ── Navigation ────────────────────────────────────────────────────────────
 
     @FXML private void handleNavAccounts() {
         SceneSwitcher.showView(welcomeLabel, "/com/hamroschool/account-view.fxml",  "Accounts",  1280, 860);
