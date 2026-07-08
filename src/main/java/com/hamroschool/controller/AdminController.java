@@ -125,7 +125,7 @@ public class AdminController {
                 super.updateItem(account, empty);
                 if (empty || account == null) { setGraphic(null); return; }
 
-                ImageView icon = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/hamroschool/images/admin-dashboard/three-dot-icon.png"))));
+                ImageView icon = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/hamroschool/assets/admin/dashboard/three-dot.png"))));
                 icon.setFitHeight(14);
                 icon.setFitWidth(14);
                 icon.setPreserveRatio(true);
