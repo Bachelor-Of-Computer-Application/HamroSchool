@@ -222,6 +222,11 @@ public class TeacherController {
     }
 
     @FXML
+    private void handleNavClasses() {
+        SceneSwitcher.showView(logoutButton, "/com/hamroschool/class-view.fxml", "Classes", 1280, 860);
+    }
+
+    @FXML
     private void handleNavStudents() {
         SceneSwitcher.showView(logoutButton, "/com/hamroschool/student-view.fxml", "Students", 1280, 860);
     }

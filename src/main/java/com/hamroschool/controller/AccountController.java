@@ -33,15 +33,12 @@ public class AccountController {
 
     private final AuthService authService = MongoAuthService.getInstance();
 
-    /** Full unfiltered list loaded from the service. */
     private final ObservableList<UserAccount> allAccounts = FXCollections.observableArrayList();
 
-    /** Currently displayed (filtered) page data. */
     private List<UserAccount> filteredAccounts = List.of();
 
     private int currentPage = 0;
 
-    // ── FXML nodes ──────────────────────────────────────────────────────────
 
     @FXML private Label userInitialsLabel;
     @FXML private Label userNameLabel;
@@ -244,6 +241,11 @@ public class AccountController {
     @FXML
     private void handleNavDashboard() {
         SceneSwitcher.showView(logoutButton, "/com/hamroschool/admin-view.fxml", "Admin Dashboard", 1280, 860);
+    }
+
+    @FXML
+    private void handleNavClasses() {
+        SceneSwitcher.showView(logoutButton, "/com/hamroschool/class-view.fxml", "Classes", 1280, 860);
     }
 
     @FXML
