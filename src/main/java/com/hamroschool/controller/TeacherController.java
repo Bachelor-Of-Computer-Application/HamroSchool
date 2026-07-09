@@ -11,10 +11,12 @@ import com.hamroschool.util.SceneSwitcher;
 import com.hamroschool.util.SessionContext;
 import com.hamroschool.util.Utils;
 
+import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -30,10 +32,18 @@ public class TeacherController {
 
     private static final int PAGE_SIZE = 7;
 
-    private final TeacherService teacherService = TeacherServiceImpl.getInstance();
-    private final ObservableList<UserAccount> allTeachers = FXCollections.observableArrayList();
+    /** Load the three-dot icon once and reuse it across all cell renders. */
+    private static final Image THREE_DOT_ICON = new Image(
+            Objects.requireNonNull(
+                    TeacherController.class.getResourceAsStream(
+                            "/com/hamroschool/assets/admin/teacher/three-dot.png")));
 
-    private List<UserAccount> filteredTeachers = List.of();
+    private final TeacherService teacherService = TeacherServiceImpl.getInstance();
+
+    // Master list that backs the FilteredList — never replaced, only mutated.
+    private final ObservableList<UserAccount> allTeachers    = FXCollections.observableArrayList();
+    private       FilteredList<UserAccount>   filteredTeachers;
+
     private int currentPage = 0;
 
     // ── FXML nodes ──────────────────────────────────────────────────────────
@@ -60,42 +70,58 @@ public class TeacherController {
 
     @FXML
     public void initialize() {
+        filteredTeachers = new FilteredList<>(allTeachers, a -> true);
+
         setupTable();
         refreshCurrentUser();
-        loadTeachers();
 
+        // Update predicate on every keystroke — no new list allocation needed.
         searchField.textProperty().addListener((obs, oldVal, newVal) -> {
             currentPage = 0;
-            applyFilterAndPage(newVal);
+            applyFilter(newVal);
         });
+
+        // Load teacher list off the FX thread to keep the UI responsive during startup.
+        Thread loader = new Thread(() -> {
+            List<UserAccount> teachers = teacherService.getAllTeachers();
+            Platform.runLater(() -> {
+                allTeachers.setAll(teachers);
+                totalTeachersLabel.setText(String.valueOf(allTeachers.size()));
+                activeTeachersLabel.setText(String.valueOf(allTeachers.size()));
+                currentPage = 0;
+                applyFilter(searchField.getText());
+            });
+        }, "TeacherListLoader");
+        loader.setDaemon(true);
+        loader.start();
     }
 
     // ── Table setup ──────────────────────────────────────────────────────────
 
     private void setupTable() {
-        // Teacher column — avatar initials + display name
+        // Teacher column — avatar initials + display name; reuse nodes per cell
         teacherColumn.setCellValueFactory(cell -> new ReadOnlyObjectWrapper<>(cell.getValue()));
         teacherColumn.setCellFactory(col -> new TableCell<>() {
+            private final Label initialsLabel = new Label();
+            private final Label nameLabel     = new Label();
+            private final HBox  container     = new HBox(10, initialsLabel, nameLabel);
+            {
+                initialsLabel.setStyle(
+                        "-fx-background-color: #e8e8e6; -fx-text-fill: #444444; " +
+                        "-fx-font-size: 11px; -fx-font-weight: 800; " +
+                        "-fx-background-radius: 999; " +
+                        "-fx-min-width: 30; -fx-min-height: 30; " +
+                        "-fx-pref-width: 30; -fx-pref-height: 30; " +
+                        "-fx-alignment: center;");
+                nameLabel.setStyle("-fx-text-fill: #222222; -fx-font-size: 13px; -fx-font-weight: 700;");
+                container.setStyle("-fx-alignment: center-left;");
+            }
             @Override
             protected void updateItem(UserAccount account, boolean empty) {
                 super.updateItem(account, empty);
                 if (empty || account == null) { setGraphic(null); return; }
-
-                Label initialsLabel = new Label(Utils.initials(account.getUsername()));
-                initialsLabel.setStyle(
-                    "-fx-background-color: #e8e8e6; -fx-text-fill: #444444; " +
-                    "-fx-font-size: 11px; -fx-font-weight: 800; " +
-                    "-fx-background-radius: 999; " +
-                    "-fx-min-width: 30; -fx-min-height: 30; " +
-                    "-fx-pref-width: 30; -fx-pref-height: 30; " +
-                    "-fx-alignment: center;"
-                );
-
-                Label nameLabel = new Label(Utils.formatName(account.getUsername()));
-                nameLabel.setStyle("-fx-text-fill: #222222; -fx-font-size: 13px; -fx-font-weight: 700;");
-
-                HBox container = new HBox(10, initialsLabel, nameLabel);
-                container.setStyle("-fx-alignment: center-left;");
+                initialsLabel.setText(Utils.initials(account.getUsername()));
+                nameLabel.setText(Utils.formatName(account.getUsername()));
                 setGraphic(container);
             }
         });
@@ -112,29 +138,24 @@ public class TeacherController {
             }
         });
 
-        // Actions column — three-dot button
+        // Actions column — reuse ImageView and Button nodes; share the static icon image
         actionsColumn.setCellValueFactory(cell -> new ReadOnlyObjectWrapper<>(cell.getValue()));
         actionsColumn.setCellFactory(col -> new TableCell<>() {
-            @Override
-            protected void updateItem(UserAccount account, boolean empty) {
-                super.updateItem(account, empty);
-                if (empty || account == null) { setGraphic(null); return; }
-
-                ImageView dotIcon = new ImageView(new Image(
-                    Objects.requireNonNull(
-                        getClass().getResourceAsStream(
-                            "/com/hamroschool/assets/admin/teacher/three-dot.png"))));
+            private final ImageView dotIcon = new ImageView(THREE_DOT_ICON);
+            private final Button    btn     = new Button();
+            {
                 dotIcon.setFitHeight(16);
                 dotIcon.setFitWidth(16);
                 dotIcon.setPreserveRatio(true);
-
-                Button btn = new Button();
                 btn.setGraphic(dotIcon);
                 btn.setStyle(
-                    "-fx-background-color: transparent; -fx-cursor: hand; " +
-                    "-fx-padding: 6 8 6 8; -fx-background-radius: 999;"
-                );
-                setGraphic(btn);
+                        "-fx-background-color: transparent; -fx-cursor: hand; " +
+                        "-fx-padding: 6 8 6 8; -fx-background-radius: 999;");
+            }
+            @Override
+            protected void updateItem(UserAccount account, boolean empty) {
+                super.updateItem(account, empty);
+                setGraphic(empty || account == null ? null : btn);
             }
         });
 
@@ -143,38 +164,24 @@ public class TeacherController {
         teacherTable.setStyle("-fx-background-color: transparent;");
     }
 
-    // ── Data loading ─────────────────────────────────────────────────────────
+    // ── Filtering & pagination ────────────────────────────────────────────────
 
-    private void loadTeachers() {
-        allTeachers.setAll(teacherService.getAllTeachers());
-
-        totalTeachersLabel.setText(String.valueOf(allTeachers.size()));
-        // All accounts created by admin are considered active; no separate status field exists yet
-        activeTeachersLabel.setText(String.valueOf(allTeachers.size()));
-
-        currentPage = 0;
-        applyFilterAndPage(searchField.getText());
-    }
-
-    private void applyFilterAndPage(String query) {
+    private void applyFilter(String query) {
         String q = (query == null ? "" : query.trim().toLowerCase(Locale.ROOT));
+        filteredTeachers.setPredicate(a ->
+                q.isEmpty() || a.getUsername().toLowerCase(Locale.ROOT).contains(q));
 
-        List<UserAccount> filtered = allTeachers.stream()
-            .filter(a -> q.isEmpty()
-                || a.getUsername().toLowerCase(Locale.ROOT).contains(q))
-            .toList();
-
-        filteredTeachers = filtered;
-
-        int totalPages = Math.max(1, (int) Math.ceil((double) filtered.size() / PAGE_SIZE));
+        int totalPages = Math.max(1, (int) Math.ceil((double) filteredTeachers.size() / PAGE_SIZE));
         if (currentPage >= totalPages) currentPage = totalPages - 1;
 
         int from = currentPage * PAGE_SIZE;
-        int to   = Math.min(from + PAGE_SIZE, filtered.size());
+        int to   = Math.min(from + PAGE_SIZE, filteredTeachers.size());
 
-        teacherTable.setItems(FXCollections.observableArrayList(filtered.subList(from, to)));
+        // Slice the filtered list for the current page
+        List<UserAccount> page = filteredTeachers.subList(from, to);
+        teacherTable.setItems(FXCollections.observableArrayList(page));
 
-        summaryLabel.setText("Showing " + filtered.size() + " of " + allTeachers.size() + " teachers");
+        summaryLabel.setText("Showing " + filteredTeachers.size() + " of " + allTeachers.size() + " teachers");
         updatePaginationButtons(totalPages);
     }
 
@@ -198,7 +205,7 @@ public class TeacherController {
     private void handlePrevPage() {
         if (currentPage > 0) {
             currentPage--;
-            applyFilterAndPage(searchField.getText());
+            applyFilter(searchField.getText());
         }
     }
 
@@ -207,41 +214,45 @@ public class TeacherController {
         int totalPages = Math.max(1, (int) Math.ceil((double) filteredTeachers.size() / PAGE_SIZE));
         if (currentPage < totalPages - 1) {
             currentPage++;
-            applyFilterAndPage(searchField.getText());
+            applyFilter(searchField.getText());
         }
     }
 
     @FXML
     private void handleNavDashboard() {
-        SceneSwitcher.showView(logoutButton, "/com/hamroschool/admin-view.fxml", "Admin Dashboard", SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
+        SceneSwitcher.showView(logoutButton, "/com/hamroschool/admin-view.fxml",
+                "Admin Dashboard", SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
     }
 
     @FXML
     private void handleNavAccounts() {
-        SceneSwitcher.showView(logoutButton, "/com/hamroschool/account-view.fxml", "Accounts", SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
+        SceneSwitcher.showView(logoutButton, "/com/hamroschool/account-view.fxml",
+                "Accounts", SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
     }
 
     @FXML
     private void handleNavClasses() {
-        SceneSwitcher.showView(logoutButton, "/com/hamroschool/class-view.fxml", "Classes", SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
+        SceneSwitcher.showView(logoutButton, "/com/hamroschool/class-view.fxml",
+                "Classes", SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
     }
 
     @FXML
     private void handleNavStudents() {
-        SceneSwitcher.showView(logoutButton, "/com/hamroschool/student-view.fxml", "Students", SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
+        SceneSwitcher.showView(logoutButton, "/com/hamroschool/student-view.fxml",
+                "Students", SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
     }
 
     @FXML
     private void handleNavSettings() {
-        SceneSwitcher.showView(logoutButton, "/com/hamroschool/settings-view.fxml", "Settings", SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
+        SceneSwitcher.showView(logoutButton, "/com/hamroschool/settings-view.fxml",
+                "Settings", SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
     }
 
     @FXML
     private void handleLogout() {
         SessionContext.getInstance().clear();
-        SceneSwitcher.showView(logoutButton, "/com/hamroschool/hello-view.fxml", "Hamro School", SceneSwitcher.LOGIN_WIDTH, SceneSwitcher.LOGIN_HEIGHT);
+        SceneSwitcher.clearCache(); // invalidate all cached scenes on logout
+        SceneSwitcher.showView(logoutButton, "/com/hamroschool/hello-view.fxml",
+                "Hamro School", SceneSwitcher.LOGIN_WIDTH, SceneSwitcher.LOGIN_HEIGHT);
     }
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
-    // initials and formatDisplayName delegated to Utils
 }

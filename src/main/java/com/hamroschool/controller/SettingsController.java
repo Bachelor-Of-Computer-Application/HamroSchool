@@ -128,6 +128,7 @@ public class SettingsController {
     @FXML
     private void handleLogout() {
         SessionContext.getInstance().clear();
+        SceneSwitcher.clearCache();
         SceneSwitcher.showView(logoutButton, "/com/hamroschool/hello-view.fxml", "Hamro School", SceneSwitcher.LOGIN_WIDTH, SceneSwitcher.LOGIN_HEIGHT);
     }
 

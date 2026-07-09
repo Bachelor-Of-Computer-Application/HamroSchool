@@ -570,6 +570,7 @@ public class AdminController {
     }
     @FXML private void handleLogout() {
         SessionContext.getInstance().clear();
+        SceneSwitcher.clearCache();
         SceneSwitcher.showView(welcomeLabel, "/com/hamroschool/hello-view.fxml",    "Hamro School", SceneSwitcher.LOGIN_WIDTH, SceneSwitcher.LOGIN_HEIGHT);
     }
 }
