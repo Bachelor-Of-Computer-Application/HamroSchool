@@ -31,7 +31,4 @@ public class AttendanceRecord {
     public String getStatus()            { return status; }
     public String getFeedback()          { return feedback; }
 
-    public boolean isPresent() { return "PRESENT".equals(status); }
-    public boolean isAbsent()  { return "ABSENT".equals(status); }
-    public boolean isLate()    { return "LATE".equals(status); }
 }

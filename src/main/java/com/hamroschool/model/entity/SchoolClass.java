@@ -67,26 +67,6 @@ public class SchoolClass {
         this.createdBy = createdBy;
     }
 
-    public void addTeacher(String teacherUsername) {
-        if (!assignedTeachers.contains(teacherUsername)) {
-            assignedTeachers.add(teacherUsername);
-        }
-    }
-
-    public void removeTeacher(String teacherUsername) {
-        assignedTeachers.remove(teacherUsername);
-    }
-
-    public void addStudent(String studentUsername) {
-        if (!enrolledStudents.contains(studentUsername)) {
-            enrolledStudents.add(studentUsername);
-        }
-    }
-
-    public void removeStudent(String studentUsername) {
-        enrolledStudents.remove(studentUsername);
-    }
-
     public int getTeacherCount() {
         return assignedTeachers.size();
     }

@@ -29,22 +29,18 @@ public final class MarkServiceImpl implements MarkService {
     private static final MarkServiceImpl INSTANCE = new MarkServiceImpl();
 
     private static final String COL_MARKS    = "marks";
-    private static final String COL_SUBJECTS = "teacher_subjects";
     private static final String COL_ACCOUNTS = "user_accounts";
 
     private final MongoCollection<Document> marks;
-    private final MongoCollection<Document> teacherSubjects;
     private final MongoCollection<Document> userAccounts;
 
     private MarkServiceImpl() {
         MongoDatabase db = MongoClientProvider.getInstance().getDatabase();
-        this.marks           = db.getCollection(COL_MARKS);
-        this.teacherSubjects = db.getCollection(COL_SUBJECTS);
-        this.userAccounts    = db.getCollection(COL_ACCOUNTS);
+        this.marks        = db.getCollection(COL_MARKS);
+        this.userAccounts = db.getCollection(COL_ACCOUNTS);
 
         marks.createIndex(Indexes.ascending(
                 "studentUsername", "subjectName", "teacherUsername", "examType"));
-        teacherSubjects.createIndex(Indexes.ascending("teacherUsername", "subjectName"));
     }
 
     public static MarkServiceImpl getInstance() { return INSTANCE; }
@@ -79,32 +75,10 @@ public final class MarkServiceImpl implements MarkService {
     }
 
     @Override
-    public synchronized void deleteMark(long id) {
-        // id was stored as ObjectId timestamp — delete by matching it
-        // We store a numeric surrogate; use ObjectId string lookup instead
-        // For simplicity, accept string hex id through the Mark entity
-        marks.deleteOne(Filters.eq("_numId", id));
-    }
-
-
-    @Override
     public synchronized List<Mark> getMarksByTeacher(String teacherUsername) {
         List<Mark> list = new ArrayList<>();
         for (Document d : marks.find(Filters.eq("teacherUsername", teacherUsername))
                 .sort(Sorts.descending("createdAt"))) {
-            list.add(mapMark(d));
-        }
-        return list;
-    }
-
-    @Override
-    public synchronized List<Mark> getMarksByStudentAndTeacher(String studentUsername,
-                                                                String teacherUsername) {
-        List<Mark> list = new ArrayList<>();
-        for (Document d : marks.find(Filters.and(
-                Filters.eq("studentUsername", studentUsername),
-                Filters.eq("teacherUsername", teacherUsername)))
-                .sort(Sorts.ascending("subjectName"))) {
             list.add(mapMark(d));
         }
         return list;
@@ -210,41 +184,12 @@ public final class MarkServiceImpl implements MarkService {
     }
 
 
-    @Override
-    public synchronized void assignSubject(String teacherUsername, String subjectName) {
-        if (blank(teacherUsername) || blank(subjectName)) return;
-        org.bson.conversions.Bson filter = Filters.and(
-                Filters.eq("teacherUsername", teacherUsername.trim().toLowerCase()),
-                Filters.eq("subjectName",     subjectName.trim()));
-        Document doc = new Document("teacherUsername", teacherUsername.trim().toLowerCase())
-                .append("subjectName", subjectName.trim());
-        teacherSubjects.replaceOne(filter, doc, new ReplaceOptions().upsert(true));
-    }
-
-    @Override
-    public synchronized void removeSubject(String teacherUsername, String subjectName) {
-        teacherSubjects.deleteOne(Filters.and(
-                Filters.eq("teacherUsername", teacherUsername.trim().toLowerCase()),
-                Filters.eq("subjectName",     subjectName.trim())));
-    }
-
-    @Override
-    public synchronized List<String> getAssignedSubjects(String teacherUsername) {
-        List<String> result = new ArrayList<>();
-        for (Document d : teacherSubjects.find(
-                Filters.eq("teacherUsername", teacherUsername.trim().toLowerCase()))
-                .sort(Sorts.ascending("subjectName"))) {
-            result.add(d.getString("subjectName"));
-        }
-        return result;
-    }
 
 
     private Mark mapMark(Document d) {
         ObjectId oid = d.getObjectId("_id");
         long numId   = oid != null ? oid.getTimestamp() : -1;
 
-        // createdAt may be stored as java.util.Date or Instant depending on driver version
         LocalDateTime createdAt;
         Object raw = d.get("createdAt");
         if (raw instanceof java.util.Date date) {
