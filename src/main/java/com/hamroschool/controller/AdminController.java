@@ -554,22 +554,23 @@ public class AdminController {
 
 
     @FXML private void handleNavAccounts() {
-        SceneSwitcher.showView(welcomeLabel, "/com/hamroschool/account-view.fxml",  "Accounts",  1280, 860);
+        SceneSwitcher.showView(welcomeLabel, "/com/hamroschool/account-view.fxml",  "Accounts",  SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
     }
     @FXML private void handleNavClasses() {
-        SceneSwitcher.showView(welcomeLabel, "/com/hamroschool/class-view.fxml",    "Classes",   1280, 860);
+        SceneSwitcher.showView(welcomeLabel, "/com/hamroschool/class-view.fxml",    "Classes",   SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
     }
     @FXML private void handleNavTeachers() {
-        SceneSwitcher.showView(welcomeLabel, "/com/hamroschool/teacher-view.fxml",  "Teachers",  1280, 860);
+        SceneSwitcher.showView(welcomeLabel, "/com/hamroschool/teacher-view.fxml",  "Teachers",  SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
     }
     @FXML private void handleNavStudents() {
-        SceneSwitcher.showView(welcomeLabel, "/com/hamroschool/student-view.fxml",  "Students",  1280, 860);
+        SceneSwitcher.showView(welcomeLabel, "/com/hamroschool/student-view.fxml",  "Students",  SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
     }
     @FXML private void handleNavSettings() {
-        SceneSwitcher.showView(welcomeLabel, "/com/hamroschool/settings-view.fxml", "Settings",  1280, 860);
+        SceneSwitcher.showView(welcomeLabel, "/com/hamroschool/settings-view.fxml", "Settings",  SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
     }
     @FXML private void handleLogout() {
         SessionContext.getInstance().clear();
-        SceneSwitcher.showView(welcomeLabel, "/com/hamroschool/hello-view.fxml",    "Hamro School", 920, 720);
+        SceneSwitcher.clearCache();
+        SceneSwitcher.showView(welcomeLabel, "/com/hamroschool/hello-view.fxml",    "Hamro School", SceneSwitcher.LOGIN_WIDTH, SceneSwitcher.LOGIN_HEIGHT);
     }
 }

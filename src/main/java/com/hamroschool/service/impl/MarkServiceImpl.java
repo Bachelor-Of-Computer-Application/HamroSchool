@@ -46,10 +46,12 @@ public final class MarkServiceImpl implements MarkService {
     public static MarkServiceImpl getInstance() { return INSTANCE; }
 
 
+    // ── Write ─────────────────────────────────────────────────────────────────
+
     @Override
-    public synchronized long saveMark(String studentUsername, String subjectName,
-                                      String teacherUsername, int score, int fullMarks,
-                                      String examType, String remarks) {
+    public long saveMark(String studentUsername, String subjectName,
+                         String teacherUsername, int score, int fullMarks,
+                         String examType, String remarks) {
         String et = examType == null ? "Terminal" : examType;
         org.bson.conversions.Bson filter = Filters.and(
                 Filters.eq("studentUsername", studentUsername),
@@ -74,8 +76,11 @@ public final class MarkServiceImpl implements MarkService {
         return -1;
     }
 
+
+    // ── Read ──────────────────────────────────────────────────────────────────
+
     @Override
-    public synchronized List<Mark> getMarksByTeacher(String teacherUsername) {
+    public List<Mark> getMarksByTeacher(String teacherUsername) {
         List<Mark> list = new ArrayList<>();
         for (Document d : marks.find(Filters.eq("teacherUsername", teacherUsername))
                 .sort(Sorts.descending("createdAt"))) {
@@ -85,7 +90,7 @@ public final class MarkServiceImpl implements MarkService {
     }
 
     @Override
-    public synchronized List<Mark> getMarksByStudent(String studentUsername) {
+    public List<Mark> getMarksByStudent(String studentUsername) {
         List<Mark> list = new ArrayList<>();
         for (Document d : marks.find(Filters.eq("studentUsername", studentUsername))
                 .sort(Sorts.ascending("subjectName"))) {
@@ -95,22 +100,27 @@ public final class MarkServiceImpl implements MarkService {
     }
 
     @Override
-    public synchronized List<String> getSubjectsByTeacher(String teacherUsername) {
+    public List<String> getSubjectsByTeacher(String teacherUsername) {
         return marks.distinct("subjectName", Filters.eq("teacherUsername", teacherUsername),
                 String.class).into(new ArrayList<>());
     }
 
     @Override
-    public synchronized List<String> getAllStudentUsernames() {
+    public List<String> getAllStudentUsernames() {
         return userAccounts.distinct("username",
                 Filters.eq("role", UserRole.STUDENT.name()),
                 String.class).into(new ArrayList<>());
     }
 
 
-    @Override
-    public synchronized List<StudentMarkSummary> getMarksheet(String teacherUsername,
-                                                               String subjectName) {
+    // ── Derived / aggregated reads ────────────────────────────────────────────
+
+    /**
+     * Returns a marksheet for the given teacher+subject. Accepts an optional pre-loaded
+     * student list to avoid redundant DB round-trips when called from composite methods.
+     */
+    public List<StudentMarkSummary> getMarksheet(String teacherUsername, String subjectName,
+                                                  List<String> allStudents) {
         Map<String, int[]> pivot = new LinkedHashMap<>();
         for (Document d : marks.find(Filters.and(
                 Filters.eq("teacherUsername", teacherUsername),
@@ -119,31 +129,35 @@ public final class MarkServiceImpl implements MarkService {
             String student  = d.getString("studentUsername");
             String examType = d.getString("examType").toLowerCase();
             int score       = d.getInteger("score", 0);
-            int fullMarks   = d.getInteger("fullMarks", 50);
+            int fm          = d.getInteger("fullMarks", 50);
             int[] row = pivot.computeIfAbsent(student, k -> new int[]{-1, -1, 50, 50});
-            if (examType.contains("mid")) { row[0] = score; row[2] = fullMarks; }
-            else                          { row[1] = score; row[3] = fullMarks; }
+            if (examType.contains("mid")) { row[0] = score; row[2] = fm; }
+            else                          { row[1] = score; row[3] = fm; }
         }
-        List<String> allStudents = getAllStudentUsernames();
         List<StudentMarkSummary> result = new ArrayList<>();
         int roll = 1;
         for (String student : allStudents) {
             int[] row = pivot.getOrDefault(student, new int[]{-1, -1, 50, 50});
-            int fm = (row[2] > 0 ? row[2] : 50) + (row[3] > 0 ? row[3] : 50);
-            result.add(new StudentMarkSummary(roll++, student, row[0], row[1], fm));
+            int totalFm = (row[2] > 0 ? row[2] : 50) + (row[3] > 0 ? row[3] : 50);
+            result.add(new StudentMarkSummary(roll++, student, row[0], row[1], totalFm));
         }
         return result;
     }
 
     @Override
-    public synchronized double getAverageMarks(String teacherUsername, String subjectName) {
+    public List<StudentMarkSummary> getMarksheet(String teacherUsername, String subjectName) {
+        return getMarksheet(teacherUsername, subjectName, getAllStudentUsernames());
+    }
+
+    @Override
+    public double getAverageMarks(String teacherUsername, String subjectName) {
         return getMarksheet(teacherUsername, subjectName).stream()
                 .filter(s -> s.getMidterm() >= 0 || s.getFinalMark() >= 0)
                 .mapToDouble(StudentMarkSummary::getPercentage).average().orElse(0);
     }
 
     @Override
-    public synchronized double getPassRate(String teacherUsername, String subjectName) {
+    public double getPassRate(String teacherUsername, String subjectName) {
         List<StudentMarkSummary> with = getMarksheet(teacherUsername, subjectName).stream()
                 .filter(s -> s.getMidterm() >= 0 || s.getFinalMark() >= 0).toList();
         if (with.isEmpty()) return 0;
@@ -152,16 +166,18 @@ public final class MarkServiceImpl implements MarkService {
     }
 
     @Override
-    public synchronized int getTopScore(String teacherUsername, String subjectName) {
+    public int getTopScore(String teacherUsername, String subjectName) {
         return getMarksheet(teacherUsername, subjectName).stream()
                 .filter(s -> s.getMidterm() >= 0 || s.getFinalMark() >= 0)
                 .mapToInt(StudentMarkSummary::getTotal).max().orElse(0);
     }
 
     @Override
-    public synchronized List<ReportCardEntry> getReportCard(String teacherUsername,
-                                                             String subjectName) {
-        List<StudentMarkSummary> sheet = getMarksheet(teacherUsername, subjectName);
+    public List<ReportCardEntry> getReportCard(String teacherUsername, String subjectName) {
+        // Single DB round-trip for student list shared by both getMarksheet and rank computation
+        List<String> allStudents = getAllStudentUsernames();
+        List<StudentMarkSummary> sheet = getMarksheet(teacherUsername, subjectName, allStudents);
+
         List<StudentMarkSummary> sorted = sheet.stream()
                 .sorted((a, b) -> Double.compare(b.getPercentage(), a.getPercentage())).toList();
         Map<String, Integer> rankMap = new LinkedHashMap<>();
@@ -184,7 +200,7 @@ public final class MarkServiceImpl implements MarkService {
     }
 
 
-
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private Mark mapMark(Document d) {
         ObjectId oid = d.getObjectId("_id");
@@ -210,6 +226,4 @@ public final class MarkServiceImpl implements MarkService {
                 d.getString("remarks"),
                 createdAt);
     }
-
-    private boolean blank(String s) { return s == null || s.trim().isEmpty(); }
 }
