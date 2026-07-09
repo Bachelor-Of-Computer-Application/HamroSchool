@@ -218,33 +218,33 @@ public class StudentController {
 
     @FXML
     private void handleNavDashboard() {
-        SceneSwitcher.showView(logoutButton, "/com/hamroschool/admin-view.fxml", "Admin Dashboard", 1280, 860);
+        SceneSwitcher.showView(logoutButton, "/com/hamroschool/admin-view.fxml", "Admin Dashboard", SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
     }
 
     @FXML
     private void handleNavAccounts() {
-        SceneSwitcher.showView(logoutButton, "/com/hamroschool/account-view.fxml", "Accounts", 1280, 860);
+        SceneSwitcher.showView(logoutButton, "/com/hamroschool/account-view.fxml", "Accounts", SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
     }
 
     @FXML
     private void handleNavClasses() {
-        SceneSwitcher.showView(logoutButton, "/com/hamroschool/class-view.fxml", "Classes", 1280, 860);
+        SceneSwitcher.showView(logoutButton, "/com/hamroschool/class-view.fxml", "Classes", SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
     }
 
     @FXML
     private void handleNavTeachers() {
-        SceneSwitcher.showView(logoutButton, "/com/hamroschool/teacher-view.fxml", "Teachers", 1280, 860);
+        SceneSwitcher.showView(logoutButton, "/com/hamroschool/teacher-view.fxml", "Teachers", SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
     }
 
     @FXML
     private void handleNavSettings() {
-        SceneSwitcher.showView(logoutButton, "/com/hamroschool/settings-view.fxml", "Settings", 1280, 860);
+        SceneSwitcher.showView(logoutButton, "/com/hamroschool/settings-view.fxml", "Settings", SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
     }
 
     @FXML
     private void handleLogout() {
         SessionContext.getInstance().clear();
-        SceneSwitcher.showView(logoutButton, "/com/hamroschool/hello-view.fxml", "Hamro School", 920, 720);
+        SceneSwitcher.showView(logoutButton, "/com/hamroschool/hello-view.fxml", "Hamro School", SceneSwitcher.LOGIN_WIDTH, SceneSwitcher.LOGIN_HEIGHT);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

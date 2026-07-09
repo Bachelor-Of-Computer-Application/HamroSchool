@@ -233,7 +233,7 @@ public class StudentDashboardController {
     @FXML
     private void handleLogout() {
         SessionContext.getInstance().clear();
-        SceneSwitcher.showView(logoutButton, "/com/hamroschool/hello-view.fxml", "Hamro School", 920, 720);
+        SceneSwitcher.showView(logoutButton, "/com/hamroschool/hello-view.fxml", "Hamro School", SceneSwitcher.LOGIN_WIDTH, SceneSwitcher.LOGIN_HEIGHT);
     }
 
     @FXML private void handlePrevPage() {

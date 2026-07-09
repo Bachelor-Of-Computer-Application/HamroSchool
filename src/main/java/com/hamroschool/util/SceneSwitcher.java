@@ -9,6 +9,12 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 public final class SceneSwitcher {
+
+    public static final double APP_WIDTH  = 1280;
+    public static final double APP_HEIGHT = 860;
+    public static final double LOGIN_WIDTH  = 1280;
+    public static final double LOGIN_HEIGHT = 860;
+
     private SceneSwitcher() {
     }
 

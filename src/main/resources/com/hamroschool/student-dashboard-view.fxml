@@ -7,62 +7,58 @@
 <?import javafx.scene.shape.*?>
 
 <BorderPane prefHeight="860.0" prefWidth="1280.0" stylesheets="@styles.css"
-            style="-fx-background-color: #f5f5f4; -fx-font-family: 'Segoe UI';"
+            style="-fx-background-color: #f8f8f7; -fx-font-family: 'Segoe UI';"
             xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.hamroschool.controller.StudentDashboardController">
 
     <left>
-        <VBox prefWidth="216.0"
-              style="-fx-background-color: white; -fx-border-color: #e7e5e4; -fx-border-width: 0 1 0 0;">
-            <padding><Insets bottom="28.0" left="20.0" right="20.0" top="20.0" /></padding>
+        <VBox prefWidth="216.0" spacing="18.0"
+              style="-fx-background-color: #fbfbfa; -fx-border-color: #eceae6; -fx-border-width: 0 1 0 0;">
+            <padding><Insets bottom="24.0" left="20.0" right="16.0" top="18.0" /></padding>
             <children>
 
-                <HBox alignment="CENTER_LEFT" spacing="10.0">
+                <HBox alignment="CENTER_LEFT" spacing="12.0">
                     <children>
-                        <ImageView fitHeight="32.0" fitWidth="32.0" preserveRatio="true">
+                        <ImageView fitHeight="38.0" fitWidth="38.0" preserveRatio="true">
                             <image><Image url="@assets/logo.png" /></image>
                         </ImageView>
-                        <VBox spacing="1.0">
+                        <VBox spacing="2.0">
                             <children>
-                                <Label style="-fx-text-fill: #111111; -fx-font-size: 14px; -fx-font-weight: 800;" text="Hammro School" />
-                                <Label style="-fx-text-fill: #a8a29e; -fx-font-size: 11px;" text="Student Portal" />
+                                <Label style="-fx-text-fill: #161616; -fx-font-size: 16px; -fx-font-weight: 800;" text="Hamro School" />
+                                <Label style="-fx-text-fill: #8a8a8a; -fx-font-size: 12px;" text="Student Portal" />
                             </children>
                         </VBox>
                     </children>
                 </HBox>
 
-                <Separator style="-fx-opacity: 0.5;">
-                    <VBox.margin><Insets bottom="8.0" top="16.0" /></VBox.margin>
-                </Separator>
-
-                <VBox spacing="2.0">
+                <VBox spacing="10.0">
                     <children>
-                        <Button fx:id="navDashboardBtn" alignment="CENTER_LEFT" graphicTextGap="10.0"
-                                onAction="#handleNavDashboard" prefHeight="38.0" maxWidth="Infinity"
-                                style="-fx-background-color: #111111; -fx-background-radius: 8; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: 600; -fx-padding: 0 12 0 12; -fx-cursor: hand;"
+                        <Button fx:id="navDashboardBtn" alignment="CENTER_LEFT" graphicTextGap="12.0"
+                                onAction="#handleNavDashboard" prefHeight="28.0" maxWidth="Infinity"
+                                style="-fx-background-color: #111111; -fx-background-radius: 8; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: 700; -fx-padding: 10 14 10 14; -fx-cursor: hand;"
                                 text="Dashboard">
                             <graphic>
-                                <ImageView fitHeight="14.0" fitWidth="14.0" preserveRatio="true">
+                                <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
                                     <image><Image url="@assets/student-portal/aside/dashboard.png" /></image>
                                 </ImageView>
                             </graphic>
                         </Button>
-                        <Button fx:id="navGradesBtn" alignment="CENTER_LEFT" graphicTextGap="10.0"
-                                onAction="#handleNavGrades" prefHeight="38.0" maxWidth="Infinity"
-                                style="-fx-background-color: transparent; -fx-background-radius: 8; -fx-text-fill: #44403c; -fx-font-size: 13px; -fx-font-weight: 500; -fx-padding: 0 12 0 12; -fx-cursor: hand;"
+                        <Button fx:id="navGradesBtn" alignment="CENTER_LEFT" graphicTextGap="12.0"
+                                onAction="#handleNavGrades" prefHeight="28.0" maxWidth="Infinity"
+                                style="-fx-background-color: transparent; -fx-background-radius: 8; -fx-text-fill: #272727; -fx-font-size: 13px; -fx-font-weight: 600; -fx-padding: 10 14 10 14; -fx-cursor: hand;"
                                 text="Grades">
                             <graphic>
-                                <ImageView fitHeight="14.0" fitWidth="14.0" preserveRatio="true">
+                                <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
                                     <image><Image url="@assets/student-portal/aside/grades.png" /></image>
                                 </ImageView>
                             </graphic>
                         </Button>
-                        <Button fx:id="navAttendanceBtn" alignment="CENTER_LEFT" graphicTextGap="10.0"
-                                onAction="#handleNavAttendance" prefHeight="38.0" maxWidth="Infinity"
-                                style="-fx-background-color: transparent; -fx-background-radius: 8; -fx-text-fill: #44403c; -fx-font-size: 13px; -fx-font-weight: 500; -fx-padding: 0 12 0 12; -fx-cursor: hand;"
+                        <Button fx:id="navAttendanceBtn" alignment="CENTER_LEFT" graphicTextGap="12.0"
+                                onAction="#handleNavAttendance" prefHeight="28.0" maxWidth="Infinity"
+                                style="-fx-background-color: transparent; -fx-background-radius: 8; -fx-text-fill: #272727; -fx-font-size: 13px; -fx-font-weight: 600; -fx-padding: 10 14 10 14; -fx-cursor: hand;"
                                 text="Attendance">
                             <graphic>
-                                <ImageView fitHeight="14.0" fitWidth="14.0" preserveRatio="true">
+                                <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
                                     <image><Image url="@assets/student-portal/grades/lowestgrade.png" /></image>
                                 </ImageView>
                             </graphic>
@@ -72,12 +68,12 @@
 
                 <Region VBox.vgrow="ALWAYS" />
 
-                <Button fx:id="logoutButton" alignment="CENTER_LEFT" graphicTextGap="10.0"
-                        onAction="#handleLogout" prefHeight="38.0" maxWidth="Infinity"
-                        style="-fx-background-color: transparent; -fx-background-radius: 8; -fx-text-fill: #44403c; -fx-font-size: 13px; -fx-font-weight: 500; -fx-padding: 0 12 0 12; -fx-cursor: hand;"
+                <Button fx:id="logoutButton" alignment="CENTER_LEFT" graphicTextGap="12.0"
+                        onAction="#handleLogout" prefHeight="40.0" maxWidth="Infinity"
+                        style="-fx-background-color: transparent; -fx-background-radius: 8; -fx-text-fill: #272727; -fx-font-size: 13px; -fx-font-weight: 600; -fx-padding: 10 14 10 14; -fx-cursor: hand;"
                         text="Logout">
                     <graphic>
-                        <ImageView fitHeight="14.0" fitWidth="14.0" preserveRatio="true">
+                        <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
                             <image><Image url="@assets/student-portal/aside/logout.png" /></image>
                         </ImageView>
                     </graphic>
@@ -91,37 +87,32 @@
         <ScrollPane fitToWidth="true" hbarPolicy="NEVER"
                     style="-fx-background: transparent; -fx-background-color: transparent; -fx-border-color: transparent;">
             <content>
-                <VBox spacing="0" style="-fx-background-color: #f5f5f4;">
+                <VBox spacing="0" style="-fx-background-color: #f8f8f7;">
                     <children>
 
                         <!-- Top Header -->
-                        <VBox style="-fx-background-color: white; -fx-border-color: #e7e5e4; -fx-border-width: 0 0 1 0; -fx-padding: 20 28 20 28;">
+                        <VBox style="-fx-background-color: white; -fx-border-color: #eceae6; -fx-border-width: 0 0 1 0; -fx-padding: 20 28 20 28;">
                             <children>
                                 <HBox alignment="CENTER_LEFT">
                                     <children>
-                                        <VBox spacing="3.0" HBox.hgrow="ALWAYS">
+                                        <VBox spacing="4.0" HBox.hgrow="ALWAYS">
                                             <children>
-                                                <Label style="-fx-font-size: 22px; -fx-font-weight: 800; -fx-text-fill: #111111;"
+                                                <Label style="-fx-font-size: 28px; -fx-font-weight: 800; -fx-text-fill: #171717;"
                                                        text="Dashboard" />
                                                 <Label fx:id="welcomeSubLabel"
-                                                       style="-fx-font-size: 13px; -fx-text-fill: #78716c;"
+                                                       style="-fx-font-size: 14px; -fx-text-fill: #8a8a8a;"
                                                        text="Overview of academic performance, attendance trends, and upcoming priorities." />
                                             </children>
                                         </VBox>
-                                        <HBox alignment="CENTER_LEFT" spacing="8.0"
-                                              style="-fx-background-color: #f5f5f4; -fx-background-radius: 999; -fx-border-color: #e7e5e4; -fx-border-radius: 999; -fx-padding: 6 14 6 8;">
+                                        <HBox alignment="CENTER_LEFT" spacing="10.0"
+                                              style="-fx-background-color: white; -fx-background-radius: 999; -fx-border-color: #ebe9e4; -fx-border-radius: 999; -fx-padding: 8 14 8 10;">
                                             <children>
                                                 <Label fx:id="userInitialsLabel"
-                                                       style="-fx-background-color: #111111; -fx-background-radius: 999; -fx-text-fill: white; -fx-font-size: 11px; -fx-font-weight: 800; -fx-min-width: 28; -fx-min-height: 28; -fx-pref-width: 28; -fx-pref-height: 28; -fx-alignment: center;"
+                                                       style="-fx-background-color: #1d1d1d; -fx-background-radius: 999; -fx-text-fill: white; -fx-font-size: 11px; -fx-font-weight: 800; -fx-min-width: 28; -fx-min-height: 28; -fx-pref-width: 28; -fx-pref-height: 28; -fx-alignment: center;"
                                                        text="PO" />
-                                                <VBox>
-                                                    <children>
-                                                        <Label fx:id="userNameLabel"
-                                                               style="-fx-text-fill: #111111; -fx-font-size: 13px; -fx-font-weight: 700;"
-                                                               text="Pokemon" />
-                                                        <Label style="-fx-text-fill: #78716c; -fx-font-size: 10px;" text="Student" />
-                                                    </children>
-                                                </VBox>
+                                                <Label fx:id="userNameLabel"
+                                                       style="-fx-text-fill: #1f1f1f; -fx-font-size: 13px; -fx-font-weight: 700;"
+                                                       text="Pokemon" />
                                             </children>
                                         </HBox>
                                     </children>
@@ -130,7 +121,7 @@
                         </VBox>
 
                         <!-- Main Content Area -->
-                        <VBox spacing="20.0" style="-fx-padding: 24 28 28 28;">
+                        <VBox spacing="22.0" style="-fx-padding: 24 28 28 28; -fx-background-color: #f8f8f7;">
                             <children>
 
                                 <!-- Top 3 Stats Cards -->
@@ -138,7 +129,7 @@
                                     <children>
                                         <!-- Total Subjects Card -->
                                         <VBox HBox.hgrow="ALWAYS" spacing="10.0"
-                                              style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 18; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
+                                              style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #eceae6; -fx-border-radius: 12; -fx-padding: 18; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
                                             <children>
                                                 <HBox alignment="CENTER_LEFT">
                                                     <children>
@@ -160,7 +151,7 @@
 
                                         <!-- Attendance Rate Card -->
                                         <VBox HBox.hgrow="ALWAYS" spacing="10.0"
-                                              style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 18; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
+                                              style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #eceae6; -fx-border-radius: 12; -fx-padding: 18; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
                                             <children>
                                                 <HBox alignment="CENTER_LEFT">
                                                     <children>
@@ -181,7 +172,7 @@
 
                                         <!-- GPA Card -->
                                         <VBox HBox.hgrow="ALWAYS" spacing="10.0"
-                                              style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 18; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
+                                              style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #eceae6; -fx-border-radius: 12; -fx-padding: 18; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
                                             <children>
                                                 <HBox alignment="CENTER_LEFT">
                                                     <children>
@@ -217,7 +208,7 @@
                                                     <children>
                                                         <!-- Student Details Card -->
                                                         <VBox spacing="14.0"
-                                                              style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
+                                                              style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #eceae6; -fx-border-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
                                                             <children>
                                                                 <HBox alignment="CENTER_LEFT">
                                                                     <children>
@@ -324,7 +315,7 @@
 
                                                         <!-- Recent Grades -->
                                                         <VBox spacing="14.0"
-                                                              style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
+                                                              style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #eceae6; -fx-border-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
                                                             <children>
                                                                 <HBox alignment="CENTER_LEFT">
                                                                     <children>
@@ -334,7 +325,7 @@
                                                                                 <Label style="-fx-font-size: 12px; -fx-text-fill: #78716c;" text="Latest subject performance snapshot" />
                                                                             </children>
                                                                         </VBox>
-                                                                        <Label style="-fx-background-color: #f5f5f4; -fx-text-fill: #78716c; -fx-font-size: 11px; -fx-font-weight: 700; -fx-padding: 6 14; -fx-background-radius: 999; -fx-border-color: #e7e5e4; -fx-border-radius: 999;" text="This Week" />
+                                                                        <Label style="-fx-background-color: #f5f5f4; -fx-text-fill: #78716c; -fx-font-size: 11px; -fx-font-weight: 700; -fx-padding: 6 14; -fx-background-radius: 999; -fx-border-color: #eceae6; -fx-border-radius: 999;" text="This Week" />
                                                                     </children>
                                                                 </HBox>
 
@@ -348,7 +339,7 @@
 
                                                 <!-- Right Column - Recent Attendance -->
                                                 <VBox HBox.hgrow="ALWAYS" spacing="14.0"
-                                                      style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
+                                                      style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #eceae6; -fx-border-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
                                                     <children>
                                                         <HBox alignment="CENTER_LEFT">
                                                             <children>
@@ -358,7 +349,7 @@
                                                                         <Label style="-fx-font-size: 12px; -fx-text-fill: #78716c;" text="Subject-wise status overview" />
                                                                     </children>
                                                                 </VBox>
-                                                                <Label fx:id="attTodayLabelDash" style="-fx-background-color: #f5f5f4; -fx-text-fill: #78716c; -fx-font-size: 11px; -fx-font-weight: 700; -fx-padding: 6 14; -fx-background-radius: 999; -fx-border-color: #e7e5e4; -fx-border-radius: 999;" text="Today" />
+                                                                <Label fx:id="attTodayLabelDash" style="-fx-background-color: #f5f5f4; -fx-text-fill: #78716c; -fx-font-size: 11px; -fx-font-weight: 700; -fx-padding: 6 14; -fx-background-radius: 999; -fx-border-color: #eceae6; -fx-border-radius: 999;" text="Today" />
                                                             </children>
                                                         </HBox>
 
@@ -379,7 +370,7 @@
                                                     <children>
                                                         <!-- Overall GPA Card -->
                                                         <VBox HBox.hgrow="ALWAYS" spacing="12.0"
-                                                              style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
+                                                              style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #eceae6; -fx-border-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
                                                             <children>
                                                                 <HBox alignment="CENTER_LEFT">
                                                                     <children>
@@ -395,7 +386,7 @@
 
                                                         <!-- Total Subjects Card -->
                                                         <VBox HBox.hgrow="ALWAYS" spacing="12.0"
-                                                              style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
+                                                              style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #eceae6; -fx-border-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
                                                             <children>
                                                                 <HBox alignment="CENTER_LEFT">
                                                                     <children>
@@ -411,7 +402,7 @@
 
                                                         <!-- Highest Grade Card -->
                                                         <VBox HBox.hgrow="ALWAYS" spacing="12.0"
-                                                              style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
+                                                              style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #eceae6; -fx-border-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
                                                             <children>
                                                                 <HBox alignment="CENTER_LEFT">
                                                                     <children>
@@ -427,7 +418,7 @@
 
                                                         <!-- Subjects Improved Card -->
                                                         <VBox HBox.hgrow="ALWAYS" spacing="12.0"
-                                                              style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
+                                                              style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #eceae6; -fx-border-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
                                                             <children>
                                                                 <HBox alignment="CENTER_LEFT">
                                                                     <children>
@@ -450,7 +441,7 @@
 
                                                 <!-- Subject Grades Section -->
                                                 <VBox spacing="14.0"
-                                                      style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
+                                                      style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #eceae6; -fx-border-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
                                                     <children>
                                                         <HBox alignment="CENTER_LEFT">
                                                             <children>
@@ -460,7 +451,7 @@
                                                                         <Label style="-fx-font-size: 12px; -fx-text-fill: #78716c;" text="Review recent assessments and performance by subject" />
                                                                     </children>
                                                                 </VBox>
-                                                                <Label style="-fx-background-color: #f5f5f4; -fx-text-fill: #78716c; -fx-font-size: 11px; -fx-font-weight: 700; -fx-padding: 6 14; -fx-background-radius: 999; -fx-border-color: #e7e5e4; -fx-border-radius: 999;" text="This Term" />
+                                                                <Label style="-fx-background-color: #f5f5f4; -fx-text-fill: #78716c; -fx-font-size: 11px; -fx-font-weight: 700; -fx-padding: 6 14; -fx-background-radius: 999; -fx-border-color: #eceae6; -fx-border-radius: 999;" text="This Term" />
                                                             </children>
                                                         </HBox>
 
@@ -477,7 +468,7 @@
                                         <VBox fx:id="attendancePane" spacing="20.0" visible="false" managed="false">
                                             <children>
                                                 <VBox spacing="16.0"
-                                                      style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 24; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
+                                                      style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #eceae6; -fx-border-radius: 12; -fx-padding: 24; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.04),8,0,0,2);">
                                                     <children>
                                                         <HBox alignment="CENTER_LEFT">
                                                             <children>
@@ -487,14 +478,14 @@
                                                                         <Label style="-fx-font-size: 13px; -fx-text-fill: #78716c;" text="Track subject-wise attendance with quick status updates" />
                                                                     </children>
                                                                 </VBox>
-                                                                <Label fx:id="attTodayLabel" style="-fx-background-color: #f5f5f4; -fx-text-fill: #78716c; -fx-font-size: 12px; -fx-font-weight: 700; -fx-padding: 8 16; -fx-background-radius: 999; -fx-border-color: #e7e5e4; -fx-border-radius: 999;" text="Today" />
+                                                                <Label fx:id="attTodayLabel" style="-fx-background-color: #f5f5f4; -fx-text-fill: #78716c; -fx-font-size: 12px; -fx-font-weight: 700; -fx-padding: 8 16; -fx-background-radius: 999; -fx-border-color: #eceae6; -fx-border-radius: 999;" text="Today" />
                                                             </children>
                                                         </HBox>
 
                                                         <HBox spacing="14.0">
                                                             <children>
                                                                 <VBox HBox.hgrow="ALWAYS" spacing="8.0"
-                                                                      style="-fx-background-color: #fafaf9; -fx-background-radius: 12; -fx-border-color: #e7e5e4; -fx-border-radius: 12; -fx-padding: 20;">
+                                                                      style="-fx-background-color: #fafaf9; -fx-background-radius: 12; -fx-border-color: #eceae6; -fx-border-radius: 12; -fx-padding: 20;">
                                                                     <children>
                                                                         <HBox alignment="CENTER_LEFT" spacing="8.0">
                                                                             <children>

@@ -100,6 +100,6 @@ public class AuthController {
             case TEACHER -> "Teacher Dashboard";
             default      -> "Student Dashboard";
         };
-        SceneSwitcher.showView(usernameField, path, title, 1280, 860);
+        SceneSwitcher.showView(usernameField, path, title, SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
     }
 }

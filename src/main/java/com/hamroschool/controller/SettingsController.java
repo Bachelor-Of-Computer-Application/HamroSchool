@@ -17,17 +17,14 @@ public class SettingsController {
 
     private final AuthService authService = MongoAuthService.getInstance();
 
-    // ── FXML nodes ──────────────────────────────────────────────────────────
 
     @FXML private Label userInitialsLabel;
     @FXML private Label userNameLabel;
 
-    // Profile card
     @FXML private Label     avatarLabel;
     @FXML private TextField displayNameField;
     @FXML private Label     profileStatusLabel;
 
-    // Security card
     @FXML private PasswordField currentPasswordField;
     @FXML private PasswordField newPasswordField;
     @FXML private PasswordField confirmPasswordField;
@@ -35,7 +32,6 @@ public class SettingsController {
 
     @FXML private Button logoutButton;
 
-    // ── Lifecycle ────────────────────────────────────────────────────────────
 
     @FXML
     public void initialize() {
@@ -48,7 +44,6 @@ public class SettingsController {
         });
     }
 
-    // ── Profile handlers ─────────────────────────────────────────────────────
 
     @FXML
     private void handleSaveProfile() {
@@ -57,13 +52,11 @@ public class SettingsController {
             setProfileStatus("Display name cannot be empty.", false);
             return;
         }
-        // Display name is cosmetic only — no persistence layer for it yet
         avatarLabel.setText(Utils.initials(displayName));
         userNameLabel.setText(displayName);
         setProfileStatus("Profile updated successfully.", true);
     }
 
-    // ── Security handlers ─────────────────────────────────────────────────────
 
     @FXML
     private void handleUpdatePassword() {
@@ -83,14 +76,12 @@ public class SettingsController {
 
         UserAccount user = SessionContext.getInstance().requireCurrentUser();
 
-        // Verify the current password is correct before allowing the change
         boolean currentValid = authService.authenticate(user.getUsername(), current, user.getRole()).isPresent();
         if (!currentValid) {
             setSecurityStatus("Current password is incorrect.", false);
             return;
         }
 
-        // Persist the new password to the database
         boolean updated = authService.updatePassword(user.getUsername(), newPwd);
         if (updated) {
             setSecurityStatus("Password updated successfully.", true);
@@ -104,45 +95,42 @@ public class SettingsController {
 
     @FXML
     private void handleDeleteAccount() {
-        // Guarded by confirmation in a real app — for now just log out and clear session
         SessionContext.getInstance().clear();
-        SceneSwitcher.showView(logoutButton, "/com/hamroschool/hello-view.fxml", "Hamro School", 920, 720);
+        SceneSwitcher.showView(logoutButton, "/com/hamroschool/hello-view.fxml", "Hamro School", SceneSwitcher.LOGIN_WIDTH, SceneSwitcher.LOGIN_HEIGHT);
     }
 
-    // ── Nav handlers ──────────────────────────────────────────────────────────
 
     @FXML
     private void handleNavDashboard() {
-        SceneSwitcher.showView(logoutButton, "/com/hamroschool/admin-view.fxml", "Admin Dashboard", 1280, 860);
+        SceneSwitcher.showView(logoutButton, "/com/hamroschool/admin-view.fxml", "Admin Dashboard", SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
     }
 
     @FXML
     private void handleNavAccounts() {
-        SceneSwitcher.showView(logoutButton, "/com/hamroschool/account-view.fxml", "Accounts", 1280, 860);
+        SceneSwitcher.showView(logoutButton, "/com/hamroschool/account-view.fxml", "Accounts", SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
     }
 
     @FXML
     private void handleNavClasses() {
-        SceneSwitcher.showView(logoutButton, "/com/hamroschool/class-view.fxml", "Classes", 1280, 860);
+        SceneSwitcher.showView(logoutButton, "/com/hamroschool/class-view.fxml", "Classes", SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
     }
 
     @FXML
     private void handleNavTeachers() {
-        SceneSwitcher.showView(logoutButton, "/com/hamroschool/teacher-view.fxml", "Teachers", 1280, 860);
+        SceneSwitcher.showView(logoutButton, "/com/hamroschool/teacher-view.fxml", "Teachers", SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
     }
 
     @FXML
     private void handleNavStudents() {
-        SceneSwitcher.showView(logoutButton, "/com/hamroschool/student-view.fxml", "Students", 1280, 860);
+        SceneSwitcher.showView(logoutButton, "/com/hamroschool/student-view.fxml", "Students", SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
     }
 
     @FXML
     private void handleLogout() {
         SessionContext.getInstance().clear();
-        SceneSwitcher.showView(logoutButton, "/com/hamroschool/hello-view.fxml", "Hamro School", 920, 720);
+        SceneSwitcher.showView(logoutButton, "/com/hamroschool/hello-view.fxml", "Hamro School", SceneSwitcher.LOGIN_WIDTH, SceneSwitcher.LOGIN_HEIGHT);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private void setProfileStatus(String message, boolean success) {
         profileStatusLabel.setText(message);
