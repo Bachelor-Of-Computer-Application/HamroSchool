@@ -90,6 +90,7 @@ public class TeacherDashboardController {
     @FXML private Label  attDateLabel;
     @FXML private Label  attSubjectLabel;
     @FXML private Label  subjectTagLabel;
+    @FXML private Label  attStatusLabel;
     @FXML private TextField attSearchField;
     @FXML private Button attMarkAllPresentBtn;
     @FXML private Button attSaveBtn;
@@ -279,14 +280,28 @@ public class TeacherDashboardController {
 
     @FXML
     private void handleSaveAttendance() {
-        if (!dataLoaded) return;
+        if (!dataLoaded) {
+            setAttStatus("Data not loaded yet. Please wait.", false);
+            return;
+        }
         String subject = assignedSubject.isBlank() ? "General" : assignedSubject;
+        int savedCount = 0;
         for (String s : cachedStudentList) {
             String status = pendingStatus.getOrDefault(s, "PRESENT");
             String feedback = pendingFeedback.getOrDefault(s, "");
             attendanceService.saveAttendance(s, teacherUsername, subject, attendanceDate, status, feedback);
+            savedCount++;
         }
+        setAttStatus("✓ Attendance saved successfully for " + savedCount + " student(s)", true);
         refreshAttendance();
+        
+        // Auto-clear message after 3 seconds
+        new Thread(() -> {
+            try {
+                Thread.sleep(3000);
+                javafx.application.Platform.runLater(() -> attStatusLabel.setText(""));
+            } catch (InterruptedException ignored) {}
+        }).start();
     }
 
     private void setStudentStatus(String studentUsername, String status) {
@@ -864,6 +879,12 @@ public class TeacherDashboardController {
     private void setMsStatus(String msg, boolean ok) {
         msStatusLabel.setText(msg);
         msStatusLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: "
+                + (ok ? "#16a34a" : "#dc2626") + ";");
+    }
+
+    private void setAttStatus(String msg, boolean ok) {
+        attStatusLabel.setText(msg);
+        attStatusLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: "
                 + (ok ? "#16a34a" : "#dc2626") + ";");
     }
 

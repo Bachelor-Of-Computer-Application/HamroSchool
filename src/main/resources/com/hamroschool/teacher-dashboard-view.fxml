@@ -295,6 +295,7 @@
                                                 <HBox alignment="CENTER_LEFT" spacing="14.0">
                                                     <children>
                                                         <Label style="-fx-text-fill: #8a8a8a; -fx-font-size: 13px;" text="Showing students" />
+                                                        <Label fx:id="attStatusLabel" style="-fx-font-size: 13px; -fx-font-weight: 700;" text="" />
                                                         <Region HBox.hgrow="ALWAYS" />
                                                         <Button fx:id="attSaveBtn" prefHeight="36.0"
                                                                 style="-fx-background-color: #111111; -fx-background-radius: 8; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: 700; -fx-padding: 0 18 0 18; -fx-cursor: hand;"
