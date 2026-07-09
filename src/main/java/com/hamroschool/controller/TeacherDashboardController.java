@@ -47,41 +47,42 @@ public class TeacherDashboardController {
     private String          assignedSubject;
     private final LocalDate attendanceDate = LocalDate.now();
 
-    // ── Cache for background-loaded data ──────────────────────────────────────
     private volatile List<String> cachedStudentList = List.of();
     private volatile boolean      dataLoaded        = false;
 
-    /** Live map: studentUsername → current status (PRESENT/ABSENT/LATE) for today's session. */
     private final Map<String, String> pendingStatus = new HashMap<>();
-    /** Live map: studentUsername → feedback note for today's session. */
     private final Map<String, String> pendingFeedback = new HashMap<>();
-    /** Last saved status map for today's session (used to compute live percentages). */
     private final Map<String, String> savedStatusToday = new HashMap<>();
-    /** Baseline historical totals from DB: studentUsername → [attendedClasses, totalClasses]. */
     private final Map<String, int[]> attendanceTotalsMap = new HashMap<>();
-    /** Live map: studentUsername → attendance percentage including unsaved pending changes. */
     private final Map<String, Double> liveAttendancePctMap = new HashMap<>();
 
-    // ── Top bar ──────────────────────────────────────────────────────────────
     @FXML private Label  pageTitle;
     @FXML private Label  pageSubtitle;
     @FXML private Label  userInitialsLabel;
     @FXML private Label  userNameLabel;
     @FXML private Button logoutButton;
 
-    // ── Nav buttons ───────────────────────────────────────────────────────────
+    @FXML private Label detailTeacherId;
+    @FXML private Label detailTeacherName;
+    @FXML private Label detailTeacherGender;
+    @FXML private Label detailTeacherPhone;
+    @FXML private Label detailTeacherEmail;
+    @FXML private Label detailTeacherSubject;
+    @FXML private Label detailTeacherQualification;
+    @FXML private Label detailTeacherEmployment;
+
+    @FXML private Button navDashboardBtn;
     @FXML private Button navAttendanceBtn;
     @FXML private Button navMarkSheetBtn;
     @FXML private Button navReportCardBtn;
     @FXML private Button navPerformanceBtn;
 
-    // ── Section panes ─────────────────────────────────────────────────────────
+    @FXML private VBox dashboardPane;
     @FXML private VBox attendancePane;
     @FXML private VBox markSheetPane;
     @FXML private VBox reportCardPane;
     @FXML private VBox performancePane;
 
-    // ── Attendance ────────────────────────────────────────────────────────────
     @FXML private Label  attTotalLabel;
     @FXML private Label  attPresentLabel;
     @FXML private Label  attAbsentLabel;
@@ -89,6 +90,7 @@ public class TeacherDashboardController {
     @FXML private Label  attDateLabel;
     @FXML private Label  attSubjectLabel;
     @FXML private Label  subjectTagLabel;
+    @FXML private Label  attStatusLabel;
     @FXML private TextField attSearchField;
     @FXML private Button attMarkAllPresentBtn;
     @FXML private Button attSaveBtn;
@@ -99,7 +101,6 @@ public class TeacherDashboardController {
     @FXML private TableColumn<String, String>  attColStatus;
     @FXML private TableColumn<String, String>  attColFeedback;
 
-    // ── Mark sheet ────────────────────────────────────────────────────────────
     @FXML private Label            msSheetTitle;
     @FXML private Label            msStatStudentsLabel;
     @FXML private Label            msStatAvgLabel;
@@ -126,7 +127,6 @@ public class TeacherDashboardController {
     @FXML private TableColumn<StudentMarkSummary, String>       msColTotal;
     @FXML private TableColumn<StudentMarkSummary, String>       msColStatus;
 
-    // ── Report card ───────────────────────────────────────────────────────────
     @FXML private Label                          rcCardTitle;
     @FXML private Label                          rcCardSubtitle;
     @FXML private Label                          rcStatStudentsLabel;
@@ -143,7 +143,6 @@ public class TeacherDashboardController {
     @FXML private TableColumn<ReportCardEntry, String>    rcColRank;
     @FXML private TableColumn<ReportCardEntry, String>    rcColStatus;
 
-    // ── Performance ───────────────────────────────────────────────────────────
     @FXML private ComboBox<String>          pfSubjectCombo;
     @FXML private Button                    pfRefreshBtn;
     @FXML private Label                     pfAvgLabel;
@@ -159,7 +158,6 @@ public class TeacherDashboardController {
     @FXML private TableColumn<Mark, String> pfColGrade;
     @FXML private TableColumn<Mark, String> pfColStatus;
 
-    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     @FXML
     public void initialize() {
@@ -167,9 +165,10 @@ public class TeacherDashboardController {
         userInitialsLabel.setText(Utils.initials(teacherUsername));
         userNameLabel.setText(teacherUsername);
 
-        // Resolve assigned subject
         Optional<String> sub = teacherService.getSubject(teacherUsername);
         assignedSubject = sub.orElse("");
+
+        loadTeacherDetails();
 
         setupMarkTables();
         setupAttendanceTable();
@@ -182,7 +181,6 @@ public class TeacherDashboardController {
 
         msSearchField.textProperty().addListener((obs, o, n) -> loadMarkSheetTable(n));
 
-        // Wire buttons from sub-FXML includes (no onAction in sub-files)
         attMarkAllPresentBtn.setOnAction(e -> handleMarkAllPresent());
         attSaveBtn.setOnAction(e -> handleSaveAttendance());
         msAddMarkBtn.setOnAction(e -> handleOpenAddMark());
@@ -190,10 +188,9 @@ public class TeacherDashboardController {
         msCancelFormBtn.setOnAction(e -> handleClearMarkForm());
         pfRefreshBtn.setOnAction(e -> handleRefreshPerformance());
 
-        showPane(attendancePane, navAttendanceBtn, "Attendance",
-                "Mark and manage attendance for your assigned subject only");
+        showPane(dashboardPane, navDashboardBtn, "Dashboard",
+                "Overview of your teaching profile and account information");
 
-        // Load student list once on background thread
         Thread loader = new Thread(() -> {
             try {
                 cachedStudentList = markService.getAllStudentUsernames();
@@ -210,7 +207,27 @@ public class TeacherDashboardController {
         loader.start();
     }
 
-    // ── Nav ───────────────────────────────────────────────────────────────────
+
+    private void loadTeacherDetails() {
+        var user = SessionContext.getInstance().requireCurrentUser();
+        
+        detailTeacherId.setText(user.getUserId().isEmpty() ? "TCH-0012" : user.getUserId());
+        detailTeacherName.setText(user.getFullName().isEmpty() ? "—" : user.getFullName());
+        detailTeacherGender.setText(user.getGender().isEmpty() ? "—" : user.getGender());
+        detailTeacherPhone.setText(user.getPhone().isEmpty() ? "—" : user.getPhone());
+        detailTeacherEmail.setText(user.getEmail().isEmpty() ? "—" : user.getEmail());
+        detailTeacherSubject.setText(assignedSubject.isEmpty() ? "—" : assignedSubject);
+        detailTeacherQualification.setText(user.getQualification().isEmpty() ? "—" : user.getQualification());
+        
+        String employment = user.getEmploymentStatus().isEmpty() ? "Full-time" : user.getEmploymentStatus();
+        detailTeacherEmployment.setText(employment);
+    }
+
+
+    @FXML private void handleNavDashboard() {
+        showPane(dashboardPane, navDashboardBtn, "Dashboard",
+                "Overview of your teaching profile and account information");
+    }
 
     @FXML private void handleNavAttendance() {
         showPane(attendancePane, navAttendanceBtn, "Attendance",
@@ -251,7 +268,6 @@ public class TeacherDashboardController {
                 "Hamro School", 920, 720);
     }
 
-    // ── Attendance actions ────────────────────────────────────────────────────
 
     @FXML
     private void handleMarkAllPresent() {
@@ -264,17 +280,30 @@ public class TeacherDashboardController {
 
     @FXML
     private void handleSaveAttendance() {
-        if (!dataLoaded) return;
+        if (!dataLoaded) {
+            setAttStatus("Data not loaded yet. Please wait.", false);
+            return;
+        }
         String subject = assignedSubject.isBlank() ? "General" : assignedSubject;
+        int savedCount = 0;
         for (String s : cachedStudentList) {
             String status = pendingStatus.getOrDefault(s, "PRESENT");
             String feedback = pendingFeedback.getOrDefault(s, "");
             attendanceService.saveAttendance(s, teacherUsername, subject, attendanceDate, status, feedback);
+            savedCount++;
         }
+        setAttStatus("✓ Attendance saved successfully for " + savedCount + " student(s)", true);
         refreshAttendance();
+        
+        // Auto-clear message after 3 seconds
+        new Thread(() -> {
+            try {
+                Thread.sleep(3000);
+                javafx.application.Platform.runLater(() -> attStatusLabel.setText(""));
+            } catch (InterruptedException ignored) {}
+        }).start();
     }
 
-    /** Called by the per-row Present/Late/Absent toggle buttons. */
     private void setStudentStatus(String studentUsername, String status) {
         pendingStatus.put(studentUsername, status);
         recalculateLiveAttendancePercentages();
@@ -286,7 +315,6 @@ public class TeacherDashboardController {
         pendingFeedback.put(studentUsername, normalizeFeedback(feedback));
     }
 
-    // ── Attendance helpers ────────────────────────────────────────────────────
 
     private void refreshAttendance() {
         if (!dataLoaded) return;
@@ -309,7 +337,6 @@ public class TeacherDashboardController {
         savedStatusToday.clear();
         todayRecords.forEach((student, record) -> savedStatusToday.put(student, record.getStatus()));
 
-        // Seed pendingStatus from DB for today
         for (String s : cachedStudentList) {
             String savedStatus = Optional.ofNullable(todayRecords.get(s))
                     .map(AttendanceRecord::getStatus)
@@ -419,7 +446,6 @@ public class TeacherDashboardController {
             }
         });
 
-        // Attendance % column
         attColPct.setCellValueFactory(c -> {
             double pct = liveAttendancePctMap.getOrDefault(c.getValue(), 0.0);
             return new ReadOnlyStringWrapper(pct + "%");
@@ -435,7 +461,6 @@ public class TeacherDashboardController {
             }
         });
 
-        // Status column — Present / Late / Absent toggle buttons
         attColStatus.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue()));
         attColStatus.setCellFactory(col -> new TableCell<>() {
             private final Button btnPresent = new Button("✓ Present");
@@ -504,9 +529,7 @@ public class TeacherDashboardController {
         });
     }
 
-    // ── Mark sheet actions ────────────────────────────────────────────────────
 
-    // ── Mark sheet actions ────────────────────────────────────────────────────
 
     @FXML
     private void handleOpenAddMark() {
@@ -551,10 +574,6 @@ public class TeacherDashboardController {
         msFormPane.setManaged(false);
     }
 
-    // ── Report card ───────────────────────────────────────────────────────────
-
-    // ── Report card ───────────────────────────────────────────────────────────
-
     private void loadReportCard(String query) {
         String subject = assignedSubject.isBlank() ? "General" : assignedSubject;
         List<ReportCardEntry> all = markService.getReportCard(teacherUsername, subject);
@@ -570,7 +589,6 @@ public class TeacherDashboardController {
         String subject = assignedSubject.isBlank() ? "General" : assignedSubject;
         rcStatStudentsLabel.setText(String.valueOf(cachedStudentList.size()));
         double avg = markService.getAverageMarks(teacherUsername, subject);
-        // average grade letter
         ReportCardEntry tmp = new ReportCardEntry(0, "", avg, 0);
         rcStatAvgGradeLabel.setText(avg > 0 ? tmp.getGrade() : "—");
         double pass = markService.getPassRate(teacherUsername, subject);
@@ -579,7 +597,6 @@ public class TeacherDashboardController {
         rcStatTopLabel.setText(top > 0 ? String.valueOf(top) : "—");
     }
 
-    // ── Performance ───────────────────────────────────────────────────────────
 
     @FXML
     private void handleRefreshPerformance() {
@@ -605,10 +622,8 @@ public class TeacherDashboardController {
         performanceTable.setItems(FXCollections.observableArrayList(ranked));
     }
 
-    // ── Table setup (marks) ───────────────────────────────────────────────────
 
     private void setupMarkTables() {
-        // ── Marksheet summary table ──────────────────────────────────────────
         msColRoll.setCellValueFactory(c ->
                 new ReadOnlyStringWrapper(String.format("%02d", c.getValue().getRoll())));
         msColRoll.setCellFactory(col -> new TableCell<>() {
@@ -850,11 +865,11 @@ public class TeacherDashboardController {
             "-fx-font-size: 13px; -fx-font-weight: 600; -fx-padding: 10 14 10 14; -fx-cursor: hand;";
 
     private void showPane(VBox target, Button activeBtn, String title, String subtitle) {
-        for (VBox pane : List.of(attendancePane, markSheetPane, reportCardPane, performancePane)) {
+        for (VBox pane : List.of(dashboardPane, attendancePane, markSheetPane, reportCardPane, performancePane)) {
             pane.setVisible(pane == target);
             pane.setManaged(pane == target);
         }
-        for (Button btn : List.of(navAttendanceBtn, navMarkSheetBtn, navReportCardBtn, navPerformanceBtn)) {
+        for (Button btn : List.of(navDashboardBtn, navAttendanceBtn, navMarkSheetBtn, navReportCardBtn, navPerformanceBtn)) {
             btn.setStyle(btn == activeBtn ? ACTIVE_STYLE : INACTIVE_STYLE);
         }
         pageTitle.setText(title);
@@ -864,6 +879,12 @@ public class TeacherDashboardController {
     private void setMsStatus(String msg, boolean ok) {
         msStatusLabel.setText(msg);
         msStatusLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: "
+                + (ok ? "#16a34a" : "#dc2626") + ";");
+    }
+
+    private void setAttStatus(String msg, boolean ok) {
+        attStatusLabel.setText(msg);
+        attStatusLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: "
                 + (ok ? "#16a34a" : "#dc2626") + ";");
     }
 
