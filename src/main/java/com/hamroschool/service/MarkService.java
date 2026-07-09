@@ -13,11 +13,7 @@ public interface MarkService {
 
     List<Mark> getMarksByTeacher(String teacherUsername);
 
-    List<Mark> getMarksByStudentAndTeacher(String studentUsername, String teacherUsername);
-
     List<Mark> getMarksByStudent(String studentUsername);
-
-    void deleteMark(long id);
 
     List<String> getSubjectsByTeacher(String teacherUsername);
 
@@ -31,11 +27,4 @@ public interface MarkService {
     int getTopScore(String teacherUsername, String subjectName);
 
     List<ReportCardEntry> getReportCard(String teacherUsername, String subjectName);
-
-
-    void assignSubject(String teacherUsername, String subjectName);
-
-    void removeSubject(String teacherUsername, String subjectName);
-
-    List<String> getAssignedSubjects(String teacherUsername);
 }

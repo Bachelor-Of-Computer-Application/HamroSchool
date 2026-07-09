@@ -131,7 +131,6 @@ public class StudentDashboardController {
         userInitialsLabel.setText(Utils.initials(studentUsername));
         userNameLabel.setText(displayName);
 
-        setupAttendanceTable();
         loadStudentDetails();
 
         showDashboard();
@@ -484,44 +483,6 @@ public class StudentDashboardController {
         nextButton.setDisable(currentPage >= total - 1);
     }
 
-    private void setupCoursesTable() {
-        cColCourse.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().subject()));
-        cColCourse.setCellFactory(col -> new TableCell<CourseRow, String>() {
-            @Override protected void updateItem(String subject, boolean empty) {
-                super.updateItem(subject, empty);
-                if (empty || subject == null) { setGraphic(null); return; }
-                Label icon = new Label(TableUtils.getSubjectIcon(subject));
-                icon.setStyle("-fx-font-size: 15px; -fx-min-width: 26;");
-                Label name = new Label(subject);
-                name.setStyle("-fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: #111111;");
-                HBox box = new HBox(10, icon, name);
-                box.setAlignment(Pos.CENTER_LEFT);
-                setGraphic(box); setText(null);
-            }
-        });
-
-        cColInstructor.setCellValueFactory(c -> new ReadOnlyStringWrapper(Utils.formatName(c.getValue().teacher())));
-        cColInstructor.setCellFactory(col -> TableCellFactories.plainTextCell("#44403c", false));
-
-        cColGrade.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().grade()));
-        cColGrade.setCellFactory(col -> new TableCell<CourseRow, String>() {
-            @Override protected void updateItem(String grade, boolean empty) {
-                super.updateItem(grade, empty);
-                if (empty || grade == null) { setGraphic(null); setText(null); return; }
-                Label badge = new Label(grade);
-                badge.setStyle("-fx-background-color: #f5f5f4; -fx-border-color: #e7e5e4; "
-                        + "-fx-border-radius: 6; -fx-background-radius: 6; "
-                        + "-fx-text-fill: #111111; -fx-font-size: 12px; -fx-font-weight: 700; "
-                        + "-fx-padding: 3 10 3 10;");
-                setGraphic(badge); setText(null);
-            }
-        });
-
-        coursesTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
-        coursesTable.setPlaceholder(new Label("No courses yet."));
-        coursesTable.setStyle("-fx-background-color: transparent;");
-    }
-
 
     private void loadGradesView() {
         if (!dataLoaded) return;
@@ -541,10 +502,8 @@ public class StudentDashboardController {
         }
         gradeStatHighest.setText(highestGrade);
         
-        // Count improved subjects (placeholder - would need historical data)
         gradeStatImproved.setText("—");
 
-        // Build subject cards
         subjectGradesContainer.getChildren().clear();
         
         List<String> subjectList = new ArrayList<>(subjects);
@@ -612,14 +571,11 @@ public class StudentDashboardController {
         
         header.getChildren().addAll(titleBox, categoryBadge);
         
-        // Exam type cards
         HBox examCards = new HBox(8);
         
-        // Group marks by exam type
         Map<String, List<Mark>> marksByExam = marks.stream()
                 .collect(Collectors.groupingBy(Mark::getExamType));
         
-        // Create cards for each exam type
         String[] examTypes = {"Midterm", "Assignment", "Final"};
         for (String examType : examTypes) {
             List<Mark> examMarks = marksByExam.get(examType);
@@ -637,7 +593,6 @@ public class StudentDashboardController {
         VBox card = new VBox(8);
         card.setAlignment(Pos.CENTER);
         
-        // Determine grade and color
         String grade = "—";
         String bgColor = "#ffffff";
         String textColor = "#78716c";
@@ -730,15 +685,12 @@ public class StudentDashboardController {
     }
 
     private String getTeacherInfo(String teacherUsername, String subject) {
-        // Format: "Room 204 • Prof. Sharma" or "Block A • Mr. Lewis" etc.
         String formattedName = Utils.formatName(teacherUsername);
-        // Generate a room/block based on subject (placeholder logic)
         String location = getClassroomLocation(subject);
         return location + " • " + formattedName;
     }
 
     private String getClassroomLocation(String subject) {
-        // Placeholder logic to generate classroom locations
         int hash = Math.abs(subject.hashCode());
         int roomNum = 100 + (hash % 150);
         
@@ -919,10 +871,6 @@ public class StudentDashboardController {
 
         tile.getChildren().addAll(iconLabel, textLabel, daysLabel);
         return tile;
-    }
-
-    private void setupAttendanceTable() {
-        // No longer using table view - will build subject cards dynamically in showAttendance()
     }
 
 }

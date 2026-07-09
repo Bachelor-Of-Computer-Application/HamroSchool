@@ -48,26 +48,8 @@ public final class UIStyles {
         "-fx-pref-height: 30; " +
         "-fx-alignment: center;";
     
-    public static final String AVATAR_SMALL = 
-        "-fx-background-color: #e8e8e6; " +
-        "-fx-text-fill: #444444; " +
-        "-fx-font-size: 11px; " +
-        "-fx-font-weight: 800; " +
-        "-fx-background-radius: 999; " +
-        "-fx-min-width: 28; " +
-        "-fx-min-height: 28; " +
-        "-fx-pref-width: 28; " +
-        "-fx-pref-height: 28; " +
-        "-fx-alignment: center;";
     
     
-    public static final String BADGE_DEFAULT = 
-        "-fx-background-color: #f4f4f5; " +
-        "-fx-text-fill: #111111; " +
-        "-fx-padding: 5 10 5 10; " +
-        "-fx-background-radius: 999; " +
-        "-fx-font-size: 11px; " +
-        "-fx-font-weight: 700;";
     
     public static final String BADGE_NEUTRAL = 
         "-fx-background-color: #f5f5f4; " +
@@ -98,50 +80,22 @@ public final class UIStyles {
         "-fx-background-radius: 4; " +
         "-fx-cursor: hand;";
     
-    public static final String WARNING_BUTTON = 
-        "-fx-background-color: #f97316; " +
-        "-fx-text-fill: white; " +
-        "-fx-font-size: 12px; " +
-        "-fx-font-weight: 600; " +
-        "-fx-padding: 6 14; " +
-        "-fx-background-radius: 6; " +
-        "-fx-cursor: hand;";
     
     public static final String ICON_BUTTON = 
         "-fx-background-color: transparent; " +
         "-fx-cursor: hand; " +
         "-fx-padding: 6 8 6 8; " +
         "-fx-background-radius: 999;";
-    
-    
-    public static final String TEXT_BOLD_PRIMARY = 
-        "-fx-text-fill: #111111; " +
-        "-fx-font-size: 13px; " +
-        "-fx-font-weight: 700;";
-    
-    public static final String TEXT_NORMAL_SECONDARY = 
-        "-fx-text-fill: #44403c; " +
-        "-fx-font-size: 13px; " +
-        "-fx-font-weight: 400;";
-    
-    public static final String TEXT_BOLD_SECONDARY = 
+
+    public static final String TEXT_BOLD_SECONDARY =
         "-fx-text-fill: #222222; " +
         "-fx-font-size: 13px; " +
         "-fx-font-weight: 700;";
-    
-    public static final String TEXT_TERTIARY = 
-        "-fx-text-fill: #78716c; " +
-        "-fx-font-size: 13px; " +
-        "-fx-font-weight: 400;";
-    
-    
-    public static final String COLOR_PRIMARY = "#111111";
-    public static final String COLOR_SUCCESS = "#16a34a";
-    public static final String COLOR_WARNING = "#d97706";
-    public static final String COLOR_DANGER = "#dc2626";
-    public static final String COLOR_INFO = "#2563eb";
-    
-    
+
+    private static final String COLOR_SUCCESS = "#16a34a";
+    private static final String COLOR_WARNING = "#d97706";
+    private static final String COLOR_DANGER  = "#dc2626";
+
     /**
      * Get color based on percentage (for attendance, grades, etc.)
      * @param percentage Value from 0-100

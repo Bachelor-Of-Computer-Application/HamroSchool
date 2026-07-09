@@ -26,52 +26,6 @@ public final class TableUtils {
         configureTable(table, "No data available");
     }
 
-    /**
-     * Create a formatted count label (e.g., "5 students", "1 teacher")
-     * @param count The count
-     * @param singular Singular form (e.g., "student")
-     * @param plural Plural form (e.g., "students")
-     * @return Formatted string
-     */
-    public static String formatCount(int count, String singular, String plural) {
-        return count + " " + (count == 1 ? singular : plural);
-    }
-
-    /**
-     * Create a formatted count label using simple pluralization (add 's')
-     * @param count The count
-     * @param noun Base noun (e.g., "student")
-     * @return Formatted string (e.g., "5 students", "1 student")
-     */
-    public static String formatCount(int count, String noun) {
-        return formatCount(count, noun, noun + "s");
-    }
-
-    /**
-     * Create a summary label text for filtered results
-     * @param filteredCount Number of filtered items
-     * @param totalCount Total number of items
-     * @param itemName Name of item type (e.g., "accounts", "classes")
-     * @return Summary text (e.g., "Showing 5 of 10 accounts")
-     */
-    public static String createSummary(int filteredCount, int totalCount, String itemName) {
-        return "Showing " + filteredCount + " of " + totalCount + " " + itemName;
-    }
-
-    /**
-     * Create a summary label text for paginated results
-     * @param from Start index (1-based)
-     * @param to End index (inclusive)
-     * @param total Total number of items
-     * @param itemName Name of item type (e.g., "accounts", "classes")
-     * @return Summary text (e.g., "Showing 1–10 of 50 accounts")
-     */
-    public static String createPaginatedSummary(int from, int to, int total, String itemName) {
-        if (total == 0) {
-            return "Showing 0 of 0 " + itemName;
-        }
-        return "Showing " + from + "–" + to + " of " + total + " " + itemName;
-    }
 
     /**
      * Get subject icon emoji
@@ -107,25 +61,5 @@ public final class TableUtils {
         if (percentage >= 40) return "D";
         return "F";
     }
-
-    /**
-     * Check if grade is passing
-     * @param percentage Percentage (0-100)
-     * @return true if >= 40%
-     */
-    public static boolean isPassing(double percentage) {
-        return percentage >= 40;
-    }
-
-    /**
-     * Format a date string to show only date portion (first 10 chars)
-     * @param dateTimeString Full date-time string
-     * @return Date portion or "—" if null/empty
-     */
-    public static String formatDateOnly(String dateTimeString) {
-        if (dateTimeString == null || dateTimeString.isBlank()) {
-            return "—";
-        }
-        return dateTimeString.substring(0, Math.min(10, dateTimeString.length()));
-    }
 }
+
