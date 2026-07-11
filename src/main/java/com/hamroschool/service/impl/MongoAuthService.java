@@ -44,7 +44,6 @@ public final class MongoAuthService implements AuthService {
         createDefaultAdmin();
     }
 
-    /** Returns the single shared instance. */
     public static MongoAuthService getInstance() {
         return INSTANCE;
     }
@@ -150,7 +149,50 @@ public final class MongoAuthService implements AuthService {
     }
 
 
-    /** Convert a MongoDB document into a UserAccount object. */
+    @Override
+    public synchronized boolean updateAccount(UserAccount updated) {
+        if (updated == null || isBlank(updated.getUsername())) return false;
+
+        List<org.bson.conversions.Bson> updates = new java.util.ArrayList<>();
+        updates.add(Updates.set("fullName",         updated.getFullName()));
+        updates.add(Updates.set("gender",           updated.getGender()));
+        updates.add(Updates.set("dateOfBirth",      updated.getDateOfBirth()));
+        updates.add(Updates.set("phone",            updated.getPhone()));
+        updates.add(Updates.set("email",            updated.getEmail()));
+        updates.add(Updates.set("address",          updated.getAddress()));
+        updates.add(Updates.set("assignedClass",    updated.getAssignedClass()));
+        updates.add(Updates.set("rollNumber",       updated.getRollNumber()));
+        updates.add(Updates.set("academicSession",  updated.getAcademicSession()));
+        updates.add(Updates.set("guardianName",     updated.getGuardianName()));
+        updates.add(Updates.set("guardianRelation", updated.getGuardianRelation()));
+        updates.add(Updates.set("guardianPhone",    updated.getGuardianPhone()));
+        updates.add(Updates.set("guardianEmail",    updated.getGuardianEmail()));
+        updates.add(Updates.set("subject",          updated.getSubject()));
+        updates.add(Updates.set("qualification",    updated.getQualification()));
+        updates.add(Updates.set("employmentStatus", updated.getEmploymentStatus()));
+        if (!isBlank(updated.getPassword())) {
+            updates.add(Updates.set("password", updated.getPassword()));
+        }
+
+        long matched = accounts.updateOne(
+                Filters.eq("username", normalize(updated.getUsername())),
+                Updates.combine(updates)
+        ).getMatchedCount();
+
+        return matched > 0;
+    }
+
+
+    @Override
+    public synchronized boolean deleteAccount(String username) {
+        if (isBlank(username)) return false;
+        long deleted = accounts.deleteOne(
+                Filters.eq("username", normalize(username))
+        ).getDeletedCount();
+        return deleted > 0;
+    }
+
+
     private UserAccount toUserAccount(Document doc) {
         return new UserAccount(
                 doc.getString("username"),

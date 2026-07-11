@@ -31,4 +31,19 @@ public interface AuthService {
      *         {@code false} if no account with that username exists.
      */
     boolean updatePassword(String username, String newPassword);
+
+    /**
+     * Updates all editable fields of an existing account.
+     * The username is used as the lookup key and cannot be changed here.
+     *
+     * @return {@code true} if the account was found and updated.
+     */
+    boolean updateAccount(UserAccount updated);
+
+    /**
+     * Deletes an account by username.
+     *
+     * @return {@code true} if a document was deleted.
+     */
+    boolean deleteAccount(String username);
 }

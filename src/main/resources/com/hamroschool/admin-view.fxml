@@ -515,6 +515,202 @@
 
                 </VBox><!-- end modalCard -->
             </StackPane><!-- end modalOverlay -->
+
+            <!-- ══ EDIT MODAL OVERLAY ══ -->
+            <StackPane fx:id="editModalOverlay" visible="false" managed="false"
+                       style="-fx-background-color: rgba(0,0,0,0.5);">
+                <VBox prefWidth="620.0" maxWidth="620.0" maxHeight="820.0" spacing="0"
+                      style="-fx-background-color: white; -fx-background-radius: 14; -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.25),32,0.12,0,8);">
+
+                    <!-- Header -->
+                    <VBox spacing="6.0" style="-fx-padding: 24 30 16 30; -fx-border-color: transparent transparent #eceae6 transparent; -fx-border-width: 0 0 1 0;">
+                        <children>
+                            <HBox alignment="CENTER_LEFT"><children>
+                                <VBox spacing="3.0" HBox.hgrow="ALWAYS"><children>
+                                    <Label fx:id="editModalTitle" style="-fx-font-size: 20px; -fx-font-weight: 800; -fx-text-fill: #111111;" text="Edit Account"/>
+                                    <Label fx:id="editModalSubtitle" style="-fx-font-size: 13px; -fx-text-fill: #78716c;" text=""/>
+                                </children></VBox>
+                                <Button onAction="#handleCloseEditModal"
+                                        style="-fx-background-color: transparent; -fx-text-fill: #78716c; -fx-font-size: 20px; -fx-cursor: hand; -fx-padding: 0 4;" text="×"/>
+                            </children></HBox>
+                            <!-- Account identity chips -->
+                            <HBox spacing="8.0" alignment="CENTER_LEFT"><children>
+                                <Label style="-fx-font-size: 12px; -fx-text-fill: #78716c;" text="Username:"/>
+                                <Label fx:id="editUsernameDisplay"
+                                       style="-fx-background-color: #f5f5f4; -fx-text-fill: #111111; -fx-font-size: 12px; -fx-font-weight: 700; -fx-padding: 3 10; -fx-background-radius: 6;" text="—"/>
+                                <Label style="-fx-font-size: 12px; -fx-text-fill: #78716c;" text="Role:"/>
+                                <Label fx:id="editRoleDisplay"
+                                       style="-fx-background-color: #f5f5f4; -fx-text-fill: #111111; -fx-font-size: 12px; -fx-font-weight: 700; -fx-padding: 3 10; -fx-background-radius: 6;" text="—"/>
+                            </children></HBox>
+                        </children>
+                    </VBox>
+
+                    <!-- Scrollable body -->
+                    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" hbarPolicy="NEVER"
+                                style="-fx-background: transparent; -fx-background-color: transparent; -fx-border-color: transparent;">
+                        <content>
+                            <VBox spacing="14.0" style="-fx-padding: 20 30;">
+                                <children>
+
+                                    <!-- ── Change Password (optional) ── -->
+                                    <VBox spacing="10.0" style="-fx-background-color: #fafaf9; -fx-background-radius: 10; -fx-border-color: #eceae6; -fx-border-radius: 10; -fx-padding: 14;">
+                                        <children>
+                                            <Label style="-fx-font-size: 12px; -fx-font-weight: 800; -fx-text-fill: #111111;" text="Change Password"/>
+                                            <Label style="-fx-font-size: 11px; -fx-text-fill: #a8a29e;" text="Leave blank to keep the current password"/>
+                                            <HBox spacing="10.0"><children>
+                                                <VBox spacing="4.0" HBox.hgrow="ALWAYS"><children>
+                                                    <Label style="-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #222222;" text="New Password"/>
+                                                    <PasswordField fx:id="editNewPasswordField" prefHeight="36.0"
+                                                                   promptText="New password (optional)"
+                                                                   style="-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #eceae6; -fx-border-radius: 8; -fx-padding: 0 12; -fx-font-size: 13px;"/>
+                                                </children></VBox>
+                                                <VBox spacing="4.0" HBox.hgrow="ALWAYS"><children>
+                                                    <Label style="-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #222222;" text="Confirm New Password"/>
+                                                    <PasswordField fx:id="editConfirmPasswordField" prefHeight="36.0"
+                                                                   promptText="Confirm new password"
+                                                                   style="-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #eceae6; -fx-border-radius: 8; -fx-padding: 0 12; -fx-font-size: 13px;"/>
+                                                </children></VBox>
+                                            </children></HBox>
+                                            <Label fx:id="editPasswordError" visible="false" managed="false"
+                                                   style="-fx-text-fill: #dc2626; -fx-font-size: 11px; -fx-font-weight: 600;" text="⊙ Passwords do not match"/>
+                                        </children>
+                                    </VBox>
+
+                                    <!-- ── Common Profile ── -->
+                                    <VBox spacing="10.0" style="-fx-background-color: #fafaf9; -fx-background-radius: 10; -fx-border-color: #eceae6; -fx-border-radius: 10; -fx-padding: 14;">
+                                        <children>
+                                            <Label style="-fx-font-size: 12px; -fx-font-weight: 800; -fx-text-fill: #111111;" text="Personal Information"/>
+                                            <HBox spacing="10.0"><children>
+                                                <VBox spacing="4.0" HBox.hgrow="ALWAYS"><children>
+                                                    <Label style="-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #222222;" text="Full Name"/>
+                                                    <TextField fx:id="editFullNameField" prefHeight="36.0" promptText="Full name"
+                                                               style="-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #eceae6; -fx-border-radius: 8; -fx-padding: 0 12; -fx-font-size: 13px;"/>
+                                                </children></VBox>
+                                                <VBox spacing="4.0" HBox.hgrow="ALWAYS"><children>
+                                                    <Label style="-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #222222;" text="Gender"/>
+                                                    <ChoiceBox fx:id="editGenderChoiceBox" prefHeight="36.0" maxWidth="Infinity"
+                                                               style="-fx-background-color: white; -fx-border-color: #eceae6; -fx-border-radius: 8; -fx-background-radius: 8;"/>
+                                                </children></VBox>
+                                            </children></HBox>
+                                            <HBox spacing="10.0"><children>
+                                                <VBox spacing="4.0" HBox.hgrow="ALWAYS"><children>
+                                                    <Label style="-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #222222;" text="Phone"/>
+                                                    <TextField fx:id="editPhoneField" prefHeight="36.0" promptText="+977 98XXXXXXXX"
+                                                               style="-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #eceae6; -fx-border-radius: 8; -fx-padding: 0 12; -fx-font-size: 13px;"/>
+                                                </children></VBox>
+                                                <VBox spacing="4.0" HBox.hgrow="ALWAYS"><children>
+                                                    <Label style="-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #222222;" text="Email"/>
+                                                    <TextField fx:id="editEmailField" prefHeight="36.0" promptText="email@example.com"
+                                                               style="-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #eceae6; -fx-border-radius: 8; -fx-padding: 0 12; -fx-font-size: 13px;"/>
+                                                </children></VBox>
+                                            </children></HBox>
+                                        </children>
+                                    </VBox>
+
+                                    <!-- ── Teacher-specific ── -->
+                                    <VBox fx:id="editTeacherSection" spacing="10.0" visible="false" managed="false"
+                                          style="-fx-background-color: #fafaf9; -fx-background-radius: 10; -fx-border-color: #eceae6; -fx-border-radius: 10; -fx-padding: 14;">
+                                        <children>
+                                            <Label style="-fx-font-size: 12px; -fx-font-weight: 800; -fx-text-fill: #111111;" text="Professional Information"/>
+                                            <HBox spacing="10.0"><children>
+                                                <VBox spacing="4.0" HBox.hgrow="ALWAYS"><children>
+                                                    <Label style="-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #222222;" text="Assigned Subject"/>
+                                                    <TextField fx:id="editSubjectField" prefHeight="36.0" promptText="e.g. Mathematics"
+                                                               style="-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #eceae6; -fx-border-radius: 8; -fx-padding: 0 12; -fx-font-size: 13px;"/>
+                                                </children></VBox>
+                                                <VBox spacing="4.0" HBox.hgrow="ALWAYS"><children>
+                                                    <Label style="-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #222222;" text="Qualification"/>
+                                                    <TextField fx:id="editQualificationField" prefHeight="36.0" promptText="e.g. M.Ed"
+                                                               style="-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #eceae6; -fx-border-radius: 8; -fx-padding: 0 12; -fx-font-size: 13px;"/>
+                                                </children></VBox>
+                                            </children></HBox>
+                                            <VBox spacing="4.0"><children>
+                                                <Label style="-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #222222;" text="Employment Status"/>
+                                                <ChoiceBox fx:id="editEmploymentStatusChoiceBox" prefHeight="36.0" maxWidth="Infinity"
+                                                           style="-fx-background-color: white; -fx-border-color: #eceae6; -fx-border-radius: 8; -fx-background-radius: 8;"/>
+                                            </children></VBox>
+                                        </children>
+                                    </VBox>
+
+                                    <!-- ── Student-specific ── -->
+                                    <VBox fx:id="editStudentSection" spacing="10.0" visible="false" managed="false"
+                                          style="-fx-background-color: #fafaf9; -fx-background-radius: 10; -fx-border-color: #eceae6; -fx-border-radius: 10; -fx-padding: 14;">
+                                        <children>
+                                            <Label style="-fx-font-size: 12px; -fx-font-weight: 800; -fx-text-fill: #111111;" text="Academic &amp; Guardian Information"/>
+                                            <HBox spacing="10.0"><children>
+                                                <VBox spacing="4.0" HBox.hgrow="ALWAYS"><children>
+                                                    <Label style="-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #222222;" text="Class"/>
+                                                    <ChoiceBox fx:id="editClassChoiceBox" prefHeight="36.0" maxWidth="Infinity"
+                                                               style="-fx-background-color: white; -fx-border-color: #eceae6; -fx-border-radius: 8; -fx-background-radius: 8;"/>
+                                                </children></VBox>
+                                                <VBox spacing="4.0" HBox.hgrow="ALWAYS"><children>
+                                                    <Label style="-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #222222;" text="Roll Number"/>
+                                                    <TextField fx:id="editRollNumberField" prefHeight="36.0" promptText="e.g. 01"
+                                                               style="-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #eceae6; -fx-border-radius: 8; -fx-padding: 0 12; -fx-font-size: 13px;"/>
+                                                </children></VBox>
+                                            </children></HBox>
+                                            <HBox spacing="10.0"><children>
+                                                <VBox spacing="4.0" HBox.hgrow="ALWAYS"><children>
+                                                    <Label style="-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #222222;" text="Academic Session"/>
+                                                    <TextField fx:id="editAcademicSessionField" prefHeight="36.0" promptText="e.g. 2024–2025"
+                                                               style="-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #eceae6; -fx-border-radius: 8; -fx-padding: 0 12; -fx-font-size: 13px;"/>
+                                                </children></VBox>
+                                                <VBox spacing="4.0" HBox.hgrow="ALWAYS"><children>
+                                                    <Label style="-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #222222;" text="Address"/>
+                                                    <TextField fx:id="editAddressField" prefHeight="36.0" promptText="City, District"
+                                                               style="-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #eceae6; -fx-border-radius: 8; -fx-padding: 0 12; -fx-font-size: 13px;"/>
+                                                </children></VBox>
+                                            </children></HBox>
+                                            <HBox spacing="10.0"><children>
+                                                <VBox spacing="4.0" HBox.hgrow="ALWAYS"><children>
+                                                    <Label style="-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #222222;" text="Guardian Name"/>
+                                                    <TextField fx:id="editGuardianNameField" prefHeight="36.0" promptText="Guardian name"
+                                                               style="-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #eceae6; -fx-border-radius: 8; -fx-padding: 0 12; -fx-font-size: 13px;"/>
+                                                </children></VBox>
+                                                <VBox spacing="4.0" HBox.hgrow="ALWAYS"><children>
+                                                    <Label style="-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #222222;" text="Relationship"/>
+                                                    <ChoiceBox fx:id="editGuardianRelationChoiceBox" prefHeight="36.0" maxWidth="Infinity"
+                                                               style="-fx-background-color: white; -fx-border-color: #eceae6; -fx-border-radius: 8; -fx-background-radius: 8;"/>
+                                                </children></VBox>
+                                            </children></HBox>
+                                            <HBox spacing="10.0"><children>
+                                                <VBox spacing="4.0" HBox.hgrow="ALWAYS"><children>
+                                                    <Label style="-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #222222;" text="Guardian Phone"/>
+                                                    <TextField fx:id="editGuardianPhoneField" prefHeight="36.0" promptText="+977 98XXXXXXXX"
+                                                               style="-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #eceae6; -fx-border-radius: 8; -fx-padding: 0 12; -fx-font-size: 13px;"/>
+                                                </children></VBox>
+                                                <VBox spacing="4.0" HBox.hgrow="ALWAYS"><children>
+                                                    <Label style="-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #222222;" text="Guardian Email"/>
+                                                    <TextField fx:id="editGuardianEmailField" prefHeight="36.0" promptText="guardian@example.com"
+                                                               style="-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #eceae6; -fx-border-radius: 8; -fx-padding: 0 12; -fx-font-size: 13px;"/>
+                                                </children></VBox>
+                                            </children></HBox>
+                                        </children>
+                                    </VBox>
+
+                                </children>
+                            </VBox>
+                        </content>
+                    </ScrollPane>
+
+                    <!-- Footer -->
+                    <HBox spacing="10.0" alignment="CENTER_LEFT"
+                          style="-fx-padding: 14 30 18 30; -fx-border-color: #eceae6 transparent transparent transparent; -fx-border-width: 1 0 0 0; -fx-background-color: white; -fx-background-radius: 0 0 14 14;">
+                        <children>
+                            <Button fx:id="editDeleteBtn" onAction="#handleEditDelete" prefHeight="38.0"
+                                    style="-fx-background-color: white; -fx-border-color: #fca5a5; -fx-border-radius: 8; -fx-background-radius: 8; -fx-text-fill: #dc2626; -fx-font-size: 13px; -fx-font-weight: 700; -fx-padding: 0 18; -fx-cursor: hand;" text="🗑 Delete Account"/>
+                            <Label fx:id="editStatusLabel" style="-fx-font-size: 12px; -fx-font-weight: 700;" text=""/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Button onAction="#handleCloseEditModal" prefHeight="38.0" prefWidth="80.0"
+                                    style="-fx-background-color: white; -fx-border-color: #eceae6; -fx-border-radius: 8; -fx-background-radius: 8; -fx-text-fill: #44403c; -fx-font-size: 13px; -fx-font-weight: 600; -fx-cursor: hand;" text="Cancel"/>
+                            <Button onAction="#handleSaveEdit" prefHeight="38.0" prefWidth="130.0"
+                                    style="-fx-background-color: #111111; -fx-background-radius: 8; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: 700; -fx-cursor: hand;" text="✓ Save Changes"/>
+                        </children>
+                    </HBox>
+
+                </VBox><!-- end edit modal card -->
+            </StackPane><!-- end editModalOverlay -->
+
         </StackPane><!-- end center StackPane -->
     </center>
 </BorderPane>
