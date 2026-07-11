@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 
 import com.hamroschool.model.auth.UserAccount;
 import com.hamroschool.model.auth.UserRole;
@@ -19,6 +18,7 @@ import com.hamroschool.util.SceneSwitcher;
 import com.hamroschool.util.SessionContext;
 import com.hamroschool.util.Utils;
 
+import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
@@ -34,8 +34,6 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -53,6 +51,8 @@ public class AdminController {
     private int currentPage = 0;
     private UserRole selectedRole = UserRole.STUDENT;
 
+    private UserAccount editingAccount = null;
+
     @FXML private Label welcomeLabel;
     @FXML private Label userInitialsLabel;
     @FXML private Label userNameLabel;
@@ -61,12 +61,12 @@ public class AdminController {
     @FXML private Label teacherCountLabel;
     @FXML private Label studentCountLabel;
 
-    @FXML private TextField searchField;
-    @FXML private Button    filterRoleBtn;
-    @FXML private Button    filterStatusBtn;
-    @FXML private Button    sortBtn;
-    @FXML private HBox      bulkActionBar;
-    @FXML private Label     selectedCountLabel;
+    @FXML private TextField  searchField;
+    @FXML private Button     filterRoleBtn;
+    @FXML private Button     filterStatusBtn;
+    @FXML private Button     sortBtn;
+    @FXML private HBox       bulkActionBar;
+    @FXML private Label      selectedCountLabel;
 
     @FXML private TableView<UserAccount>                accountTable;
     @FXML private TableColumn<UserAccount, UserAccount> selectColumn;
@@ -124,6 +124,38 @@ public class AdminController {
     @FXML private TextField         guardianEmailField;
     @FXML private Label             studentStatusLabel;
 
+    @FXML private StackPane editModalOverlay;
+    @FXML private Label     editModalTitle;
+    @FXML private Label     editModalSubtitle;
+
+    @FXML private Label         editUsernameDisplay;
+    @FXML private Label         editRoleDisplay;
+    @FXML private PasswordField editNewPasswordField;
+    @FXML private PasswordField editConfirmPasswordField;
+    @FXML private Label         editPasswordError;
+
+    @FXML private TextField         editFullNameField;
+    @FXML private ChoiceBox<String> editGenderChoiceBox;
+    @FXML private TextField         editPhoneField;
+    @FXML private TextField         editEmailField;
+
+    @FXML private VBox              editTeacherSection;
+    @FXML private TextField         editSubjectField;
+    @FXML private TextField         editQualificationField;
+    @FXML private ChoiceBox<String> editEmploymentStatusChoiceBox;
+
+    @FXML private VBox              editStudentSection;
+    @FXML private TextField         editAddressField;
+    @FXML private ChoiceBox<String> editClassChoiceBox;
+    @FXML private TextField         editRollNumberField;
+    @FXML private TextField         editAcademicSessionField;
+    @FXML private TextField         editGuardianNameField;
+    @FXML private ChoiceBox<String> editGuardianRelationChoiceBox;
+    @FXML private TextField         editGuardianPhoneField;
+    @FXML private TextField         editGuardianEmailField;
+
+    @FXML private Label  editStatusLabel;
+    @FXML private Button editDeleteBtn;
 
 
     @FXML
@@ -135,10 +167,12 @@ public class AdminController {
         employmentStatusChoiceBox.setItems(FXCollections.observableArrayList("Full-time", "Part-time", "Contract"));
         guardianRelationChoiceBox.setItems(FXCollections.observableArrayList("Father", "Mother", "Guardian", "Other"));
 
-        classChoiceBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal != null && rollNumberField != null) {
-                updateRollNumberForClass(newVal);
-            }
+        editGenderChoiceBox.setItems(FXCollections.observableArrayList("Male", "Female", "Other"));
+        editEmploymentStatusChoiceBox.setItems(FXCollections.observableArrayList("Full-time", "Part-time", "Contract"));
+        editGuardianRelationChoiceBox.setItems(FXCollections.observableArrayList("Father", "Mother", "Guardian", "Other"));
+
+        classChoiceBox.getSelectionModel().selectedItemProperty().addListener((obs, o, n) -> {
+            if (n != null && rollNumberField != null) updateRollNumberForClass(n);
         });
 
         setupTableColumns();
@@ -155,20 +189,22 @@ public class AdminController {
     private void setupTableColumns() {
         userColumn.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue()));
         userColumn.setCellFactory(col -> new TableCell<>() {
-            @Override protected void updateItem(UserAccount acc, boolean empty) {
-                super.updateItem(acc, empty);
-                if (empty || acc == null) { setGraphic(null); return; }
-                String initStr = acc.getFullName().isEmpty()
-                        ? Utils.initials(acc.getUsername())
-                        : Utils.initialsFromFull(acc.getFullName());
-                Label avatar = new Label(initStr);
+            private final Label avatar = new Label();
+            private final Label name   = new Label();
+            private final HBox  box    = new HBox(8, avatar, name);
+            {
                 avatar.setStyle("-fx-background-color: #111111; -fx-text-fill: white; -fx-font-size: 11px; " +
                         "-fx-font-weight: 800; -fx-background-radius: 999; -fx-min-width: 30; -fx-min-height: 30; " +
                         "-fx-pref-width: 30; -fx-pref-height: 30; -fx-alignment: center;");
-                Label name = new Label(acc.getDisplayName());
                 name.setStyle("-fx-text-fill: #111111; -fx-font-size: 13px; -fx-font-weight: 700;");
-                HBox box = new HBox(8, avatar, name);
                 box.setAlignment(Pos.CENTER_LEFT);
+            }
+            @Override protected void updateItem(UserAccount acc, boolean empty) {
+                super.updateItem(acc, empty);
+                if (empty || acc == null) { setGraphic(null); return; }
+                avatar.setText(acc.getFullName().isEmpty()
+                        ? Utils.initials(acc.getUsername()) : Utils.initialsFromFull(acc.getFullName()));
+                name.setText(acc.getDisplayName());
                 setGraphic(box);
             }
         });
@@ -190,32 +226,24 @@ public class AdminController {
 
         phoneColumn.setCellValueFactory(c -> {
             String p = c.getValue().getPhone();
-            if (!p.isEmpty()) return new ReadOnlyStringWrapper(p);
-            int idx = allAccounts.indexOf(c.getValue());
-            return new ReadOnlyStringWrapper(String.format("+977 980000%04d", idx + 1));
+            return new ReadOnlyStringWrapper(p.isEmpty() ? "—" : p);
         });
         phoneColumn.setCellFactory(col -> greyCell());
 
         emailColumn.setCellValueFactory(c -> {
             String e = c.getValue().getEmail();
-            if (!e.isEmpty()) return new ReadOnlyStringWrapper(e);
-            return new ReadOnlyStringWrapper(c.getValue().getUsername().toLowerCase(Locale.ROOT) + "@hamro.edu");
+            return new ReadOnlyStringWrapper(e.isEmpty() ? "—" : e);
         });
         emailColumn.setCellFactory(col -> greyCell());
 
-        statusColumn.setCellValueFactory(c -> {
-            int idx = allAccounts.indexOf(c.getValue());
-            return new ReadOnlyStringWrapper(idx % 4 == 3 ? "Inactive" : "Active");
-        });
+        statusColumn.setCellValueFactory(c -> new ReadOnlyStringWrapper("Active"));
         statusColumn.setCellFactory(col -> new TableCell<>() {
             @Override protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
                 if (empty || v == null) { setGraphic(null); setText(null); return; }
-                boolean active = "Active".equals(v);
                 Label badge = new Label(v);
-                badge.setStyle("-fx-background-color:" + (active ? "#dcfce7" : "#f5f5f4") +
-                        "; -fx-text-fill:" + (active ? "#16a34a" : "#78716c") +
-                        "; -fx-padding: 4 10; -fx-background-radius: 999; -fx-font-size: 11px; -fx-font-weight: 700;");
+                badge.setStyle("-fx-background-color: #dcfce7; -fx-text-fill: #16a34a; " +
+                        "-fx-padding: 4 10; -fx-background-radius: 999; -fx-font-size: 11px; -fx-font-weight: 700;");
                 setGraphic(badge); setText(null);
             }
         });
@@ -230,16 +258,24 @@ public class AdminController {
 
         actionsColumn.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue()));
         actionsColumn.setCellFactory(col -> new TableCell<>() {
+            private final Button editBtn   = new Button("Edit");
+            private final Button deleteBtn = new Button("Delete");
+            private final HBox   box       = new HBox(6, editBtn, deleteBtn);
+            {
+                editBtn.setStyle("-fx-background-color: #111111; -fx-background-radius: 6; " +
+                        "-fx-text-fill: white; -fx-font-size: 11px; -fx-font-weight: 700; " +
+                        "-fx-padding: 4 10; -fx-cursor: hand;");
+                deleteBtn.setStyle("-fx-background-color: transparent; -fx-border-color: #fca5a5; " +
+                        "-fx-border-radius: 6; -fx-background-radius: 6; -fx-text-fill: #dc2626; " +
+                        "-fx-font-size: 11px; -fx-font-weight: 700; -fx-padding: 4 10; -fx-cursor: hand;");
+                box.setAlignment(Pos.CENTER_LEFT);
+            }
             @Override protected void updateItem(UserAccount acc, boolean empty) {
                 super.updateItem(acc, empty);
                 if (empty || acc == null) { setGraphic(null); return; }
-                ImageView icon = new ImageView(new Image(Objects.requireNonNull(
-                        getClass().getResourceAsStream("/com/hamroschool/assets/admin/dashboard/three-dot.png"))));
-                icon.setFitHeight(14); icon.setFitWidth(14); icon.setPreserveRatio(true);
-                Button btn = new Button();
-                btn.setGraphic(icon);
-                btn.setStyle("-fx-background-color: transparent; -fx-cursor: hand; -fx-padding: 6 8; -fx-background-radius: 999;");
-                setGraphic(btn);
+                editBtn.setOnAction(e -> openEditModal(acc));
+                deleteBtn.setOnAction(e -> handleDeleteAccount(acc));
+                setGraphic(box);
             }
         });
 
@@ -288,6 +324,7 @@ public class AdminController {
         String q = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
         filteredAccounts.setPredicate(a -> q.isEmpty()
                 || a.getUsername().toLowerCase(Locale.ROOT).contains(q)
+                || a.getDisplayName().toLowerCase(Locale.ROOT).contains(q)
                 || a.getRole().getDisplayName().toLowerCase(Locale.ROOT).contains(q));
         currentPage = 0;
         renderPage();
@@ -326,14 +363,16 @@ public class AdminController {
 
     @FXML
     private void handleCreateAccount() {
-        resetModal();
+        editingAccount = null;
+        resetCreateModal();
         setStep(1);
         modalOverlay.setVisible(true);
         modalOverlay.setManaged(true);
     }
 
-    private void resetModal() {
+    private void resetCreateModal() {
         usernameField.clear(); passwordField.clear(); confirmPasswordField.clear();
+        usernameField.setDisable(false);
         hideError(usernameError); hideError(passwordError); hideError(confirmError);
         selectedRole = UserRole.STUDENT;
         refreshRoleButtons();
@@ -342,10 +381,7 @@ public class AdminController {
         if (phoneField != null) phoneField.clear();
         if (studentEmailField != null) studentEmailField.clear();
         if (addressField != null) addressField.clear();
-        if (rollNumberField != null) {
-            // Roll number will be set when a class is selected
-            rollNumberField.clear();
-        }
+        if (rollNumberField != null) rollNumberField.clear();
         if (academicSessionField != null) academicSessionField.clear();
         if (guardianNameField != null) guardianNameField.clear();
         if (guardianPhoneField != null) guardianPhoneField.clear();
@@ -371,7 +407,6 @@ public class AdminController {
         modalOverlay.setManaged(false);
     }
 
-
     @FXML private void handleRoleStudent() { selectedRole = UserRole.STUDENT;  refreshRoleButtons(); }
     @FXML private void handleRoleTeacher() { selectedRole = UserRole.TEACHER;  refreshRoleButtons(); }
     @FXML private void handleRoleAdmin()   { selectedRole = UserRole.ADMIN;    refreshRoleButtons(); }
@@ -388,7 +423,6 @@ public class AdminController {
                 : "-fx-background-color: transparent; -fx-background-radius: 8; -fx-text-fill: #44403c; -fx-font-size: 13px; -fx-font-weight: 600; -fx-cursor: hand;");
     }
 
-
     @FXML
     private void handleStep1Next() {
         boolean ok = true;
@@ -399,12 +433,8 @@ public class AdminController {
         if (!passwordField.getText().equals(confirmPasswordField.getText())) { showError(confirmError); ok = false; }
         else hideError(confirmError);
         if (!ok) return;
-
-        if (selectedRole == UserRole.ADMIN) {
-            submitAccount(); // Admin has no step 2
-        } else {
-            setStep(2);
-        }
+        if (selectedRole == UserRole.ADMIN) { submitCreateAccount(); }
+        else { setStep(2); }
     }
 
     @FXML private void handleStep2Back() { setStep(1); }
@@ -412,44 +442,33 @@ public class AdminController {
     @FXML
     private void handleSubmitCreateAccount() {
         if (selectedRole == UserRole.STUDENT) {
-            if (studentFullNameField.getText().trim().isEmpty()) {
-                showError(fullNameError);
-                return;
-            }
+            if (studentFullNameField.getText().trim().isEmpty()) { showError(fullNameError); return; }
             hideError(fullNameError);
         }
-        submitAccount();
+        submitCreateAccount();
     }
 
-    private void submitAccount() {
+    private void submitCreateAccount() {
         String username = usernameField.getText().trim();
         String password = passwordField.getText();
-
-        Label errLabel = selectedRole == UserRole.TEACHER ? teacherStatusLabel : studentStatusLabel;
+        Label errLabel  = selectedRole == UserRole.TEACHER ? teacherStatusLabel : studentStatusLabel;
 
         UserAccount account;
         if (selectedRole == UserRole.STUDENT) {
-            String studentId = studentIdLabel != null ? studentIdLabel.getText() : "";
-            account = new UserAccount(
-                    username, password, UserRole.STUDENT,
+            account = new UserAccount(username, password, UserRole.STUDENT,
                     val(studentFullNameField), val(genderChoiceBox),
                     val(dobField), val(phoneField), val(studentEmailField),
-                    val(addressField), studentId,
+                    val(addressField), studentIdLabel != null ? studentIdLabel.getText() : "",
                     val(classChoiceBox), val(rollNumberField), val(academicSessionField),
                     val(guardianNameField), val(guardianRelationChoiceBox),
-                    val(guardianPhoneField), val(guardianEmailField),
-                    "", "", ""
-            );
+                    val(guardianPhoneField), val(guardianEmailField), "", "", "");
         } else if (selectedRole == UserRole.TEACHER) {
-            String teacherId = teacherIdLabel != null ? teacherIdLabel.getText() : "";
-            account = new UserAccount(
-                    username, password, UserRole.TEACHER,
+            account = new UserAccount(username, password, UserRole.TEACHER,
                     val(teacherFullNameField), val(teacherGenderChoiceBox),
                     "", val(teacherPhoneField), val(teacherEmailField),
-                    "", teacherId,
+                    "", teacherIdLabel != null ? teacherIdLabel.getText() : "",
                     "", "", "", "", "", "", "",
-                    val(subjectField), val(qualificationField), val(employmentStatusChoiceBox)
-            );
+                    val(subjectField), val(qualificationField), val(employmentStatusChoiceBox));
         } else {
             account = new UserAccount(username, password, UserRole.ADMIN);
         }
@@ -458,37 +477,165 @@ public class AdminController {
             showStatusError(errLabel, "✗ Username already taken or fields are empty.");
             return;
         }
-
-        if (selectedRole == UserRole.TEACHER) {
-            String subject = val(subjectField);
-            if (!subject.isEmpty()) teacherService.saveTeacherSubject(username, subject);
-        } else if (selectedRole == UserRole.STUDENT) {
-            String cls = val(classChoiceBox);
-            if (!cls.isEmpty()) classService.enrollStudent(cls, username);
-        }
+        if (selectedRole == UserRole.TEACHER && !val(subjectField).isEmpty())
+            teacherService.saveTeacherSubject(username, val(subjectField));
+        if (selectedRole == UserRole.STUDENT && !val(classChoiceBox).isEmpty())
+            classService.enrollStudent(val(classChoiceBox), username);
 
         handleCloseModal();
+        SceneSwitcher.clearCache();
         refreshView();
     }
 
-    private String val(TextField f) { return f == null ? "" : f.getText().trim(); }
-    private String val(ChoiceBox<String> cb) {
-        if (cb == null) return "";
-        String v = cb.getValue();
-        return v == null ? "" : v;
+
+    private void openEditModal(UserAccount acc) {
+        editingAccount = acc;
+
+        editModalTitle.setText("Edit Account");
+        editModalSubtitle.setText("Editing: " + acc.getUsername());
+        editUsernameDisplay.setText(acc.getUsername());
+        editRoleDisplay.setText(acc.getRole().getDisplayName());
+
+        editFullNameField.setText(acc.getFullName());
+        editPhoneField.setText(acc.getPhone());
+        editEmailField.setText(acc.getEmail());
+        editGenderChoiceBox.setValue(acc.getGender().isEmpty() ? null : acc.getGender());
+
+        editNewPasswordField.clear();
+        editConfirmPasswordField.clear();
+        hideError(editPasswordError);
+        editStatusLabel.setText("");
+
+        boolean isTeacher = acc.getRole() == UserRole.TEACHER;
+        boolean isStudent = acc.getRole() == UserRole.STUDENT;
+        editTeacherSection.setVisible(isTeacher); editTeacherSection.setManaged(isTeacher);
+        editStudentSection.setVisible(isStudent); editStudentSection.setManaged(isStudent);
+
+        if (isTeacher) {
+            editSubjectField.setText(acc.getSubject());
+            editQualificationField.setText(acc.getQualification());
+            editEmploymentStatusChoiceBox.setValue(
+                    acc.getEmploymentStatus().isEmpty() ? "Full-time" : acc.getEmploymentStatus());
+        } else if (isStudent) {
+            editAddressField.setText(acc.getAddress());
+            editClassChoiceBox.setValue(acc.getAssignedClass().isEmpty() ? null : acc.getAssignedClass());
+            editRollNumberField.setText(acc.getRollNumber());
+            editAcademicSessionField.setText(acc.getAcademicSession());
+            editGuardianNameField.setText(acc.getGuardianName());
+            editGuardianRelationChoiceBox.setValue(
+                    acc.getGuardianRelation().isEmpty() ? null : acc.getGuardianRelation());
+            editGuardianPhoneField.setText(acc.getGuardianPhone());
+            editGuardianEmailField.setText(acc.getGuardianEmail());
+        }
+
+        String currentUser = SessionContext.getInstance().requireCurrentUser().getUsername();
+        editDeleteBtn.setDisable(acc.getUsername().equals(currentUser));
+
+        editModalOverlay.setVisible(true);
+        editModalOverlay.setManaged(true);
     }
 
+    @FXML private void handleCloseEditModal() {
+        editModalOverlay.setVisible(false);
+        editModalOverlay.setManaged(false);
+        editingAccount = null;
+    }
+
+    @FXML
+    private void handleSaveEdit() {
+        if (editingAccount == null) return;
+
+        String newPass    = editNewPasswordField.getText();
+        String confirmNew = editConfirmPasswordField.getText();
+        if (!newPass.isEmpty() && !newPass.equals(confirmNew)) {
+            showError(editPasswordError);
+            return;
+        }
+        hideError(editPasswordError);
+
+        UserAccount updated = new UserAccount(
+                editingAccount.getUsername(),
+                newPass.isEmpty() ? editingAccount.getPassword() : newPass,
+                editingAccount.getRole(),
+                editFullNameField.getText().trim(),
+                valCB(editGenderChoiceBox),
+                editingAccount.getDateOfBirth(),  // DOB not editable here
+                editPhoneField.getText().trim(),
+                editEmailField.getText().trim(),
+                editingAccount.getRole() == UserRole.STUDENT ? editAddressField.getText().trim() : "",
+                editingAccount.getUserId(),
+                editingAccount.getRole() == UserRole.STUDENT ? valCB(editClassChoiceBox) : "",
+                editingAccount.getRole() == UserRole.STUDENT ? editRollNumberField.getText().trim() : "",
+                editingAccount.getRole() == UserRole.STUDENT ? editAcademicSessionField.getText().trim() : "",
+                editingAccount.getRole() == UserRole.STUDENT ? editGuardianNameField.getText().trim() : "",
+                editingAccount.getRole() == UserRole.STUDENT ? valCB(editGuardianRelationChoiceBox) : "",
+                editingAccount.getRole() == UserRole.STUDENT ? editGuardianPhoneField.getText().trim() : "",
+                editingAccount.getRole() == UserRole.STUDENT ? editGuardianEmailField.getText().trim() : "",
+                editingAccount.getRole() == UserRole.TEACHER ? editSubjectField.getText().trim() : "",
+                editingAccount.getRole() == UserRole.TEACHER ? editQualificationField.getText().trim() : "",
+                editingAccount.getRole() == UserRole.TEACHER ? valCB(editEmploymentStatusChoiceBox) : ""
+        );
+
+        Thread saver = new Thread(() -> {
+            boolean ok = authService.updateAccount(updated);
+            if (ok && updated.getRole() == UserRole.TEACHER) {
+                teacherService.saveTeacherSubject(updated.getUsername(), updated.getSubject());
+            }
+            Platform.runLater(() -> {
+                if (ok) {
+                    handleCloseEditModal();
+                    SceneSwitcher.clearCache();
+                    refreshView();
+                } else {
+                    editStatusLabel.setText("✗ Save failed. Account not found.");
+                    editStatusLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: 700; -fx-text-fill: #dc2626;");
+                }
+            });
+        }, "AccountSaver");
+        saver.setDaemon(true);
+        saver.start();
+    }
+
+    private void handleDeleteAccount(UserAccount acc) {
+        String currentUser = SessionContext.getInstance().requireCurrentUser().getUsername();
+        if (acc.getUsername().equals(currentUser)) return; // can't delete yourself
+
+        Thread deleter = new Thread(() -> {
+            authService.deleteAccount(acc.getUsername());
+            Platform.runLater(() -> {
+                SceneSwitcher.clearCache();
+                refreshView();
+            });
+        }, "AccountDeleter");
+        deleter.setDaemon(true);
+        deleter.start();
+    }
+
+    @FXML
+    private void handleEditDelete() {
+        if (editingAccount == null) return;
+        handleDeleteAccount(editingAccount);
+        handleCloseEditModal();
+    }
+
+
+    private String val(TextField f)         { return f == null ? "" : f.getText().trim(); }
+    private String val(ChoiceBox<String> cb) {
+        if (cb == null) return "";
+        String v = cb.getValue(); return v == null ? "" : v;
+    }
+    private String valCB(ChoiceBox<String> cb) { return val(cb); }
 
     private void setStep(int step) {
         step1Pane.setVisible(step == 1);        step1Pane.setManaged(step == 1);
         step2TeacherPane.setVisible(step == 2 && selectedRole == UserRole.TEACHER);
-        step2TeacherPane.setManaged(step == 2 && selectedRole == UserRole.TEACHER);
+        step2TeacherPane.setManaged(step == 2  && selectedRole == UserRole.TEACHER);
         step2StudentPane.setVisible(step == 2 && selectedRole == UserRole.STUDENT);
-        step2StudentPane.setManaged(step == 2 && selectedRole == UserRole.STUDENT);
+        step2StudentPane.setManaged(step == 2  && selectedRole == UserRole.STUDENT);
     }
 
-    private void showError(Label lbl) { lbl.setVisible(true);  lbl.setManaged(true); }
-    private void hideError(Label lbl) { lbl.setVisible(false); lbl.setManaged(false); }
+    private void showError(Label lbl)               { lbl.setVisible(true);  lbl.setManaged(true); }
+    private void hideError(Label lbl)               { lbl.setVisible(false); lbl.setManaged(false); }
     private void showStatusError(Label lbl, String msg) {
         lbl.setText(msg);
         lbl.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: #dc2626;");
@@ -506,71 +653,48 @@ public class AdminController {
                     catch (NumberFormatException e) { return a.compareTo(b); }
                 }).toList();
         classChoiceBox.setItems(FXCollections.observableArrayList(names));
+        editClassChoiceBox.setItems(FXCollections.observableArrayList(names));
         if (!names.isEmpty()) classChoiceBox.getSelectionModel().selectFirst();
     }
 
-    /**
-     * Updates the roll number field based on the highest roll number in the selected class.
-     * If the class has no students, roll number starts at 1.
-     * If the class has students, roll number is max(existing roll numbers) + 1.
-     */
     private void updateRollNumberForClass(String className) {
         var classOpt = classService.getClassByName(className);
-        if (classOpt.isEmpty()) {
-            rollNumberField.setText("1");
-            return;
-        }
-
+        if (classOpt.isEmpty()) { rollNumberField.setText("1"); return; }
         SchoolClass schoolClass = classOpt.get();
-        List<String> enrolledStudents = schoolClass.getEnrolledStudents();
-        
-        if (enrolledStudents == null || enrolledStudents.isEmpty()) {
-            rollNumberField.setText("1");
-            return;
+        List<String> enrolled = schoolClass.getEnrolledStudents();
+        if (enrolled == null || enrolled.isEmpty()) { rollNumberField.setText("1"); return; }
+        int maxRoll = 0;
+        for (String su : enrolled) {
+            try {
+                var acc = allAccounts.stream()
+                        .filter(a -> a.getUsername().equals(su) && a.getRole() == UserRole.STUDENT)
+                        .findFirst();
+                if (acc.isPresent() && !acc.get().getRollNumber().isEmpty())
+                    maxRoll = Math.max(maxRoll, Integer.parseInt(acc.get().getRollNumber()));
+            } catch (NumberFormatException ignored) {}
         }
-
-        int maxRollNumber = 0;
-        for (String studentUsername : enrolledStudents) {
-            var studentAccount = allAccounts.stream()
-                    .filter(a -> a.getUsername().equals(studentUsername) && 
-                                 a.getRole() == com.hamroschool.model.auth.UserRole.STUDENT)
-                    .findFirst();
-            
-            if (studentAccount.isPresent()) {
-                String rollNoStr = studentAccount.get().getRollNumber();
-                if (rollNoStr != null && !rollNoStr.isEmpty()) {
-                    try {
-                        int rollNo = Integer.parseInt(rollNoStr);
-                        maxRollNumber = Math.max(maxRollNumber, rollNo);
-                    } catch (NumberFormatException e) {
-                        // Ignore non-numeric roll numbers
-                    }
-                }
-            }
-        }
-
-        rollNumberField.setText(String.valueOf(maxRollNumber + 1));
+        rollNumberField.setText(String.valueOf(maxRoll + 1));
     }
 
 
     @FXML private void handleNavAccounts() {
-        SceneSwitcher.showView(welcomeLabel, "/com/hamroschool/account-view.fxml",  "Accounts",  SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
+        SceneSwitcher.showView(welcomeLabel, "/com/hamroschool/account-view.fxml",  "Accounts",   SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
     }
     @FXML private void handleNavClasses() {
-        SceneSwitcher.showView(welcomeLabel, "/com/hamroschool/class-view.fxml",    "Classes",   SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
+        SceneSwitcher.showView(welcomeLabel, "/com/hamroschool/class-view.fxml",    "Classes",    SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
     }
     @FXML private void handleNavTeachers() {
-        SceneSwitcher.showView(welcomeLabel, "/com/hamroschool/teacher-view.fxml",  "Teachers",  SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
+        SceneSwitcher.showView(welcomeLabel, "/com/hamroschool/teacher-view.fxml",  "Teachers",   SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
     }
     @FXML private void handleNavStudents() {
-        SceneSwitcher.showView(welcomeLabel, "/com/hamroschool/student-view.fxml",  "Students",  SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
+        SceneSwitcher.showView(welcomeLabel, "/com/hamroschool/student-view.fxml",  "Students",   SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
     }
     @FXML private void handleNavSettings() {
-        SceneSwitcher.showView(welcomeLabel, "/com/hamroschool/settings-view.fxml", "Settings",  SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
+        SceneSwitcher.showView(welcomeLabel, "/com/hamroschool/settings-view.fxml", "Settings",   SceneSwitcher.APP_WIDTH, SceneSwitcher.APP_HEIGHT);
     }
     @FXML private void handleLogout() {
         SessionContext.getInstance().clear();
         SceneSwitcher.clearCache();
-        SceneSwitcher.showView(welcomeLabel, "/com/hamroschool/hello-view.fxml",    "Hamro School", SceneSwitcher.LOGIN_WIDTH, SceneSwitcher.LOGIN_HEIGHT);
+        SceneSwitcher.showView(welcomeLabel, "/com/hamroschool/hello-view.fxml", "Hamro School", SceneSwitcher.LOGIN_WIDTH, SceneSwitcher.LOGIN_HEIGHT);
     }
 }
