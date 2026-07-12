@@ -349,16 +349,276 @@ public class AdminController {
         if (currentPage < pages - 1) { currentPage++; renderPage(); }
     }
 
-    @FXML private void handleImportStudents()  { /* stub */ }
-    @FXML private void handleExportData()      { /* stub */ }
-    @FXML private void handleManageRoles()     { /* stub */ }
-    @FXML private void handleFilterRole()      { /* stub */ }
-    @FXML private void handleFilterStatus()    { /* stub */ }
-    @FXML private void handleSort()            { /* stub */ }
-    @FXML private void handleBulkDelete()      { /* stub */ }
-    @FXML private void handleBulkDisable()     { /* stub */ }
-    @FXML private void handleBulkExport()      { /* stub */ }
-    @FXML private void handleBulkChangeRole()  { /* stub */ }
+    @FXML 
+    private void handleImportStudents() {
+        javafx.stage.FileChooser fileChooser = new javafx.stage.FileChooser();
+        fileChooser.setTitle("Import Students from CSV");
+        fileChooser.getExtensionFilters().add(
+            new javafx.stage.FileChooser.ExtensionFilter("CSV Files", "*.csv")
+        );
+        
+        java.io.File file = fileChooser.showOpenDialog(searchField.getScene().getWindow());
+        if (file == null) return;
+        
+        Thread importer = new Thread(() -> {
+            try {
+                java.util.List<String> imported = new java.util.ArrayList<>();
+                java.util.List<String> failed = new java.util.ArrayList<>();
+                
+                try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.FileReader(file))) {
+                    String line;
+                    boolean firstLine = true;
+                    while ((line = br.readLine()) != null) {
+                        if (firstLine) { firstLine = false; continue; } 
+                        
+                        String[] parts = line.split(",", -1);
+                        if (parts.length < 17) {
+                            failed.add("Invalid row: " + line);
+                            continue;
+                        }
+                        
+                        try {
+                            String username = parts[0].trim();
+                            String password = parts[1].trim();
+                            String fullName = parts[2].trim();
+                            String gender = parts[3].trim();
+                            String dob = parts[4].trim();
+                            String phone = parts[5].trim();
+                            String email = parts[6].trim();
+                            String address = parts[7].trim();
+                            String className = parts[8].trim();
+                            String rollNumber = parts[9].trim();
+                            String academicSession = parts[10].trim();
+                            String guardianName = parts[11].trim();
+                            String guardianRelation = parts[12].trim();
+                            String guardianPhone = parts[13].trim();
+                            String guardianEmail = parts[14].trim();
+                            
+                            if (username.isEmpty() || password.isEmpty()) {
+                                failed.add("Missing username/password: " + username);
+                                continue;
+                            }
+                            
+                            int studentCount = (int) allAccounts.stream()
+                                .filter(a -> a.getRole() == UserRole.STUDENT).count();
+                            String studentId = String.format("STU-%04d", studentCount + imported.size() + 1);
+                            
+                            UserAccount student = new UserAccount(
+                                username, password, UserRole.STUDENT,
+                                fullName, gender, dob, phone, email, address, studentId,
+                                className, rollNumber, academicSession,
+                                guardianName, guardianRelation, guardianPhone, guardianEmail,
+                                "", "", ""
+                            );
+                            
+                            if (authService.createFullAccount(student)) {
+                                if (!className.isEmpty()) {
+                                    classService.enrollStudent(className, username);
+                                }
+                                imported.add(username);
+                            } else {
+                                failed.add("Duplicate username: " + username);
+                            }
+                        } catch (Exception e) {
+                            failed.add("Error processing: " + line);
+                        }
+                    }
+                }
+                
+                Platform.runLater(() -> {
+                    refreshView();
+                    String msg = String.format("Import Complete\n\nSuccessful: %d\nFailed: %d",
+                        imported.size(), failed.size());
+                    if (!failed.isEmpty() && failed.size() <= 5) {
+                        msg += "\n\nErrors:\n" + String.join("\n", failed);
+                    }
+                    showAlert("Import Results", msg);
+                });
+                
+            } catch (Exception e) {
+                Platform.runLater(() -> showAlert("Import Error", "Failed to read CSV file: " + e.getMessage()));
+            }
+        }, "StudentImporter");
+        importer.setDaemon(true);
+        importer.start();
+    }
+    
+    @FXML 
+    private void handleExportData() {
+        javafx.stage.FileChooser fileChooser = new javafx.stage.FileChooser();
+        fileChooser.setTitle("Export Accounts to CSV");
+        fileChooser.setInitialFileName("hamroschool_accounts_" + 
+            LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + ".csv");
+        fileChooser.getExtensionFilters().add(
+            new javafx.stage.FileChooser.ExtensionFilter("CSV Files", "*.csv")
+        );
+        
+        java.io.File file = fileChooser.showSaveDialog(searchField.getScene().getWindow());
+        if (file == null) return;
+        
+        Thread exporter = new Thread(() -> {
+            try (java.io.PrintWriter writer = new java.io.PrintWriter(file)) {
+                // CSV Header
+                writer.println("Username,Role,Full Name,Gender,DOB,Phone,Email,Address," +
+                    "User ID,Assigned Class,Roll Number,Academic Session," +
+                    "Guardian Name,Guardian Relation,Guardian Phone,Guardian Email," +
+                    "Subject,Qualification,Employment Status");
+                
+                for (UserAccount acc : allAccounts) {
+                    writer.println(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
+                        csvEscape(acc.getUsername()),
+                        acc.getRole().getDisplayName(),
+                        csvEscape(acc.getFullName()),
+                        csvEscape(acc.getGender()),
+                        csvEscape(acc.getDateOfBirth()),
+                        csvEscape(acc.getPhone()),
+                        csvEscape(acc.getEmail()),
+                        csvEscape(acc.getAddress()),
+                        csvEscape(acc.getUserId()),
+                        csvEscape(acc.getAssignedClass()),
+                        csvEscape(acc.getRollNumber()),
+                        csvEscape(acc.getAcademicSession()),
+                        csvEscape(acc.getGuardianName()),
+                        csvEscape(acc.getGuardianRelation()),
+                        csvEscape(acc.getGuardianPhone()),
+                        csvEscape(acc.getGuardianEmail()),
+                        csvEscape(acc.getSubject()),
+                        csvEscape(acc.getQualification()),
+                        csvEscape(acc.getEmploymentStatus())
+                    ));
+                }
+                
+                Platform.runLater(() -> 
+                    showAlert("Export Complete", "Successfully exported " + allAccounts.size() + " accounts to:\n" + file.getAbsolutePath())
+                );
+            } catch (Exception e) {
+                Platform.runLater(() -> 
+                    showAlert("Export Error", "Failed to write CSV file: " + e.getMessage())
+                );
+            }
+        }, "AccountExporter");
+        exporter.setDaemon(true);
+        exporter.start();
+    }
+    
+    private String csvEscape(String value) {
+        if (value == null || value.isEmpty()) return "";
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
+    }
+    
+    @FXML 
+    private void handleManageRoles() {
+        showAlert("Manage Roles", "Role management is restricted to prevent security issues.\n\n" +
+            "Current roles: ADMIN, TEACHER, STUDENT\n\n" +
+            "To modify roles, contact the system administrator.");
+    }
+    
+    @FXML 
+    private void handleFilterRole() {
+        javafx.scene.control.ChoiceDialog<String> dialog = new javafx.scene.control.ChoiceDialog<>(
+            "All Roles",
+            "All Roles", "Students", "Teachers", "Admins"
+        );
+        dialog.setTitle("Filter by Role");
+        dialog.setHeaderText("Select role to filter");
+        dialog.setContentText("Role:");
+        
+        dialog.showAndWait().ifPresent(choice -> {
+            filteredAccounts.setPredicate(acc -> {
+                String query = searchField.getText().trim().toLowerCase(Locale.ROOT);
+                boolean matchesSearch = query.isEmpty()
+                    || acc.getUsername().toLowerCase(Locale.ROOT).contains(query)
+                    || acc.getDisplayName().toLowerCase(Locale.ROOT).contains(query);
+                
+                if (!matchesSearch) return false;
+                
+                return switch (choice) {
+                    case "Students" -> acc.getRole() == UserRole.STUDENT;
+                    case "Teachers" -> acc.getRole() == UserRole.TEACHER;
+                    case "Admins" -> acc.getRole() == UserRole.ADMIN;
+                    default -> true;
+                };
+            });
+            currentPage = 0;
+            renderPage();
+        });
+    }
+    
+    @FXML 
+    private void handleFilterStatus() {
+        showAlert("Filter Status", "Account status tracking will be implemented in future updates.\n\n" +
+            "Currently all accounts are considered Active by default.");
+    }
+    
+    @FXML 
+    private void handleSort() {
+        javafx.scene.control.ChoiceDialog<String> dialog = new javafx.scene.control.ChoiceDialog<>(
+            "Newest First",
+            "Newest First", "Oldest First", "Name (A-Z)", "Name (Z-A)", "Role"
+        );
+        dialog.setTitle("Sort Accounts");
+        dialog.setHeaderText("Select sort order");
+        dialog.setContentText("Sort by:");
+        
+        dialog.showAndWait().ifPresent(choice -> {
+            java.util.List<UserAccount> sorted = new java.util.ArrayList<>(allAccounts);
+            
+            switch (choice) {
+                case "Oldest First" -> {} // Already in insertion order
+                case "Newest First" -> java.util.Collections.reverse(sorted);
+                case "Name (A-Z)" -> sorted.sort(java.util.Comparator.comparing(
+                    acc -> acc.getFullName().isEmpty() ? acc.getUsername() : acc.getFullName()
+                ));
+                case "Name (Z-A)" -> {
+                    sorted.sort(java.util.Comparator.comparing(
+                        acc -> acc.getFullName().isEmpty() ? acc.getUsername() : acc.getFullName()
+                    ));
+                    java.util.Collections.reverse(sorted);
+                }
+                case "Role" -> sorted.sort(java.util.Comparator.comparing(acc -> acc.getRole().ordinal()));
+            }
+            
+            allAccounts.setAll(sorted);
+            applyFilter(searchField.getText());
+        });
+    }
+    
+    @FXML 
+    private void handleBulkDelete() {
+        showAlert("Bulk Delete", "Bulk operations require checkbox selection.\n\n" +
+            "This feature will be enabled in a future update.");
+    }
+    
+    @FXML 
+    private void handleBulkDisable() {
+        showAlert("Bulk Disable", "Account status management will be implemented in future updates.\n\n" +
+            "This feature requires database schema updates.");
+    }
+    
+    @FXML 
+    private void handleBulkExport() {
+        showAlert("Bulk Export", "Use 'Export All Data' button to export all accounts.\n\n" +
+            "Selective export with checkboxes will be added in a future update.");
+    }
+    
+    @FXML 
+    private void handleBulkChangeRole() {
+        showAlert("Bulk Change Role", "Bulk role changes are restricted for security reasons.\n\n" +
+            "Please edit accounts individually to change roles.");
+    }
+    
+    private void showAlert(String title, String message) {
+        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
+            javafx.scene.control.Alert.AlertType.INFORMATION
+        );
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
 
 
     @FXML

@@ -95,8 +95,45 @@ public class SettingsController {
 
     @FXML
     private void handleDeleteAccount() {
-        SessionContext.getInstance().clear();
-        SceneSwitcher.showView(logoutButton, "/com/hamroschool/hello-view.fxml", "Hamro School", SceneSwitcher.LOGIN_WIDTH, SceneSwitcher.LOGIN_HEIGHT);
+        UserAccount currentUser = SessionContext.getInstance().requireCurrentUser();
+        
+        // Show confirmation dialog
+        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
+            javafx.scene.control.Alert.AlertType.CONFIRMATION
+        );
+        alert.setTitle("Delete Account");
+        alert.setHeaderText("Are you sure you want to delete your account?");
+        alert.setContentText("This action cannot be undone. Your account (" + 
+            currentUser.getUsername() + ") will be permanently deleted.");
+        
+        javafx.scene.control.ButtonType buttonYes = new javafx.scene.control.ButtonType("Delete Account", 
+            javafx.scene.control.ButtonBar.ButtonData.OK_DONE);
+        javafx.scene.control.ButtonType buttonNo = new javafx.scene.control.ButtonType("Cancel", 
+            javafx.scene.control.ButtonBar.ButtonData.CANCEL_CLOSE);
+        alert.getButtonTypes().setAll(buttonYes, buttonNo);
+        
+        alert.showAndWait().ifPresent(response -> {
+            if (response == buttonYes) {
+                // Perform deletion
+                boolean deleted = authService.deleteAccount(currentUser.getUsername());
+                
+                if (deleted) {
+                    SessionContext.getInstance().clear();
+                    SceneSwitcher.clearCache();
+                    SceneSwitcher.showView(logoutButton, "/com/hamroschool/hello-view.fxml", 
+                        "Hamro School", SceneSwitcher.LOGIN_WIDTH, SceneSwitcher.LOGIN_HEIGHT);
+                } else {
+                    // Show error if deletion failed
+                    javafx.scene.control.Alert errorAlert = new javafx.scene.control.Alert(
+                        javafx.scene.control.Alert.AlertType.ERROR
+                    );
+                    errorAlert.setTitle("Deletion Failed");
+                    errorAlert.setHeaderText(null);
+                    errorAlert.setContentText("Failed to delete account. Please contact an administrator.");
+                    errorAlert.showAndWait();
+                }
+            }
+        });
     }
 
 

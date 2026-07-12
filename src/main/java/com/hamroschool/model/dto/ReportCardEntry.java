@@ -1,8 +1,5 @@
 package com.hamroschool.model.dto;
 
-/**
- * One row in the report card table — per-student grade, GPA, rank, status.
- */
 public class ReportCardEntry {
     private final int    roll;
     private final String username;
@@ -21,7 +18,6 @@ public class ReportCardEntry {
     public double getPercentage() { return percentage; }
     public int    getRank()       { return rank; }
 
-    /** Letter grade with +/- based on percentage. */
     public String getGrade() {
         if (percentage >= 93) return "A";
         if (percentage >= 90) return "A-";
@@ -36,7 +32,6 @@ public class ReportCardEntry {
         return "F";
     }
 
-    /** GPA on a 4.0 scale. */
     public double getGpa() {
         if (percentage >= 93) return 4.0;
         if (percentage >= 90) return 3.7;
@@ -51,7 +46,6 @@ public class ReportCardEntry {
         return 0.0;
     }
 
-    /** Excellent / Good / Average / Needs Support */
     public String getStatus() {
         if (percentage >= 80) return "Excellent";
         if (percentage >= 60) return "Good";
