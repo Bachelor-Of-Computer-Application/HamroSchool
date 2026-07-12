@@ -28,6 +28,7 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TableCell;
@@ -95,7 +96,6 @@ public class AdminController {
     @FXML private Label         confirmError;
     @FXML private Button        roleStudentBtn;
     @FXML private Button        roleTeacherBtn;
-    @FXML private Button        roleAdminBtn;
 
     @FXML private TextField         teacherFullNameField;
     @FXML private ChoiceBox<String> teacherGenderChoiceBox;
@@ -518,72 +518,87 @@ public class AdminController {
     
     @FXML 
     private void handleFilterRole() {
-        javafx.scene.control.ChoiceDialog<String> dialog = new javafx.scene.control.ChoiceDialog<>(
-            "All Roles",
-            "All Roles", "Students", "Teachers", "Admins"
-        );
-        dialog.setTitle("Filter by Role");
-        dialog.setHeaderText("Select role to filter");
-        dialog.setContentText("Role:");
-        
-        dialog.showAndWait().ifPresent(choice -> {
-            filteredAccounts.setPredicate(acc -> {
-                String query = searchField.getText().trim().toLowerCase(Locale.ROOT);
-                boolean matchesSearch = query.isEmpty()
-                    || acc.getUsername().toLowerCase(Locale.ROOT).contains(query)
-                    || acc.getDisplayName().toLowerCase(Locale.ROOT).contains(query);
-                
-                if (!matchesSearch) return false;
-                
-                return switch (choice) {
-                    case "Students" -> acc.getRole() == UserRole.STUDENT;
-                    case "Teachers" -> acc.getRole() == UserRole.TEACHER;
-                    case "Admins" -> acc.getRole() == UserRole.ADMIN;
-                    default -> true;
-                };
-            });
-            currentPage = 0;
-            renderPage();
-        });
+        ContextMenu menu = new ContextMenu();
+        String[] options = {"All Roles", "Students", "Teachers", "Admins"};
+        for (String option : options) {
+            javafx.scene.control.MenuItem item = new javafx.scene.control.MenuItem(option);
+            item.setStyle("-fx-font-size: 13px; -fx-font-weight: 600;");
+            item.setOnAction(e -> applyRoleFilter(option));
+            menu.getItems().add(item);
+        }
+        menu.show(filterRoleBtn, javafx.geometry.Side.BOTTOM, 0, 4);
     }
-    
+
+    private void applyRoleFilter(String choice) {
+        filteredAccounts.setPredicate(acc -> {
+            String query = searchField.getText().trim().toLowerCase(Locale.ROOT);
+            boolean matchesSearch = query.isEmpty()
+                || acc.getUsername().toLowerCase(Locale.ROOT).contains(query)
+                || acc.getDisplayName().toLowerCase(Locale.ROOT).contains(query);
+            if (!matchesSearch) return false;
+            return switch (choice) {
+                case "Students" -> acc.getRole() == UserRole.STUDENT;
+                case "Teachers" -> acc.getRole() == UserRole.TEACHER;
+                case "Admins"   -> acc.getRole() == UserRole.ADMIN;
+                default         -> true;
+            };
+        });
+        // Update button label to show active filter
+        filterRoleBtn.setText(choice.equals("All Roles") ? "Role ∨" : choice + " ∨");
+        currentPage = 0;
+        renderPage();
+    }
+
     @FXML 
     private void handleFilterStatus() {
-        showAlert("Filter Status", "Account status tracking will be implemented in future updates.\n\n" +
-            "Currently all accounts are considered Active by default.");
+        ContextMenu menu = new ContextMenu();
+        javafx.scene.control.MenuItem active = new javafx.scene.control.MenuItem("Active");
+        active.setStyle("-fx-font-size: 13px; -fx-font-weight: 600;");
+        active.setOnAction(e -> filterStatusBtn.setText("Active ∨"));
+        menu.getItems().add(active);
+        menu.show(filterStatusBtn, javafx.geometry.Side.BOTTOM, 0, 4);
     }
     
     @FXML 
     private void handleSort() {
-        javafx.scene.control.ChoiceDialog<String> dialog = new javafx.scene.control.ChoiceDialog<>(
-            "Newest First",
-            "Newest First", "Oldest First", "Name (A-Z)", "Name (Z-A)", "Role"
-        );
-        dialog.setTitle("Sort Accounts");
-        dialog.setHeaderText("Select sort order");
-        dialog.setContentText("Sort by:");
-        
-        dialog.showAndWait().ifPresent(choice -> {
-            java.util.List<UserAccount> sorted = new java.util.ArrayList<>(allAccounts);
-            
-            switch (choice) {
-                case "Oldest First" -> {} // Already in insertion order
-                case "Newest First" -> java.util.Collections.reverse(sorted);
-                case "Name (A-Z)" -> sorted.sort(java.util.Comparator.comparing(
+        ContextMenu menu = new ContextMenu();
+        String[][] options = {
+            {"Newest First",  "↕ Sort by: Newest ∨"},
+            {"Oldest First",  "↕ Sort by: Oldest ∨"},
+            {"Name (A-Z)",    "↕ Sort by: A→Z ∨"},
+            {"Name (Z-A)",    "↕ Sort by: Z→A ∨"},
+            {"Role",          "↕ Sort by: Role ∨"},
+        };
+        for (String[] opt : options) {
+            javafx.scene.control.MenuItem item = new javafx.scene.control.MenuItem(opt[0]);
+            item.setStyle("-fx-font-size: 13px; -fx-font-weight: 600;");
+            item.setOnAction(e -> {
+                applySort(opt[0]);
+                sortBtn.setText(opt[1]);
+            });
+            menu.getItems().add(item);
+        }
+        menu.show(sortBtn, javafx.geometry.Side.BOTTOM, 0, 4);
+    }
+
+    private void applySort(String choice) {
+        java.util.List<UserAccount> sorted = new java.util.ArrayList<>(allAccounts);
+        switch (choice) {
+            case "Oldest First" -> {} // insertion order
+            case "Newest First" -> java.util.Collections.reverse(sorted);
+            case "Name (A-Z)" -> sorted.sort(java.util.Comparator.comparing(
+                acc -> acc.getFullName().isEmpty() ? acc.getUsername() : acc.getFullName()
+            ));
+            case "Name (Z-A)" -> {
+                sorted.sort(java.util.Comparator.comparing(
                     acc -> acc.getFullName().isEmpty() ? acc.getUsername() : acc.getFullName()
                 ));
-                case "Name (Z-A)" -> {
-                    sorted.sort(java.util.Comparator.comparing(
-                        acc -> acc.getFullName().isEmpty() ? acc.getUsername() : acc.getFullName()
-                    ));
-                    java.util.Collections.reverse(sorted);
-                }
-                case "Role" -> sorted.sort(java.util.Comparator.comparing(acc -> acc.getRole().ordinal()));
+                java.util.Collections.reverse(sorted);
             }
-            
-            allAccounts.setAll(sorted);
-            applyFilter(searchField.getText());
-        });
+            case "Role" -> sorted.sort(java.util.Comparator.comparing(acc -> acc.getRole().ordinal()));
+        }
+        allAccounts.setAll(sorted);
+        applyFilter(searchField.getText());
     }
     
     @FXML 
@@ -669,12 +684,10 @@ public class AdminController {
 
     @FXML private void handleRoleStudent() { selectedRole = UserRole.STUDENT;  refreshRoleButtons(); }
     @FXML private void handleRoleTeacher() { selectedRole = UserRole.TEACHER;  refreshRoleButtons(); }
-    @FXML private void handleRoleAdmin()   { selectedRole = UserRole.ADMIN;    refreshRoleButtons(); }
 
     private void refreshRoleButtons() {
         styleRoleBtn(roleStudentBtn, selectedRole == UserRole.STUDENT);
         styleRoleBtn(roleTeacherBtn, selectedRole == UserRole.TEACHER);
-        styleRoleBtn(roleAdminBtn,   selectedRole == UserRole.ADMIN);
     }
 
     private void styleRoleBtn(Button btn, boolean active) {
@@ -693,8 +706,7 @@ public class AdminController {
         if (!passwordField.getText().equals(confirmPasswordField.getText())) { showError(confirmError); ok = false; }
         else hideError(confirmError);
         if (!ok) return;
-        if (selectedRole == UserRole.ADMIN) { submitCreateAccount(); }
-        else { setStep(2); }
+        setStep(2);
     }
 
     @FXML private void handleStep2Back() { setStep(1); }

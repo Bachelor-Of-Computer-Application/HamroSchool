@@ -252,8 +252,6 @@
                                             style="-fx-background-color: #111111; -fx-background-radius: 8; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: 700; -fx-cursor: hand;" text="Student"/>
                                     <Button fx:id="roleTeacherBtn" onAction="#handleRoleTeacher" maxWidth="Infinity" prefHeight="38.0" HBox.hgrow="ALWAYS"
                                             style="-fx-background-color: transparent; -fx-background-radius: 8; -fx-text-fill: #44403c; -fx-font-size: 13px; -fx-font-weight: 600; -fx-cursor: hand;" text="Teacher"/>
-                                    <Button fx:id="roleAdminBtn" onAction="#handleRoleAdmin" maxWidth="Infinity" prefHeight="38.0" HBox.hgrow="ALWAYS"
-                                            style="-fx-background-color: transparent; -fx-background-radius: 8; -fx-text-fill: #44403c; -fx-font-size: 13px; -fx-font-weight: 600; -fx-cursor: hand;" text="Admin"/>
                                 </children></HBox>
                                 <Label style="-fx-font-size: 11px; -fx-text-fill: #a8a29e;" text="Selecting a role will show role-specific fields in Step 2"/>
                             </children></VBox>
